@@ -33,6 +33,44 @@
             transform: translateY(-50%);
         }
         .select2-container--default .select2-selection--multiple .select2-selection__choice__display{color:#333;}
+        .hashtag-container {
+            position: relative;
+        }
+
+        textarea {
+            width: 100%;
+            height: 120px;
+            padding: 10px;
+            font-size: 14px;
+        }
+
+        #suggestions {
+            position: absolute;
+            top: 78px;
+            left: 9px;
+            background: white;
+            border: 1px solid #ccc;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            width: 96%;
+            z-index: 10;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        #suggestions li {
+            padding: 8px;
+            cursor: pointer;
+        }
+
+        #suggestions li:hover {
+            background: #f0f0f0;
+        }
+
+        .hidden {
+            display: none;
+        }
     </style>
 @stop
 
@@ -429,6 +467,15 @@
                                     </div>
                                     <div class="col-md-7">
                                         <input type="text" class="form-control" id="random_title_keyword_level" name="random_title_keyword_level" value="{{ old('random_title_keyword_level',$store->random_title_keyword_level) }}">
+                                    </div>
+                                </div>
+                                <div class="row mt-3 g-3 align-items-center">
+                                    <div class="col-md-5">
+                                        <label for="shopify_title_template">Shopify Title Template</label>
+                                    </div>
+                                    <div class="col-md-12 hashtag-container">
+                                        <textarea rows="3" class="form-control" id="shopify_title_template" name="shopify_title_template">{{ old('shopify_title_template',$store->shopify_title_template) }}</textarea>
+                                        <ul id="suggestions" class="hidden"></ul>
                                     </div>
                                 </div>
                                 <div class="row mt-3 g-3 align-items-center">
@@ -1844,5 +1891,53 @@
                 }
             });
         });
+
+        const allHashtags = ["#title_keyword1", "#title_keyword2", "#title_keyword3", "#title_keyword4", "#title_keyword5", "#title_keyword6", "#title_keyword7", "#title_keyword8", "#title_keyword9", "#store_short_code", "#product_code"];
+        let usedHashtags = [];
+
+        const textarea = document.getElementById("shopify_title_template");
+        const suggestions = document.getElementById("suggestions");
+
+        textarea.addEventListener("input", () => {
+            const cursorPos = textarea.selectionStart;
+            const text = textarea.value.slice(0, cursorPos);
+            const match = text.match(/#\w*$/);
+
+            if (!match) {
+                suggestions.classList.add("hidden");
+                return;
+            }
+
+            const query = match[0].toLowerCase();
+
+            const filtered = allHashtags.filter(tag =>
+                tag.startsWith(query) && !usedHashtags.includes(tag)
+            );
+
+            suggestions.innerHTML = "";
+
+            filtered.forEach(tag => {
+                const li = document.createElement("li");
+                li.textContent = tag;
+                li.onclick = () => insertHashtag(tag, match[0]);
+                suggestions.appendChild(li);
+            });
+
+            suggestions.classList.toggle("hidden", filtered.length === 0);
+        });
+
+        function insertHashtag(tag, current) {
+            const cursorPos = textarea.selectionStart;
+            const start = textarea.value.slice(0, cursorPos - current.length);
+            const end = textarea.value.slice(cursorPos);
+
+            textarea.value = start + tag + " " + end;
+
+            // 🔹 Mark hashtag as used
+            usedHashtags.push(tag);
+
+            textarea.focus();
+            suggestions.classList.add("hidden");
+        }
     </script>
 @stop

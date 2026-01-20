@@ -922,18 +922,24 @@
                                             </div>
                                             <div class="card-body" id="store_product_detail">
                                                 <div class="row">
-                                                    <div class="col-md-8"></div>
-                                                    <div class="col-md-4 text-right">
+                                                    <div class="col-md-4"></div>
+                                                    <div class="col-md-8 text-right">
                                                         <input type="hidden" id="active_store">
                                                         <button type="button" class="btn btn-primary" id="update_marketplace" disabled>Update Marketplace</button>
+                                                        <button type="button" class="btn btn-secondary" id="regenerate_title" disabled>Regenerate Title</button>
                                                     </div>
                                                 </div>
                                                 <div class="row mt-3 g-3 align-items-center">
                                                     <div class="col-md-3">
                                                         <label class="col-form-label">Title</label>
                                                     </div>
-                                                    <div class="col-md-9 d-flex justify-between">
-                                                        <input type="checkbox" name="overwrite_title" id="overwrite_title" class="mr-1"> <textarea class="form-control" name="title" id="store_product_title" placeholder="Store Name/ Title" readonly>{{ old('product_title',$product->product_title) }}</textarea>
+                                                    <div class="col-md-9">
+                                                        <div class="d-flex justify-between">
+                                                            <input type="checkbox" name="overwrite_title" id="overwrite_title" class="mr-1"> <textarea class="form-control" name="title" id="store_product_title" placeholder="Store Name/ Title" readonly>{{ old('product_title',$product->product_title) }}</textarea>
+                                                        </div>
+                                                        <div class="text-right mt-1">
+                                                            <button type="button" class="btn btn-secondary" id="reset_title" disabled>Reset Title</button>
+                                                        </div>
                                                     </div>
                                                 </div>
                                                 {{--<div class="row mt-3 g-3 align-items-center">
@@ -1763,6 +1769,15 @@
                 var store_id = $(this).data('id');
                 $('#active_store').val(store_id);
                 $('#update_marketplace').removeAttr('disabled');
+                $('#reset_title').removeAttr('disabled');
+                $('#regenerate_title').removeAttr('disabled');
+
+                getStoreDetail(store_id);
+
+            });
+
+            function getStoreDetail(store_id){
+
                 $.ajax({
                     url: "{{ route('catalog.getstoredetail') }}",
                     type: 'POST',
@@ -1916,7 +1931,7 @@
                         }*/
                     }
                 });
-            });
+            }
 
             $(document).on('click', '#store_product_detail [type="checkbox"]', function() {
 
@@ -2336,7 +2351,40 @@
                     }
                 });
 
-            })
+            });
+
+            $(document).on('click','#regenerate_title',function () {
+
+                var store_id = $('#active_store').val();
+                var store_type = $('#store_type').val();
+
+                $.ajax({
+                    url: "{{ route('catalog.regeneratetitle') }}",
+                    type: 'POST',
+                    data: {
+                        store_id: store_id,
+                        store_type: store_type,
+                        product_id: product_id,
+                    },
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function (response) {
+                        if (response.success) {
+                            if(response.title != '') {
+                                $('#store_product_title').val(response.title);
+                            }
+                        }
+                    }
+                });
+            });
+
+            $(document).on('click','#reset_title',function () {
+
+                var store_id = $('#active_store').val();
+
+                getStoreDetail(store_id);
+            });
 
             var hash = window.location.hash;
 
