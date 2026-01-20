@@ -131,10 +131,11 @@ class SubmitShopifyProductsJob implements ShouldQueue
                         ->whereIn('products.product_type', $ceaProductTypes)
                         ->whereNull('products.parent_id')
                         ->where('products.product_status', '=', 'active')
-                        ->where('store_product.last_synch_date_time', '<', 'store_product.updated_at')
+                        ->whereColumn('store_product.last_synch_date_time', '<', 'store_product.updated_at')
                         ->orderBy('manage_marketplace_products.updated_at', 'asc')
-                        ->limit(200)
-                        ->get();
+                        ->limit(200);
+
+                    Log::info('Raw SQL ' . $products->toRawSql());
 
                     foreach ($products as $product) {
                         $this->updateProduct($product, $store);
@@ -153,7 +154,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
                         ->whereIn('product_type', $ceaProductTypes)
                         ->whereNull('parent_id')
                         ->whereIn('product_status', ['discontinued', 'temporaryDisabled', 'draft'])
-                        ->where('store_product.last_synch_date_time', '<', 'product.updated_at')
+                        ->whereColumn('store_product.last_synch_date_time', '<', 'product.updated_at')
                         ->orderBy('products.created_at', 'desc')
                         ->get();
 
