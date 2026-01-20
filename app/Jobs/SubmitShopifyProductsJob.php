@@ -720,40 +720,68 @@ class SubmitShopifyProductsJob implements ShouldQueue
 
     public static function generateProductTitle($productData, $store)
     {
-        $limit = $store->random_title_keyword_level;
-        $reverse = true;
-        if (!isset($limit)) {
-            $limit = 6;
-            $reverse = false;
-        } else {
-            $limit++;
-        }
+        $titleTemplate = $store->shopify_title_template;
+        if($titleTemplate != ''){
 
-        $keywords = ProductTitleKeyword::select('product_id', 'keyword')
-            ->where('product_id', $productData->product_id)
-            ->orderBy('priority', 'asc')->limit($limit)->get()->toArray();
+            $keywords = ProductTitleKeyword::select('product_id', 'keyword')
+                ->where('product_id', $productData->product_id)
+                ->orderBy('priority', 'asc')->get()->toArray();
 
-        Log::info('Keywords: ' . json_encode($keywords));
-        // take the first one and reverse the remaining array
+            $replacements = [];
 
-        $title = '';
-        if (count($keywords) > 0) {
-            $firstKeyword = array_shift($keywords);
-            $title .= $firstKeyword['keyword'];
-            if ($reverse) {
-                $reversedKeywords = array_reverse($keywords);
-                $title .= ', ';
+            for ($i = 1; $i <= 10; $i++) {
+                $replacements["#title_keyword{$i}"] = $keywords[$i - 1]['keyword'] ?? '';
+            }
+
+            $replacements['#store_short_code'] = $store->short_code;
+            $replacements['#product_code'] = $productData->product_sku;
+            $replacements['#product_title'] = $productData->product_title;
+
+            $title = str_replace(
+                array_keys($replacements),
+                array_values($replacements),
+                $titleTemplate
+            );
+
+            $title = preg_replace('/\s+/', ' ', trim($title));
+
+            return trim($title);
+        }else {
+            $limit = $store->random_title_keyword_level;
+            $reverse = true;
+            if (!isset($limit)) {
+                $limit = 6;
+                $reverse = false;
             } else {
-                $title .= ' ';
-                $reversedKeywords = $keywords;
+                $limit++;
             }
-            foreach ($reversedKeywords as $keyword) {
-                $title .= trim($keyword['keyword']) . ' ';
+
+            $keywords = ProductTitleKeyword::select('product_id', 'keyword')
+                ->where('product_id', $productData->product_id)
+                ->orderBy('priority', 'asc')->limit($limit)->get()->toArray();
+
+            Log::info('Keywords: ' . json_encode($keywords));
+            // take the first one and reverse the remaining array
+
+            $title = '';
+            if (count($keywords) > 0) {
+                $firstKeyword = array_shift($keywords);
+                $title .= $firstKeyword['keyword'];
+                if ($reverse) {
+                    $reversedKeywords = array_reverse($keywords);
+                    $title .= ', ';
+                } else {
+                    $title .= ' ';
+                    $reversedKeywords = $keywords;
+                }
+                foreach ($reversedKeywords as $keyword) {
+                    $title .= trim($keyword['keyword']) . ' ';
+                }
+            } else {
+                $title = $productData->product_title;
             }
-        } else {
-            $title = $productData->product_title;
+            return trim($title) . ' - ' . $store->short_code . $productData->product_sku;
         }
-        return trim($title) . ' - ' . $store->short_code . $productData->product_sku;
     }
 
     private function handleMediaImages($product, $listingItem,$AlreadyImages = null)
