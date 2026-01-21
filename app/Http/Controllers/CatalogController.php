@@ -918,6 +918,7 @@ class CatalogController extends Controller
             }
 
             if (!$storeProductDetail) {
+                $storeProductDetail = $productDetail;
                 if((isset($storeDetail->storeType->code) && $storeDetail->storeType->code == 'shopify')){
                     $product_title = SubmitShopifyProductsJob::generateProductTitle($productDetail,$storeDetail);
                     $storeProductDetail->title = $product_title;
@@ -926,7 +927,7 @@ class CatalogController extends Controller
                     $product_description = $this->generateProductDescription($productDetail);
                     $storeProductDetail->description = $product_description;
                 }
-                $storeProductDetail = $productDetail;
+
             }
 
             //print_r($storeProductDetail);die;
@@ -1637,5 +1638,25 @@ class CatalogController extends Controller
         $searchlist = view('catalog.store_search_list', ['store_details' => $store_details,'productStore'=>$productStore])->render();
 
         return response()->json(['success' => true,'content'=>$searchlist]);
+    }
+
+    public function regenerateTitle(Request $request){
+
+        $store_id = $request->input('store_id');
+        $product_id = $request->input('product_id');
+        if ($store_id) {
+
+            $storeDetail = Store::with('storeType')->where('id', $store_id)->first();
+            $productDetail = Catalog::with('productType', 'productKeyFeatures', 'productColor')->where(['product_id' => $product_id])->first();
+            $product_title = $productDetail->product_title;
+            if((isset($storeDetail->storeType->code) && $storeDetail->storeType->code == 'shopify')){
+                $product_title = SubmitShopifyProductsJob::generateProductTitle($productDetail,$storeDetail);
+            }
+
+            //print_r($storeProductDetail);die;
+            return response()->json(['success' => true, 'title' => $product_title]);
+        } else {
+            return response()->json(['success' => false]);
+        }
     }
 }

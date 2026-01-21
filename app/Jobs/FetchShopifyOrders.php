@@ -12,6 +12,7 @@ use App\Models\Catalog;
 use App\Models\Customer;
 use App\Models\CustomerAddress;
 use App\Models\CustomerPhone;
+use App\Models\ListingItem;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\OrderItemAttribute;
@@ -314,21 +315,26 @@ class FetchShopifyOrders implements ShouldQueue
                                 if (isset($order['lineItems']['nodes'])) {
                                     foreach ($order['lineItems']['nodes'] as $item) {
                                         if ($item['sku'] != '') {
+
                                             Log::info('Shopify Order Item: ' . json_encode($item));
                                             //$itemDetail = ManageMarketplaceProduct::where('sku', $item['sku'])->first();
+                                            $itemDetail = ListingItem::with('storeProduct', 'storeProduct.product')->where('sku', $item['sku'])->first();
+                                            if(isset($itemDetail)) {
+                                                $product_detail = $itemDetail->storeProduct->product;
+                                            }else{
+                                                $parts = explode('-', $item['sku']);
+                                                $product_code = isset($parts[0]) ? $parts[0] : '';
+                                                Log::info('Product Code: ' . $product_code);
+                                                $product_detail = Catalog::where('product_sku',$product_code)->first();
+                                            }
 
-                                            $parts = explode('-', $item['sku']);
-
-                                            $product_code = isset($parts[0]) ? $parts[0] : '';
-                                            Log::info('Product Code: ' . $product_code);
-                                            $product_detail = Catalog::where('product_sku',$product_code)->first();
                                             Log::info('Product Detail: ' . json_encode($product_detail));
                                             $orderItemData = [
                                                 'title' => $item['name'],
                                                 'order_id' => $order_detail->id,
                                                 'product_id' => isset($product_detail->product_id) ? $product_detail->product_id : NULL,
-                                                /*'client_id' => '',
-                                                'listing_item_id' => '',*/
+                                                'client_id' => $itemDetail->client ?? null,
+                                                'listing_item_id' => $itemDetail->id ?? null,
                                                 'sku' => $item['sku'],
                                                 'store_sku' => $order['id'],
                                                 'quantity' => $item['quantity'],

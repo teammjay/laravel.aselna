@@ -592,7 +592,8 @@
                 var pCode = ele.parents('tr').find('.prVal').html();
 
                 if(pCode != ''){
-                    window.location.href = "{{ url('listing') }}?code="+pCode;
+                    var targetUrl = "{{ url('listing') }}?code="+pCode;
+                    window.open(targetUrl, '_blank');
                 }
             });
 
