@@ -131,7 +131,18 @@ class SubmitShopifyProductsJob implements ShouldQueue
                         ->whereIn('products.product_type', $ceaProductTypes)
                         ->whereNull('products.parent_id')
                         ->where('products.product_status', '=', 'active')
-                        ->whereColumn('store_product.last_synch_date_time', '<', 'store_product.updated_at')
+                        ->where(function ($query) {
+                            $query->whereColumn(
+                                'store_product.last_synch_date_time',
+                                '<',
+                                'store_product.updated_at'
+                            )
+                                ->orWhereColumn(
+                                    'store_product.last_synch_date_time',
+                                    '<',
+                                    'products.updated_at'
+                                );
+                        })
                         ->orderBy('manage_marketplace_products.updated_at', 'asc')
                         ->limit(200)
                         ->get();
