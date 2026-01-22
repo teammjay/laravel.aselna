@@ -624,6 +624,7 @@ class ShopifyAuthService
                 ]
             ]
         ];
+        Log::info('Set Featured Image Variables: ' . json_encode($variables));
 
         $response = $this->makeGraphQLRequest(ShopifyQueries::$productReorderMedia, $variables);
         Log::info('Set Featured Image Response: ' . json_encode($response));
