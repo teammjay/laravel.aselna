@@ -291,11 +291,11 @@ class FetchShopifyOrders implements ShouldQueue
                                     $shipping_carrier_service = $rulesDetails->shipping_carrier_service_id;
                                     if (isset($order_detail->requested_shipment_service)) {
                                         // check if requested shipment service starts with Priority Mail
-                                        if (stripos($order_detail->requested_shipment_service, 'Priority Mail') === 0) {
+                                        if (stripos($order_detail->requested_shipment_service, 'Priority Mail') !== false) {
                                             $shipping_carrier_service = ShippingCarrierService::where('name','Priority')->first()->id;
                                         }
                                         // check if requested shipment service starts with USPS First Class
-                                        if (stripos($order_detail->requested_shipment_service, 'USPS First Class') === 0) {
+                                        if (stripos($order_detail->requested_shipment_service, 'USPS First Class') !== false) {
                                             $shipping_carrier_service = ShippingCarrierService::where('name','First Class')->first()->id;
                                         }
                                     }
@@ -403,6 +403,7 @@ class FetchShopifyOrders implements ShouldQueue
                             if ($last_order_update_date === null || strtotime($order['createdAt']) > strtotime($last_order_update_date)) {
                                 $last_order_update_date = date('Y-m-d H:i:s', strtotime($order['createdAt']));
                             }
+                            Log::info('Last Order Update Date: ' . $last_order_update_date);
 
                             $noOfOrder++;
                         }
