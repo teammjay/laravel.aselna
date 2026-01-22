@@ -123,10 +123,26 @@ class SubmitShopifyProductsJob implements ShouldQueue
                                 ->where('manage_marketplace_products.upload_status', 'success')
                                 ->where('manage_marketplace_products.store_id', $store->id);
                         })
+                        ->join('store_product', function($join) use ($store) {
+                            $join->on('products.product_id', '=', 'store_product.product_id')
+                                ->where('store_product.store_id', $store->id);
+                        })
                         ->whereNotIn('products.product_type', $productTypes)
                         ->whereIn('products.product_type', $ceaProductTypes)
                         ->whereNull('products.parent_id')
                         ->where('products.product_status', '=', 'active')
+                        ->where(function ($query) {
+                            $query->whereColumn(
+                                'store_product.last_synch_date_time',
+                                '<',
+                                'store_product.updated_at'
+                            )
+                                ->orWhereColumn(
+                                    'store_product.last_synch_date_time',
+                                    '<',
+                                    'products.updated_at'
+                                );
+                        })
                         ->orderBy('manage_marketplace_products.updated_at', 'asc')
                         ->limit(200)
                         ->get();
@@ -140,11 +156,16 @@ class SubmitShopifyProductsJob implements ShouldQueue
 
                     // Handle Discontinued Products
                     $discontinuedProducts = Catalog::select('*')->with('productType', 'productKeyFeatures', 'productColor')
+                        ->join('store_product', function($join) use ($store) {
+                            $join->on('products.product_id', '=', 'store_product.product_id')
+                                ->where('store_product.store_id', $store->id);
+                        })
                         ->whereNotIn('product_type', $productTypes)
                         ->whereIn('product_type', $ceaProductTypes)
                         ->whereNull('parent_id')
                         ->whereIn('product_status', ['discontinued', 'temporaryDisabled', 'draft'])
-                        ->orderBy('created_at', 'desc')
+                        ->whereColumn('store_product.last_synch_date_time', '<', 'products.updated_at')
+                        ->orderBy('products.created_at', 'desc')
                         ->get();
 
                     foreach ($discontinuedProducts as $product) {
@@ -640,6 +661,8 @@ class SubmitShopifyProductsJob implements ShouldQueue
     private function discontinueProduct(mixed $productData, mixed $store)
     {
         $proDetail = ManageMarketplaceProduct::where('product_id', $productData->product_id)->where('store_id', $store->id)->where('upload_status', 'success')->first();
+        $storeProduct = StoreProduct::where('product_id', $productData->product_id)->where('store_id', $store->id)->first();
+
 
         if (isset($proDetail)) {
             $shopifyAuthService = new ShopifyAuthService($store->secret_key, $store->service_url);
@@ -658,6 +681,11 @@ class SubmitShopifyProductsJob implements ShouldQueue
                 $proDetail->update([
                     'updated_at' => now()
                 ]);
+                if ($storeProduct) {
+                    $storeProduct->update([
+                        'last_synch_date_time' => date('Y-m-d H:i:s')
+                    ]);
+                }
             }
         }
     }
@@ -703,40 +731,68 @@ class SubmitShopifyProductsJob implements ShouldQueue
 
     public static function generateProductTitle($productData, $store)
     {
-        $limit = $store->random_title_keyword_level;
-        $reverse = true;
-        if (!isset($limit)) {
-            $limit = 6;
-            $reverse = false;
-        } else {
-            $limit++;
-        }
+        $titleTemplate = $store->shopify_title_template;
+        if($titleTemplate != ''){
 
-        $keywords = ProductTitleKeyword::select('product_id', 'keyword')
-            ->where('product_id', $productData->product_id)
-            ->orderBy('priority', 'asc')->limit($limit)->get()->toArray();
+            $keywords = ProductTitleKeyword::select('product_id', 'keyword')
+                ->where('product_id', $productData->product_id)
+                ->orderBy('priority', 'asc')->get()->toArray();
 
-        Log::info('Keywords: ' . json_encode($keywords));
-        // take the first one and reverse the remaining array
+            $replacements = [];
 
-        $title = '';
-        if (count($keywords) > 0) {
-            $firstKeyword = array_shift($keywords);
-            $title .= $firstKeyword['keyword'];
-            if ($reverse) {
-                $reversedKeywords = array_reverse($keywords);
-                $title .= ', ';
+            for ($i = 1; $i <= 10; $i++) {
+                $replacements["#title_keyword{$i}"] = $keywords[$i - 1]['keyword'] ?? '';
+            }
+
+            $replacements['#store_short_code'] = $store->short_code;
+            $replacements['#product_code'] = $productData->product_sku;
+            $replacements['#product_title'] = $productData->product_title;
+
+            $title = str_replace(
+                array_keys($replacements),
+                array_values($replacements),
+                $titleTemplate
+            );
+
+            $title = preg_replace('/\s+/', ' ', trim($title));
+
+            return trim($title);
+        }else {
+            $limit = $store->random_title_keyword_level;
+            $reverse = true;
+            if (!isset($limit)) {
+                $limit = 6;
+                $reverse = false;
             } else {
-                $title .= ' ';
-                $reversedKeywords = $keywords;
+                $limit++;
             }
-            foreach ($reversedKeywords as $keyword) {
-                $title .= trim($keyword['keyword']) . ' ';
+
+            $keywords = ProductTitleKeyword::select('product_id', 'keyword')
+                ->where('product_id', $productData->product_id)
+                ->orderBy('priority', 'asc')->limit($limit)->get()->toArray();
+
+            Log::info('Keywords: ' . json_encode($keywords));
+            // take the first one and reverse the remaining array
+
+            $title = '';
+            if (count($keywords) > 0) {
+                $firstKeyword = array_shift($keywords);
+                $title .= $firstKeyword['keyword'];
+                if ($reverse) {
+                    $reversedKeywords = array_reverse($keywords);
+                    $title .= ', ';
+                } else {
+                    $title .= ' ';
+                    $reversedKeywords = $keywords;
+                }
+                foreach ($reversedKeywords as $keyword) {
+                    $title .= trim($keyword['keyword']) . ' ';
+                }
+            } else {
+                $title = $productData->product_title;
             }
-        } else {
-            $title = $productData->product_title;
+            return trim($title) . ' - ' . $store->short_code . $productData->product_sku;
         }
-        return trim($title) . ' - ' . $store->short_code . $productData->product_sku;
     }
 
     private function handleMediaImages($product, $listingItem,$AlreadyImages = null)
