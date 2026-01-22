@@ -21,6 +21,8 @@ class ExistingListingItemSyncJob implements ShouldQueue
         Queueable::withChain as queueableWithChain;
     }
 
+    public $timeout = 7200;
+
     /**
      * Create a new job instance.
      */
@@ -69,6 +71,7 @@ class ExistingListingItemSyncJob implements ShouldQueue
             ->join('listing', 'listing_item_link.listing_id', '=', 'listing.id')
             ->whereIn('listing.store_id', $amazon_store_ids)
             ->whereNotNull('listing_item.store_sku')
+            ->whereNot('listing_item.status', ListingStatus::Deleted)
             ->orderBy('listing_item.created_at','asc')
             ->chunk(20, function ($listingItemLinks) use($marketPlaceId) {
                 $itemSkus = [];
