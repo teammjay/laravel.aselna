@@ -267,7 +267,7 @@ class ShopifyAuthService
               }
             }
             GQL;*/
-            $result = $this->makeGraphQLRequest(ShopifyQueries::$getOrders, array('first' => 50, 'query' => 'created_at:>' . $sync_start_date));
+            $result = $this->makeGraphQLRequest(ShopifyQueries::$getOrders, array('first' => 50, 'query' => 'created_at:>\'' . $sync_start_date . '\''));
             if (!isset($result['errors'])) {
                 return $result['data']['orders']['edges'];
             }
@@ -628,6 +628,18 @@ class ShopifyAuthService
 
         $response = $this->makeGraphQLRequest(ShopifyQueries::$productReorderMedia, $variables);
         Log::info('Set Featured Image Response: ' . json_encode($response));
+        return $response;
+    }
+
+    public function deleteMediaImages($marketplace_product_id, $mediaIdsToDelete)
+    {
+        $variables = [
+            "productId" => $marketplace_product_id,
+            "mediaIds" => $mediaIdsToDelete
+        ];
+        Log::info('Delete Image Variables: ' . json_encode($variables));
+        $response = $this->makeGraphQLRequest(ShopifyQueries::$deleteMediaImages, $variables);
+        Log::info('Delete Image Response: ' . json_encode($response));
         return $response;
     }
 }
