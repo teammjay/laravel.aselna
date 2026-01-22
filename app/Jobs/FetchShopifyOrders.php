@@ -403,6 +403,7 @@ class FetchShopifyOrders implements ShouldQueue
                             if ($last_order_update_date === null || strtotime($order['createdAt']) > strtotime($last_order_update_date)) {
                                 $last_order_update_date = date('Y-m-d H:i:s', strtotime($order['createdAt']));
                             }
+                            Log::info('Last Order Update Date: ' . $last_order_update_date);
 
                             $noOfOrder++;
                         }
