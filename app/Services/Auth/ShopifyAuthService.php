@@ -630,4 +630,16 @@ class ShopifyAuthService
         Log::info('Set Featured Image Response: ' . json_encode($response));
         return $response;
     }
+
+    public function deleteMediaImages($marketplace_product_id, $mediaIdsToDelete)
+    {
+        $variables = [
+            "productId" => $marketplace_product_id,
+            "mediaIds" => $mediaIdsToDelete
+        ];
+        Log::info('Delete Image Variables: ' . json_encode($variables));
+        $response = $this->makeGraphQLRequest(ShopifyQueries::$deleteMediaImages, $variables);
+        Log::info('Delete Image Response: ' . json_encode($response));
+        return $response;
+    }
 }

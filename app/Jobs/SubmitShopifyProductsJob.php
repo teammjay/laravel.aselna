@@ -637,6 +637,23 @@ class SubmitShopifyProductsJob implements ShouldQueue
                 }
             }
 
+            $deletedImages =  ListingItemProductImage::where('listing_item_id', $listingItem->id)
+                ->whereNotIn('product_image_id', function ($query) use ($productData) {
+                    $query->select('product_image_id')
+                        ->from('product_images')
+                        ->where('product_id', $productData->product_id);
+                })->get();
+
+            $mediaIdsToDelete = [];
+            foreach ($deletedImages as $image) {
+                if (!empty($image->reference_id)) {
+                    $mediaIdsToDelete[] = $image->reference_id;
+                }
+            }
+            if (count($mediaIdsToDelete) > 0) {
+                $shopifyAuthService->deleteMediaImages($proDetail->marketplace_product_id, $mediaIdsToDelete);
+            }
+
             $storeProduct->update([
                 'last_synch_date_time' => date('Y-m-d H:i:s')
             ]);
