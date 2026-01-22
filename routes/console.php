@@ -13,7 +13,6 @@ use App\Jobs\Sync\ShopifyCombinedSyncing;
 use App\Jobs\Sync\ShopifyOnlySyncJob;
 use App\Jobs\SyncAllOrderStatusJob;
 use App\Jobs\TransactionStatusCheckJob;
-use App\Jobs\Walmart\ExistingListingItemSyncJob;
 use App\Jobs\WalmartListingItemSyncJob;
 use App\Models\OrderSynchronization;
 use Illuminate\Support\Facades\Schedule;
@@ -28,7 +27,9 @@ Schedule::job(new AmazonListingItemSyncJob())->hourly();
 Schedule::job(new EbayListingItemSyncJob())->hourly();
 Schedule::job(new WalmartListingItemSyncJob())->hourly();
 
-Schedule::job(new ExistingListingItemSyncJob())->dailyAt('01:00');
+Schedule::job(new App\Jobs\Walmart\ExistingListingItemSyncJob())->dailyAt('01:00');
+Schedule::job(new App\Jobs\Ebay\ExistingListingItemSyncJob())->dailyAt('01:00');
+Schedule::job(new App\Jobs\Amazon\ExistingListingItemSyncJob())->dailyAt('01:00');
 
 // Listing Feed Result Syncing
 Schedule::job(new FetchResultFeedAsync())->everyFiveMinutes();
