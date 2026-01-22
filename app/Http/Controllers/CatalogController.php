@@ -6,7 +6,9 @@ use App\Helpers\QueryFilters;
 use App\Jobs\SubmitShopifyProductsJob;
 use App\Models\Catalog;
 use App\Models\Device;
+use App\Models\GenerateProductImage;
 use App\Models\Interfaces;
+use App\Models\ListingItemProductImage;
 use App\Models\ListingRequirement;
 use App\Models\Manufacturer;
 use App\Models\ProductChannelDetail;
@@ -845,8 +847,16 @@ class CatalogController extends Controller
 
         try {
 
+            $oldImageId = ProductImages::where(['product_id' => $productId, 'main_image' => 1])->value('id');
+
             ProductImages::where('product_id', $productId)->update(['main_image' => 0]);
             ProductImages::where('id', $imageId)->update(['main_image' => 1]);
+
+            GenerateProductImage::where(['product_image_id' => $oldImageId])->update(['main_image' => 0]);
+            GenerateProductImage::where(['product_image_id' => $imageId])->update(['main_image' => 1]);
+
+            ListingItemProductImage::where(['product_image_id' => $oldImageId])->update(['main_image' => 0]);
+            ListingItemProductImage::where(['product_image_id' => $imageId])->update(['main_image' => 1]);
 
             $imageDetail = ProductImages::find($imageId);
             Catalog::where('product_id', $productId)->update(['product_image_url' => $imageDetail->image]);
