@@ -137,7 +137,7 @@ class ListingUtility
     }
 
 
-    public static function generateItemUrl($store_type, $store_sku = '', $site_url = '', $store_url = '', $collection_url = ''): string
+    public static function generateItemUrl($store_type, $store_sku = '', $site_url = '', $store_url = '', $collection_url = null): string
     {
         //Log::info("Product: " . json_encode($product));
         if ($store_type != '' && $store_sku != '') {
