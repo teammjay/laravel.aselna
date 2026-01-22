@@ -50,7 +50,7 @@ Schedule::job(FetchEmailMessagesJob::class)->everyTenMinutes();
 
 // Products Syncing
 Schedule::job(new SubmitShopifyProductsJob())->cron('*/5 * * * *');
-Schedule::job(new ShopifyOnlySyncJob())->cron('* */2 * * *');
+Schedule::job(new ShopifyOnlySyncJob())->cron('10 */2 * * *');
 
 Schedule::job(new ShopifyCombinedSyncing())->dailyAt('12:30');
 
