@@ -821,7 +821,8 @@ class SubmitShopifyProductsJob implements ShouldQueue
                     if (isset($generatedImage)) {
                         ListingItemProductImage::updateOrCreate([
                             'listing_item_id' => $listingItem->id,
-                            'path' => $imageUrl,
+                            'product_image_id' => $generatedImage->product_image_id,
+                            'reference_id' => $imageIdReplaced,
                         ], [
                             'listing_item_id' => $listingItem->id,
                             'product_image_id' => $generatedImage->product_image_id,
