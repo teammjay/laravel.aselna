@@ -263,7 +263,9 @@ class FetchShopifyOrders implements ShouldQueue
 
                                         Log::info('Shopify Order Item: ' . json_encode($item));
                                         //$itemDetail = ManageMarketplaceProduct::where('sku', $item['sku'])->first();
-                                        $itemDetail = ListingItem::with('storeProduct', 'storeProduct.product')->where('sku', $item['sku'])->first();
+                                        $itemDetail = ListingItem::with('storeProduct', 'storeProduct.product')->where('sku', $item['sku'])->whereIn('store_product_id', function ($subQuery) {
+                                            return $subQuery->select('id')->from('store_product');
+                                        })->first();
                                         if(isset($itemDetail)) {
                                             $product_detail = $itemDetail->storeProduct->product;
                                         }else{
@@ -284,7 +286,7 @@ class FetchShopifyOrders implements ShouldQueue
                                             'product_id' => isset($product_detail->product_id) ? $product_detail->product_id : NULL,
                                             'client_id' => $itemDetail->client ?? null,
                                             'listing_item_id' => $itemDetail->id ?? null,
-                                            'sku' => $item['sku'],
+                                            'sku' => $product_detail->product_sku,
                                             'store_sku' => $order['id'],
                                             'quantity' => $item['quantity'],
                                             'id1' => $item['id'],
@@ -298,7 +300,6 @@ class FetchShopifyOrders implements ShouldQueue
                                         $order_item = OrderItem::updateOrCreate([
                                             'order_id' => $order_detail->id,
                                             'id1' => $item['id'],
-                                            'sku' => $item['sku'],
                                         ], $orderItemData);
 
                                         /* create order operation item*/
@@ -306,7 +307,7 @@ class FetchShopifyOrders implements ShouldQueue
                                             $orderOperationItemData = [
                                                 'order_item_id' => $order_item->id,
                                                 'order_operation_id' => $order_operation_detail->id,
-                                                'sku' => $item['sku'],
+                                                'sku' => $product_detail->product_sku,
                                                 'quantity' => $item['quantity'],
                                                 //'client_id' => '',
                                                 'sync_status' => 6
