@@ -157,6 +157,7 @@ class ShipmentsController extends Controller
                 $package_id = $order->shipping_package_id;
                 if (isset($order->operationItem) && !empty($order->operationItem)) {
                     $totalQty = 0;
+                    $p20Items = [];
                     foreach ($order->operationItem as $opitem) {
                         $oitem = $opitem->orderItem;
 
@@ -171,15 +172,30 @@ class ShipmentsController extends Controller
                         if($opitem->sku != '') {
                             $parts = explode('-', $opitem->sku);
                             $product_code = isset($parts[0]) ? $parts[0] : '';
-                            //$product_detail = Catalog::where('product_sku', $product_code)->first();
-                            $code .= $product_code . ' x ' . $opitem->quantity . PHP_EOL;
-                            $onlycode .= $product_code . '<br>';
+                            if (strtolower($product_code) === 'p20') {
+                                // hold for later
+                                $p20Items[] = [
+                                    'code' => $product_code,
+                                    'qty'  => $opitem->quantity
+                                ];
+                            } else {
+                                $code .= $product_code . ' x ' . $opitem->quantity . PHP_EOL;
+                                $onlycode .= $product_code . '<br>';
+                            }
+
                         }else{
 
                           if (isset($oitem->product) && !empty($oitem->product)) {
                               if ($oitem->product->product_sku != '') {
-                                  $code .= $oitem->product->product_sku . ' x ' . $oitem->quantity . PHP_EOL;
-                                  $onlycode .= $oitem->product->product_sku . '<br>';
+                                  if (strtolower($oitem->product->product_sku) === 'p20') {
+                                      $p20Items[] = [
+                                          'code' => $oitem->product->product_sku,
+                                          'qty'  => $opitem->quantity
+                                      ];
+                                  } else {
+                                      $code .= $oitem->product->product_sku . ' x ' . $oitem->quantity . PHP_EOL;
+                                      $onlycode .= $oitem->product->product_sku . '<br>';
+                                  }
                               }
 
                               $product_weight = $oitem->product->product_weight * $opitem->quantity;
@@ -197,6 +213,13 @@ class ShipmentsController extends Controller
                         }
 
                         $total_qty[] = $totalQty;
+                    }
+
+                    if (!empty($p20Items)) {
+                        foreach ($p20Items as $item) {
+                            $code .= $item['code'] . ' x ' . $item['qty'] . PHP_EOL;
+                            $onlycode .= $item['code'] . '<br>';
+                        }
                     }
                 }
                 $orderIds = isset($order->order) ? [$order->order->order_id] : [];
@@ -718,11 +741,28 @@ class ShipmentsController extends Controller
         $shipping_carrier_id = $shipmentDetail->shipping_carrier_id;
         $shippingCarrierService = ShippingCarrierService::where('shipping_carrier_id', $shipping_carrier_id)->orderBy('name', 'asc')->get();
 
+        $shipmentItems = [];
+        if(isset($shipmentDetail->operationItem)) {
+            $items = $shipmentDetail->operationItem;
+
+            $normalItems = $items->filter(function ($item) {
+                $sku = explode('-', $item->sku)[0] ?? '';
+                return strtolower($sku) !== 'p20';
+            });
+
+            $p20Items = $items->filter(function ($item) {
+                $sku = explode('-', $item->sku)[0] ?? '';
+                return strtolower($sku) === 'p20';
+            });
+
+            $shipmentItems = $normalItems->merge($p20Items);
+        }
+
 
         if ($request->input('mark_as_ship')) {
-            $view = view('shipment.mark_as_shipped', compact('shipmentDetail', 'shippingCarrier', 'shippingCarrierService', 'shippingCarrierPackage', 'shipFrom', 'package_id', 'product_total_weight', 'product_weight_unit'))->render();
+            $view = view('shipment.mark_as_shipped', compact('shipmentDetail', 'shippingCarrier', 'shippingCarrierService', 'shippingCarrierPackage', 'shipFrom', 'package_id', 'product_total_weight', 'product_weight_unit','shipmentItems'))->render();
         } else {
-            $view = view('shipment.detail', compact('shipmentDetail', 'shippingCarrier', 'shippingCarrierService', 'shippingCarrierPackage', 'shipFrom', 'package_id', 'product_total_weight'))->render();
+            $view = view('shipment.detail', compact('shipmentDetail', 'shippingCarrier', 'shippingCarrierService', 'shippingCarrierPackage', 'shipFrom', 'package_id', 'product_total_weight','shipmentItems'))->render();
         }
         return response()->json([
             'success' => true,
