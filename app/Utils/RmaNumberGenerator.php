@@ -5,6 +5,7 @@ namespace App\Utils;
 use App\Models\Sequence;
 use Hashids\Hashids;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class RmaNumberGenerator
 {
@@ -19,14 +20,15 @@ class RmaNumberGenerator
         $this->hashids = new Hashids($this->hashIdSalt, $this->hashIdLen, $this->validHashChars);
     }
 
-    public function generate($storeId)
+    public function generate($store)
     {
-        $number = $this->getNextRMANumberForStore($storeId);
+        $number = $this->getNextRMANumberForStore($store);
+        Log::info('Number:'.$number);
         return $this->hashids->encode($number);
     }
 
-    function getNextRMANumberForStore($storeId) {
-        $key = 'rma_' . str_replace('-', '', $storeId);
+    function getNextRMANumberForStore($store) {
+        $key = 'rma_' . str_replace('-', '', $store->short_code);
 
         return DB::transaction(function () use ($key) {
             $sequence = Sequence::lockForUpdate()->find($key);

@@ -253,6 +253,7 @@ class ShipmentsController extends Controller
                     'total_qty' => $total_qty,
                     'op_status' => $order->status,
                     'operation_retry_count' => $order->operation_retry_count,
+                    'carrier_service_name' => $order->carrierService->name ?? NULL,
                 );
             }
         }
