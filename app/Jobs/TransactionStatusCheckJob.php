@@ -49,13 +49,18 @@ class TransactionStatusCheckJob implements ShouldQueue
 
             $shipping_account = ShippingAccount::whereLike('name', '%Endicia Label Server%')->first();
             $sync_detail = AccountTransactionSynchronization::orderBy('created_at', 'desc')->first();
+            //$last_pending_sync = AccountTransaction::where('status','pending')->orderBy('updated_at','asc')->first();
+            //$filter_start_date = $last_pending_sync->updated_at;
 
             if ($sync_detail) {
                 $startTime = date('Y-m-d H:i:s', strtotime($sync_detail->filter_end_date));
+                //$startTime = date('Y-m-d H:i:s', strtotime($filter_start_date));
+                Log::info('Transaction Status Start Time:' . $startTime);
                 if ($startTime > date('Y-m-d H:i:s')) {
                     $startTime = date('Y-m-d H:i:s');
                 }
                 $endTime = date('Y-m-d H:i:s', strtotime('+20 day', strtotime($startTime)));
+                Log::info('Transaction Status End Time:' . $endTime);
                 if ($endTime > date('Y-m-d H:i:s')) {
                     $endTime = date('Y-m-d H:i:s');
                 }

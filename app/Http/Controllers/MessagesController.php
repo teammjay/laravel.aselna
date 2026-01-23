@@ -1225,8 +1225,9 @@ class MessagesController extends Controller
                             $oitem->update(['return_request_quantity' => $oitem->quantity]);
                         }
                     }
+                    $store = Store::findOrFail($orderDetail->store_id);
                     $rmaObject = new RmaNumberGenerator();
-                    $rma_number = $rmaObject->generate($orderDetail->store_id);
+                    $rma_number = $rmaObject->generate($store);
                     $clonedOrderOperation = [
                         'ship_date' => $orderOperation->ship_date,
                         'client' => $orderOperation->client,
