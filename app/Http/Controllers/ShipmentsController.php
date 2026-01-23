@@ -1220,7 +1220,7 @@ class ShipmentsController extends Controller
                     ->from('order_operation')
                     ->where('is_merged', false)
                     ->where('status', 0);
-            });
+            })->get();
 
         if (isset($addressIds)) {
             foreach ($addressIds as $address) {
