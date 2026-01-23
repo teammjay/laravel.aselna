@@ -1203,7 +1203,7 @@ class ShipmentsController extends Controller
         //(select shipping_address_id from `order` group by shipping_address_id having count(*) > 1;
         // I want all the orderId whose addresses are same.
         $sameAddressOrders = [];
-        $addressIds = Order::select('shipping_address_id')
+        $addressIds = Order::select('shipping_address_id','store_id')
             ->groupBy('shipping_address_id','store_id')
             ->havingRaw('COUNT(*) > 1')
             ->whereNotIn('order_status', [
@@ -1220,16 +1220,18 @@ class ShipmentsController extends Controller
                     ->from('order_operation')
                     ->where('is_merged', false)
                     ->where('status', 0);
-            })
-            ->pluck('shipping_address_id');
+            })->get();
 
-        if ($addressIds->isNotEmpty()) {
-            foreach ($addressIds as $addressId) {
-                Log::info('Processing Address ID: ' . $addressId);
+        if (isset($addressIds)) {
+            foreach ($addressIds as $address) {
+                $addressId = $address->shipping_address_id;
+                $address_store_id = $address->store_id;
+                Log::info('Processing Address ID: ' . $address->shipping_address_id . ' for Store ID: ' . $address->store_id);
                 if ($addressId == null || $addressId == '' || $addressId == 0) {
                     continue; // Skip null addresses
                 }
                 $sameAddressOrders[$addressId] = Order::where('shipping_address_id', $addressId)
+                    ->where('store_id', $address_store_id)
                     ->whereIn('id', function ($query) {
                         $query->select('order_id')
                             ->from('order_operation')

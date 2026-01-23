@@ -225,7 +225,6 @@ class FetchShopifyOrders implements ShouldQueue
                             ], $orderData);
 
                             $order_weight = $order['totalWeight'];
-                            $rulesDetails = ShippingServiceRule::getOrderShippingCarrierService($order_weight);
                             $sync_message = NULL;
                             if(isset($order['risk']['assessments'][0]['riskLevel']) && ($order['risk']['assessments'][0]['riskLevel'] == 'HIGH' || $order['risk']['assessments'][0]['riskLevel'] == 'MEDIUM')){
                                 $sync_message = '';
@@ -252,42 +251,22 @@ class FetchShopifyOrders implements ShouldQueue
                                 'order_synchronization_id' => $order_synchronization_id
                             ];
 
-                            if(!empty($rulesDetails)){
-                                if(isset($rulesDetails->package_type_filter_id)){
-                                    $orderOperationData['shipping_package_id'] = $rulesDetails->package_type_filter_id;
-                                }
-                                $shipping_carrier = $rulesDetails->ShippingCarrierService->ShippingCarrier->id;
-                                $shipping_carrier_service = $rulesDetails->shipping_carrier_service_id;
-                                if (isset($order_detail->requested_shipment_service)) {
-                                    // check if requested shipment service starts with Priority Mail
-                                    if (stripos($order_detail->requested_shipment_service, 'Priority Mail') !== false) {
-                                        $shipping_carrier_service = ShippingCarrierService::where('name','Priority')->first()->id;
-                                    }
-                                    // check if requested shipment service starts with USPS First Class
-                                    if (stripos($order_detail->requested_shipment_service, 'USPS First Class') !== false) {
-                                        $shipping_carrier_service = ShippingCarrierService::where('name','First Class')->first()->id;
-                                    }
-                                }
-                                if(isset($rulesDetails->shipping_carrier_service_id)){
-                                    $orderOperationData['shipping_carrier_service_id'] = $shipping_carrier_service;
-                                }
-                                if(isset($rulesDetails->ShippingCarrierService->ShippingCarrier)){
-                                    $orderOperationData['shipping_carrier_id'] = $shipping_carrier;
-                                }
-                            }
-
                             $order_operation_detail = OrderOperation::updateOrCreate([
                                 'order_id' => $order_detail->id,
                             ], $orderOperationData);
 
                             /* get order items*/
+                            $totalWeight = 0;
+                            $biggestPackage = null;
                             if (isset($order['lineItems']['nodes'])) {
                                 foreach ($order['lineItems']['nodes'] as $item) {
                                     if ($item['sku'] != '') {
 
                                         Log::info('Shopify Order Item: ' . json_encode($item));
                                         //$itemDetail = ManageMarketplaceProduct::where('sku', $item['sku'])->first();
-                                        $itemDetail = ListingItem::with('storeProduct', 'storeProduct.product')->where('sku', $item['sku'])->first();
+                                        $itemDetail = ListingItem::with('storeProduct', 'storeProduct.product')->where('sku', $item['sku'])->whereIn('store_product_id', function ($subQuery) {
+                                            return $subQuery->select('id')->from('store_product');
+                                        })->first();
                                         if(isset($itemDetail)) {
                                             $product_detail = $itemDetail->storeProduct->product;
                                         }else{
@@ -297,6 +276,10 @@ class FetchShopifyOrders implements ShouldQueue
                                             $product_detail = Catalog::where('product_sku',$product_code)->first();
                                         }
 
+                                        if ($product_detail) {
+                                            $totalWeight += ($product_detail->product_weight * $item['quantity']);
+                                        }
+
                                         Log::info('Product Detail: ' . json_encode($product_detail));
                                         $orderItemData = [
                                             'title' => $item['name'],
@@ -304,7 +287,7 @@ class FetchShopifyOrders implements ShouldQueue
                                             'product_id' => isset($product_detail->product_id) ? $product_detail->product_id : NULL,
                                             'client_id' => $itemDetail->client ?? null,
                                             'listing_item_id' => $itemDetail->id ?? null,
-                                            'sku' => $item['sku'],
+                                            'sku' => $product_detail->product_sku,
                                             'store_sku' => $order['id'],
                                             'quantity' => $item['quantity'],
                                             'id1' => $item['id'],
@@ -318,7 +301,6 @@ class FetchShopifyOrders implements ShouldQueue
                                         $order_item = OrderItem::updateOrCreate([
                                             'order_id' => $order_detail->id,
                                             'id1' => $item['id'],
-                                            'sku' => $item['sku'],
                                         ], $orderItemData);
 
                                         /* create order operation item*/
@@ -326,7 +308,7 @@ class FetchShopifyOrders implements ShouldQueue
                                             $orderOperationItemData = [
                                                 'order_item_id' => $order_item->id,
                                                 'order_operation_id' => $order_operation_detail->id,
-                                                'sku' => $item['sku'],
+                                                'sku' => $product_detail->product_sku,
                                                 'quantity' => $item['quantity'],
                                                 //'client_id' => '',
                                                 'sync_status' => 6
@@ -339,7 +321,17 @@ class FetchShopifyOrders implements ShouldQueue
 
                                             if(isset($product_detail->shipping_package_id) && $product_detail->shipping_package_id != '') {
                                                 $package_id = $product_detail->shipping_package_id;
-                                                $order_operation_detail->update(['shipping_package_id' => $package_id]);
+                                                $package = ShippingPackage::findOrFail($package_id);
+                                                if (isset($biggestPackage)) {
+                                                    $packageVolume = $package->dimensions_length * $package->dimensions_width * $package->dimensions_height;
+                                                    $biggestPackageVolume = $biggestPackage->dimensions_length * $biggestPackage->dimensions_width * $biggestPackage->dimensions_height;
+                                                    if ($biggestPackageVolume < $packageVolume) {
+                                                        $biggestPackage = $package;
+                                                    }
+                                                } else {
+                                                    $biggestPackage = $package;
+                                                }
+
                                             }
 
                                             /* save order item attribute*/
@@ -365,6 +357,38 @@ class FetchShopifyOrders implements ShouldQueue
                                     }
                                 }
                             }
+
+                            if ($biggestPackage) {
+                                $order_operation_detail->shipping_package_id = $biggestPackage->id;
+                            }
+
+                            $rulesDetails = ShippingServiceRule::getOrderShippingCarrierService($totalWeight);
+                            if(!empty($rulesDetails)){
+                                Log::info('Shipping Service Rule Applied: ' . json_encode($rulesDetails));
+                                if(isset($rulesDetails->package_type_filter_id)){
+                                    $order_operation_detail->shipping_package_id = $rulesDetails->package_type_filter_id;
+                                }
+                                $shipping_carrier = $rulesDetails->ShippingCarrierService->ShippingCarrier->id;
+                                $shipping_carrier_service = $rulesDetails->shipping_carrier_service_id;
+                                if (isset($order_detail->requested_shipment_service)) {
+                                    // check if requested shipment service starts with Priority Mail
+                                    if (stripos($order_detail->requested_shipment_service, 'Priority Mail') !== false) {
+                                        $shipping_carrier_service = ShippingCarrierService::where('name','Priority')->first()->id;
+                                    }
+                                    // check if requested shipment service starts with USPS First Class
+                                    if (stripos($order_detail->requested_shipment_service, 'USPS First Class') !== false) {
+                                        $shipping_carrier_service = ShippingCarrierService::where('name','First Class')->first()->id;
+                                    }
+                                }
+                                if(isset($rulesDetails->shipping_carrier_service_id)){
+                                    $order_operation_detail->shipping_carrier_service_id = $shipping_carrier_service;
+                                }
+                                if(isset($rulesDetails->ShippingCarrierService->ShippingCarrier)){
+                                    $order_operation_detail->shipping_carrier_id = $shipping_carrier;
+                                }
+                            }
+                            $order_operation_detail->update();
+
 
                             $orderExist = Order::where('order_id', $order['id'])->count();
                             if ($orderExist) {

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Constants\Operators;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class ShippingServiceRule extends Model
@@ -40,7 +41,8 @@ class ShippingServiceRule extends Model
     public static function getOrderShippingCarrierService($weight){
 
         $weight= $weight * 0.03527396195;
-        $rules = SELF::with('ShippingCarrierService','ShippingCarrierService.ShippingCarrier')->orderBy('priority','asc')->get();
+        Log::info('Converted Weight in Pounds: '.$weight);
+        $rules = SELF::with('ShippingCarrierService','ShippingCarrierService.ShippingCarrier')->whereNotNull('shipping_carrier_service_id')->orderBy('priority','asc')->get();
         if(count($rules ?? []) > 0){
             foreach($rules as $rule){
                 $value1 = $rule->min_weight_value;
