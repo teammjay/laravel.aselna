@@ -25,6 +25,7 @@ use App\Jobs\FetchEbayOrders;
 use App\Jobs\FetchEmailMessagesJob;
 use App\Jobs\FetchMagentoCategoriesJob;
 use App\Jobs\FetchMagentoProductsJob;
+use App\Jobs\FetchShopifyOrders;
 use App\Jobs\FetchShopifyProductsJob;
 use App\Jobs\FetchTemuOrders;
 use App\Jobs\FetchWalmartOrdersJob;
@@ -230,12 +231,13 @@ class SyncAllTables extends Command
 //        CategorySyncJob::dispatch();
 //        SyncShopifyItems::dispatch();
 //        ExistingListingItemSyncJob::dispatch();
+        FetchShopifyOrders::dispatch();
 
         $transactionIds = [
 ////            '9400150105798006163885',
 ////            '9400150105799006167927',
 //            '9400150105497028574135',
-        '0004010549653258533685041800821'
+//        '0004010549653258533685041800821'
         ];
 
         foreach ($transactionIds as $transactionId) {
