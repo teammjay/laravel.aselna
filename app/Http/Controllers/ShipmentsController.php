@@ -1220,10 +1220,9 @@ class ShipmentsController extends Controller
                     ->from('order_operation')
                     ->where('is_merged', false)
                     ->where('status', 0);
-            })
-            ->pluck('shipping_address_id');
+            });
 
-        if ($addressIds->isNotEmpty()) {
+        if (isset($addressIds)) {
             foreach ($addressIds as $address) {
                 $addressId = $address->shipping_address_id;
                 $address_store_id = $address->store_id;
