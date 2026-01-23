@@ -22,6 +22,11 @@ class RmaNumberGenerator
     public function generate($storeId)
     {
         $number = $this->getNextRMANumberForStore($storeId);
+        return $this->generateRma($number);
+    }
+
+    public function generateRma($number)
+    {
         return $this->hashids->encode($number);
     }
 
