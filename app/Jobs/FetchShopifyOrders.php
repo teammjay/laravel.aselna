@@ -257,6 +257,7 @@ class FetchShopifyOrders implements ShouldQueue
 
                             /* get order items*/
                             $totalWeight = 0;
+                            $biggestPackage = null;
                             if (isset($order['lineItems']['nodes'])) {
                                 foreach ($order['lineItems']['nodes'] as $item) {
                                     if ($item['sku'] != '') {
@@ -320,7 +321,17 @@ class FetchShopifyOrders implements ShouldQueue
 
                                             if(isset($product_detail->shipping_package_id) && $product_detail->shipping_package_id != '') {
                                                 $package_id = $product_detail->shipping_package_id;
-                                                $order_operation_detail->update(['shipping_package_id' => $package_id]);
+                                                $package = ShippingPackage::findOrFail($package_id);
+                                                if (isset($biggestPackage)) {
+                                                    $packageVolume = $package->dimensions_length * $package->dimensions_width * $package->dimensions_height;
+                                                    $biggestPackageVolume = $biggestPackage->dimensions_length * $biggestPackage->dimensions_width * $biggestPackage->dimensions_height;
+                                                    if ($biggestPackageVolume < $packageVolume) {
+                                                        $biggestPackage = $package;
+                                                    }
+                                                } else {
+                                                    $biggestPackage = $package;
+                                                }
+
                                             }
 
                                             /* save order item attribute*/
@@ -345,6 +356,10 @@ class FetchShopifyOrders implements ShouldQueue
                                         }
                                     }
                                 }
+                            }
+
+                            if ($biggestPackage) {
+                                $order_operation_detail->shipping_package_id = $biggestPackage->id;
                             }
 
                             $rulesDetails = ShippingServiceRule::getOrderShippingCarrierService($totalWeight);
