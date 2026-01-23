@@ -167,8 +167,8 @@
                     </thead>
                     <tbody id="shipment-item-list">
 
-                    @if(count($shipmentDetail->operationItem ?? []) > 0)
-                        @foreach($shipmentDetail->operationItem as $key=>$oitem)
+                    @if(count($shipmentItems ?? []) > 0)
+                        @foreach($shipmentItems as $key=>$oitem)
                             @php
                                 $url = '';
                                 $listingItem = null;
