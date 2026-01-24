@@ -375,8 +375,9 @@ class FetchShopifyOrders implements ShouldQueue
                                     if (stripos($order_detail->requested_shipment_service, 'Priority Mail') !== false) {
                                         $shipping_carrier_service = ShippingCarrierService::where('name','Priority')->first()->id;
                                     }
-                                    // check if requested shipment service starts with USPS First Class
-                                    if (stripos($order_detail->requested_shipment_service, 'USPS First Class') !== false) {
+                                }
+                                if (!isset($rulesDetails->package_type_filter_id) && isset($biggestPackage)) {
+                                    if (in_array($biggestPackage->name,['Large Envelope','Machinable Letter','Non Machinable Letter'])) {
                                         $shipping_carrier_service = ShippingCarrierService::where('name','First Class')->first()->id;
                                     }
                                 }
