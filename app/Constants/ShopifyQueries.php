@@ -511,6 +511,7 @@ GQL;
         id
         name
         createdAt
+        cancelledAt
         displayFinancialStatus
         displayFulfillmentStatus
         fulfillments {

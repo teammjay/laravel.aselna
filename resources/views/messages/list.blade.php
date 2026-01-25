@@ -455,6 +455,7 @@
             "serverSide": true,
             "searching": false,
             "stateSave": true,
+            "stateDuration": -1,
             "aLengthMenu": [20, 25, 50, 100],
             'ajax': {
                 url: "{{ route('message.getdata') }}",
