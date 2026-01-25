@@ -150,12 +150,14 @@ class SyncAllOrderStatusJob implements ShouldQueue
 
                         $order->save();
                         $operation->save();
-                    } else if (isset($orderDetail['cancelledAt']) && $order['cancelledAt'] != null){
+                    }
+                    if (isset($orderDetail['cancelledAt']) && $order['cancelledAt'] != null){
                         $order->order_status = OrderStatus::Canceled;
                         $operation->status = OrderOperationStatus::Canceled;
                         $order->save();
                         $operation->save();
-                    } else if(isset($orderDetail['risk']['assessments'][0]['riskLevel']) && ($orderDetail['risk']['assessments'][0]['riskLevel'] == 'HIGH' || $orderDetail['risk']['assessments'][0]['riskLevel'] == 'MEDIUM')){
+                    }
+                    if(isset($orderDetail['risk']['assessments'][0]['riskLevel']) && ($orderDetail['risk']['assessments'][0]['riskLevel'] == 'HIGH' || $orderDetail['risk']['assessments'][0]['riskLevel'] == 'MEDIUM')){
                         $sync_message = '';
                         if(isset($order['risk']['assessments'][0]['facts']) && is_array($order['risk']['assessments'][0]['facts'])){
                             foreach($order['risk']['assessments'][0]['facts'] as $facts){
