@@ -183,7 +183,7 @@
                                         <div class="mb-3">
                                             @if(stripos($message->message, '<table') !== false)
                                                 {!! (html_entity_decode(\Mews\Purifier\Facades\Purifier::clean($message->message))) !!}
-                                                
+
                                             @else
                                                 {!! nl2br(html_entity_decode(\Mews\Purifier\Facades\Purifier::clean($message->message))) !!}
                                             @endif
@@ -1931,6 +1931,8 @@
                 "processing": true,
                 "serverSide": true,
                 "searching": false,
+                "stateSave": true,
+                "stateDuration": -1,
                 "aLengthMenu": [20, 25, 50, 100],
                 'ajax': {
                     url: "{{ route('order.filter') }}",
