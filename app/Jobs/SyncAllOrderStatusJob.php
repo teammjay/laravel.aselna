@@ -151,7 +151,7 @@ class SyncAllOrderStatusJob implements ShouldQueue
                         $order->save();
                         $operation->save();
                     }
-                    if (isset($orderDetail['cancelledAt']) && $order['cancelledAt'] != null){
+                    if (isset($orderDetail['cancelledAt']) && $orderDetail['cancelledAt'] != null){
                         $order->order_status = OrderStatus::Canceled;
                         $operation->status = OrderOperationStatus::Canceled;
                         $order->save();
