@@ -756,7 +756,8 @@
             "serverSide": true,
             "searching": false,
             "aLengthMenu": [10, 20, 25, 50, 100],
-            "stateSave":true,
+            "stateSave": true,
+            "stateDuration": -1,
             stateSaveCallback: function(settings, data) {
                 sessionStorage.setItem(
                     'DataTables_' + settings.sInstance,
