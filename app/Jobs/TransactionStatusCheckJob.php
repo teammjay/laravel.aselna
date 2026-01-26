@@ -31,10 +31,27 @@ class TransactionStatusCheckJob implements ShouldQueue
         //
     }
 
+    public function handle():void
+    {
+        $this->updateTrackingRecord(['tags' => 'Endicia Transaction Status Check']);
+
+        AccountTransaction::with('shippingAccount')
+            ->where(function ($q) {
+                $q->where('canceled', 0)
+                    ->orWhereNull('canceled');
+            })
+            ->where('status','pending')
+            ->orderBy('transaction_date','asc')
+            ->chunk(100, function ($transactions) {
+                $this->checkTransactionStatus($transactions);
+            });
+
+    }
+
     /**
      * Execute the job.
      */
-    public function handle(): void
+    public function handleOld(): void
     {
         /*AccountTransaction::with('shippingAccount')->where('canceled', 0)->whereNull('canceled')
             ->orderBy('transaction_date','desc')
@@ -101,6 +118,7 @@ class TransactionStatusCheckJob implements ShouldQueue
                 $transactions = $response['transactionResult'][0]->Transaction;
                 if (isset($transactions) && !empty($transactions)) {
                     $key = 0;
+                    $last_filter_date = '';
                     foreach ($transactions as $tres) {
 
                         /*echo '<pre>';
@@ -109,8 +127,13 @@ class TransactionStatusCheckJob implements ShouldQueue
 
                         $transactionType = (string)$tres['TransactionType'];
                         $transactionDateTime = (string)$tres['TransactionDateTime'];
+                        $transactionDateTime = date('Y-m-d H:i:s', strtotime($transactionDateTime));
                         $postmarkDate = (string)$tres['PostmarkDate'];
                         $refundStatus = (string)$tres['RefundStatus'];
+
+                        if (isset($transactionDateTime) && $transactionDateTime > $last_filter_date) {
+                            $last_filter_date = $transactionDateTime;
+                        }
 
                         $trackingNumber = (string)$tres->PIC;
                         $status_event = isset($tres->Status->StatusEvent[0]) ? (string)trim($tres->Status->StatusEvent[0]) : '';
@@ -186,12 +209,20 @@ class TransactionStatusCheckJob implements ShouldQueue
                             Log::info('Update Tracking status:' . json_encode($updateRecords));
                             $transactionObj->update($updateRecords);
                             Log::info('Update Tracking status:' . $trackingNumber . '- status : ' . $status);
+
+                            if ($last_filter_date != '') {
+                                Log::info('Updating transaction last filter date to: ' . $last_filter_date);
+                                $last_filter_datef = \Carbon\Carbon::parse($last_filter_date)->setTimezone('America/New_York');
+                                $synchronize->update(['filter_end_date' => $last_filter_datef]);
+                            }
                         }
 
-                        if ($key == 0) {
+
+
+                        /*if ($key == 0) {
                             $synchronize->update(['filter_end_date' => date('Y-m-d H:i:s', strtotime($transactionDateTime))]);
                             Log::info('Tracking:' . $trackingNumber);
-                        }
+                        }*/
 
                         $key++;
                     }
@@ -210,27 +241,81 @@ class TransactionStatusCheckJob implements ShouldQueue
 
     public function checkTransactionStatus(mixed $transactions)
     {
+        try{
+            $trans = [];
+            if($transactions){
+                foreach($transactions as $key=>$transaction){
+                    if($key == 0) {
+                        $trans = [
+                            'accountId' => $transaction->shippingAccount->account_id,
+                            'passPhrase' => $transaction->shippingAccount->pass_phrase,
+                            'requesterId' => $transaction->shippingAccount->requester_id,
+                            'requestId' => (string)Str::uuid()
+                        ];
+                    }
 
-        $trans = [];
-        if($transactions){
-            foreach($transactions as $key=>$transaction){
-                if($key == 0) {
-                    $trans = [
-                        'accountId' => $transaction->shippingAccount->account_id,
-                        'passPhrase' => $transaction->shippingAccount->pass_phrase,
-                        'requesterId' => $transaction->shippingAccount->requester_id,
-                        'requestId' => (string)Str::uuid()
-                    ];
+                    $trans['transactions'][] = $transaction->tracking_number;
                 }
 
-                $trans['transactions'][] = $transaction->tracking_number;
+                $endiciaClient = new EndicialabelService();
+                $response = $endiciaClient->getStatusRequest($trans);
+
+                if(isset($response['responsestatus']) && $response['responsestatus'] == 0){
+                    foreach($trans['transactions'] as $transaction){
+                        if(!empty($response['transaction_status'])) {
+                            foreach ($response['transaction_status'] as $res_trans) {
+                                $transactionObj = AccountTransaction::where('tracking_number', $transaction)->first();
+
+                                if(isset($res_trans['tracking_number']) && $res_trans['tracking_number'] == $transaction){
+                                    $status = 'Pending';
+                                    $status_event = $res_trans['status'];
+                                    $status_description = $res_trans['status_description'];
+                                    Log::info('Tracking Number:' . $transaction.'- Status:'.$status_event);
+                                    if ($status_event != '') {
+                                        switch (trim($status_event)) {
+                                            case 'D':
+                                                $status = 'completed';
+                                                break;
+                                            default:
+                                                $status = 'pending';
+                                                break;
+                                        }
+                                    }else{
+                                        $status = 'completed';
+                                    }
+
+                                    if ($transactionObj) {
+                                        $updateRecords = [
+                                            'status' => $status,
+                                            'status_event' => $status_event,
+                                            'status_description' => $status_description
+                                        ];
+
+                                        Log::info('Update Tracking status:' . json_encode($updateRecords));
+                                    }
+                                }else{
+                                    $updateRecords = [
+                                        'status' => 'completed',
+                                        'status_event' => '',
+                                        'status_description' => 'Status Not Found'
+                                    ];
+                                }
+
+                                if($transactionObj && $updateRecords) {
+                                    $transactionObj->update($updateRecords);
+                                }
+                            }
+                        }
+                    }
+                }
             }
+        }catch (\Throwable $e) {
 
-            $endiciaClient = new EndicialabelService();
-            $response = $endiciaClient->getTransactionLists($trans);
-
-
+            CriticalErrorService::report('Error in transaction status check', [
+                'marketplace' => 'Transaction Status',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
         }
-
     }
 }

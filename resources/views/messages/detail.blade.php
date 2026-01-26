@@ -65,16 +65,16 @@
         font-size:20px;
     }
     .msg-container {
-        border: 2px solid #dedede;
-        background-color: #eaeaea;
+        border: 2px solid #ccc;
+        background-color: #fff;
         border-radius: 5px;
         padding: 10px;
         margin: 10px 0;
         width:90%;
     }
     .darker {
-        border-color: #ccc;
-        background-color: #fff;
+        border-color: #dedede;
+        background-color: #eaeaea;
         margin-left: 10%;
     }
     .msg-container::after {
@@ -138,6 +138,9 @@
     .clickable-row:hover{cursor:pointer; background: #f0f8ff;}
     #UserInputtedText{white-space: break-spaces;}
     .dropdown-toggle{font-size:18px;}
+    .msg-container p {
+        margin-bottom: 1rem;
+    }
 </style>
 @stop
 
@@ -185,7 +188,7 @@
                                                 {!! (html_entity_decode(\Mews\Purifier\Facades\Purifier::clean($message->message))) !!}
 
                                             @else
-                                                {!! nl2br(html_entity_decode(\Mews\Purifier\Facades\Purifier::clean($message->message))) !!}
+                                                {!! html_entity_decode(\Mews\Purifier\Facades\Purifier::clean($message->message)) !!}
                                             @endif
                                         </div>
                                         @if(isset($message->attachments))
