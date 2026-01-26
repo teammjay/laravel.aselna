@@ -158,7 +158,7 @@ class AccountTransactionController extends Controller
                         $transaction = AccountTransaction::findOrFail($id);
                         switch ($response['status']) {
                             case 'Approved':
-                                $transaction->update(['canceled' => 1, 'canceled_date' => date('Y-m-d H:i:s')]);
+                                $transaction->update(['status'=> 'completed','canceled' => 1, 'canceled_date' => date('Y-m-d H:i:s')]);
                                 $flag = true;
                                 $message = (isset($response['message'])) ? $response['message'] : '';
                                 $successCnt++;
