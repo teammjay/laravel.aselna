@@ -1,65 +1,104 @@
 <?php
 
-use App\Jobs\AmazonListingItemSyncJob;
-use App\Jobs\EbayListingItemSyncJob;
-use App\Jobs\FetchEbayOrders;
-use App\Jobs\FetchEmailMessagesJob;
-use App\Jobs\FetchResultFeedAsync;
-use App\Jobs\FetchShopifyOrders;
-use App\Jobs\FetchTemuOrders;
-use App\Jobs\FetchWalmartOrdersJob;
-use App\Jobs\SubmitShopifyProductsJob;
-use App\Jobs\Sync\ShopifyCombinedSyncing;
-use App\Jobs\Sync\ShopifyOnlySyncJob;
-use App\Jobs\SyncAllOrderStatusJob;
-use App\Jobs\TransactionStatusCheckJob;
-use App\Jobs\WalmartListingItemSyncJob;
 use App\Models\OrderSynchronization;
+use App\Models\ScheduledJobs;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schedule;
 
+/**
+ * Load all scheduled jobs from the database
+ * Jobs are managed in the scheduled_cron_jobs table
+ * Use ScheduledCronJobsSeeder to seed initial jobs
+ *
+ * Supports three types of scheduled tasks:
+ * - job: Laravel Queue Jobs (class_name required)
+ * - command: Artisan Commands (command required)
+ * - callback: Inline PHP callbacks (handled specially)
+ */
+try {
+    $jobs = ScheduledJobs::where('is_active', true)->get();
 
-Schedule::command('logs:rotate')->everyFourHours();
-Schedule::command('app:run-daily-update-listing-sales')->everyFourHours();
+    foreach ($jobs as $job) {
+        $type = $job->type ?? 'job';
 
+        switch ($type) {
+            case 'job':
+                // Skip if no class_name for job type
+                if (empty($job->class_name)) {
+                    continue 2;
+                }
 
-// Listing sync Job
-Schedule::job(new AmazonListingItemSyncJob())->hourly();
-Schedule::job(new EbayListingItemSyncJob())->hourly();
-Schedule::job(new WalmartListingItemSyncJob())->hourly();
+                $class = $job->class_name;
 
-Schedule::job(new App\Jobs\Walmart\ExistingListingItemSyncJob())->dailyAt('01:00');
-Schedule::job(new App\Jobs\Ebay\ExistingListingItemSyncJob())->dailyAt('01:00');
-Schedule::job(new App\Jobs\Amazon\ExistingListingItemSyncJob())->dailyAt('01:00');
+                if (!class_exists($class)) {
+                    Log::warning("Scheduled job class not found: {$class}");
+                    continue 2;
+                }
 
-// Listing Feed Result Syncing
-Schedule::job(new FetchResultFeedAsync())->everyFiveMinutes();
+                $params = json_decode($job->parameters, true) ?? [];
 
-//Order Syncing
-Schedule::job(new FetchWalmartOrdersJob())->everyThirtyMinutes();
-Schedule::job(new FetchEbayOrders())->everyThirtyMinutes();
-Schedule::job(new FetchShopifyOrders())->everyThirtyMinutes();
-Schedule::job(new SyncAllOrderStatusJob())->everyThirtyMinutes();
-Schedule::job(new FetchTemuOrders())->everyThirtyMinutes();
+                Schedule::job(new $class(...array_values($params)))
+                    ->cron($job->cron_expression)
+                    ->name($job->name)
+                    ->after(function () use ($job) {
+                        $job->update([
+                            'last_run_at' => now(),
+                            'last_status' => 'success',
+                        ]);
+                    })
+                    ->onFailure(function () use ($job) {
+                        $job->update([
+                            'last_run_at' => now(),
+                            'last_status' => 'failed',
+                        ]);
+                    });
+                break;
 
-// I want to run this at every 45 Minute of the hour
-//Schedule::job(new SendNotificationEmailSyncFailJob(2))->cron('12 * * * *');
-//Schedule::job(new SendNotificationOrderSyncFailJob(2))->cron('12 * * * *');
+            case 'command':
+                // Skip if no command for command type
+                if (empty($job->command)) {
+                    continue 2;
+                }
 
-// Email Message fetching
-Schedule::job(FetchEmailMessagesJob::class)->everyTenMinutes();
+                Schedule::command($job->command)
+                    ->cron($job->cron_expression)
+                    ->name($job->name)
+                    ->after(function () use ($job) {
+                        $job->update([
+                            'last_run_at' => now(),
+                            'last_status' => 'success',
+                        ]);
+                    })
+                    ->onFailure(function () use ($job) {
+                        $job->update([
+                            'last_run_at' => now(),
+                            'last_status' => 'failed',
+                        ]);
+                    });
+                break;
 
-// Products Syncing
-Schedule::job(new SubmitShopifyProductsJob())->cron('*/5 * * * *');
-Schedule::job(new ShopifyOnlySyncJob())->cron('10 */2 * * *');
-
-Schedule::job(new ShopifyCombinedSyncing())->dailyAt('12:30');
-
-
-
-Schedule::call(function () {
-    // Delete all the records from yesterday to all previous days
-    OrderSynchronization::where('updated_at', '<', now()->toDate())->delete();
-})->dailyAt('00:00')->name('clear syncronisation');
-
-
-Schedule::job(new TransactionStatusCheckJob())->hourly();
+            case 'callback':
+                // Handle specific callbacks based on the job name
+                if ($job->name === 'Clear Order Synchronization') {
+                    Schedule::call(function () use ($job) {
+                        OrderSynchronization::where('updated_at', '<', now()->toDate())->delete();
+                        $job->update([
+                            'last_run_at' => now(),
+                            'last_status' => 'success',
+                        ]);
+                    })
+                        ->cron($job->cron_expression)
+                        ->name($job->name)
+                        ->onFailure(function () use ($job) {
+                            $job->update([
+                                'last_run_at' => now(),
+                                'last_status' => 'failed',
+                            ]);
+                        });
+                }
+                break;
+        }
+    }
+} catch (\Exception $e) {
+    Log::error("Failed to load scheduled jobs from database: " . $e->getMessage());
+}

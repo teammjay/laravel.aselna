@@ -20,5 +20,10 @@ class DatabaseSeeder extends Seeder
 //            'email' => 'admin@example.com',
 //            'password' => bcrypt('password'),
 //        ]);
+
+        // Seed scheduled cron jobs
+        $this->call([
+            ScheduledCronJobsSeeder::class,
+        ]);
     }
 }

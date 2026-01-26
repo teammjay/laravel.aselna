@@ -26,6 +26,31 @@ class ScheduledJobs extends Model
     }
 
 
-    protected $fillable = ['id','name','class_name','cron_expression','store_type','parameters','last_run_at','last_status','is_active','created_at','updated_at'];
+    protected $fillable = [
+        'id',
+        'name',
+        'class_name',
+        'cron_expression',
+        'type',
+        'command',
+        'description',
+        'store_type',
+        'parameters',
+        'last_run_at',
+        'last_status',
+        'is_active',
+        'created_at',
+        'updated_at'
+    ];
+
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'is_active' => 'boolean',
+        'last_run_at' => 'datetime',
+    ];
 
 }
