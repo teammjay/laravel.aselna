@@ -86,7 +86,7 @@ class Common
     public static function getActiveStoreJobs($job_name, $storeType=''){
 
         if($job_name) {
-            $scheduleJob = ScheduledJobs::where('name', $job_name)->first();
+            $scheduleJob = ScheduledJobs::whereLike('class_name', '%'.$job_name.'%')->first();
 
             if ($scheduleJob) {
                 $query = StoreScheduledCronJobs::select('store_id')->where('scheduled_job_id', $scheduleJob->id);
