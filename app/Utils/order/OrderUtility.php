@@ -618,7 +618,7 @@ class OrderUtility
         $customer_address = null;
         $customer_detail = null;
 
-        if ($presentOrder['shippingInfo']) {
+        if (isset($presentOrder['shippingInfo']) && $presentOrder['shippingInfo']) {
             $buyerInfo = $presentOrder['shippingInfo'] ?? [];
             Log::info('Shipping Info ::' . json_encode($buyerInfo));
             if (isset($buyerInfo['receiptName'])) {
