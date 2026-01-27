@@ -108,6 +108,7 @@ class EbayService implements MarketplaceServiceInterface
             echo '</pre>';die;*/
             $description = htmlspecialchars($itemDetail->description);
             $store_id = $listingItem->listingItem->storeProduct->store->id;
+            $store = $listingItem->listingItem->storeProduct->store;
             $listing_template_id = $listingItem->listingItem->storeProduct->store->listing_template_id;
             $product = $listingItem->listingItem->storeProduct->product;
             if ($listing_template_id != '') {
@@ -118,7 +119,7 @@ class EbayService implements MarketplaceServiceInterface
                 $template = $listing_template['code'];
 
                 $productTitle = $itemDetail->title;
-                $store = $listingItem->listingItem->storeProduct->store;
+
                 $descriptionParagraphs = explode(PHP_EOL, $description);
                 $keyFeatures = ProductKeyFeatures::where('product_id', $product->product_id)->orderBy('sort_order')->get();
                 $shippingText = StorePage::getStorePageByPageType($store_id, 2);
@@ -248,7 +249,7 @@ class EbayService implements MarketplaceServiceInterface
                 }
             }*/
 
-            $item->addChild('DispatchTimeMax', '1');
+            $item->addChild('DispatchTimeMax', $store->default_handling_time ?? 1);
 
 
             // Add ItemSpecifics
