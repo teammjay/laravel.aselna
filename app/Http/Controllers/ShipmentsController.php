@@ -508,7 +508,7 @@ class ShipmentsController extends Controller
                             if (!empty($oitem->product->image)) {
                                 $img = asset('storage/' . $oitem->product->image->getFileUrl());
 
-                                $image .= '<div class="main-image">
+                                $image .= '<div class="main-image mb-1">
                                                 <img src="'.$img.'" alt="'.$oitem->product->product_image.'" class="mainImage" width="70" height="70" data-product-id="'.$oitem->product->product_id.'">
                                             </div>';
 
