@@ -526,6 +526,15 @@
                                         <input type="text" class="form-control" id="label_order_prefix" name="label_order_prefix" value="{{ old('label_order_prefix',$store->label_order_prefix) }}">
                                     </div>
                                 </div>
+
+                                <div class="row mt-3 g-3 align-items-center">
+                                    <div class="col-md-5">
+                                        <label for="label_order_prefix">Default Handling Time</label>
+                                    </div>
+                                    <div class="col-md-7">
+                                        <input type="text" class="form-control" id="default_handling_time" name="default_handling_time" value="{{ old('default_handling_time',$store->default_handling_time) }}">
+                                    </div>
+                                </div>
                             </div>
                         </div>
 

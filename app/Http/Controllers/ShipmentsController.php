@@ -81,6 +81,23 @@ class ShipmentsController extends Controller
             $query->where('order_operation.store_id', $request->store_id);
         }
 
+        if ($request->has('is_searched') && $request->is_searched == 1) {
+
+            if ($request->has('carrier_id') && $request->carrier_id != '') {
+                $query->where('order_operation.shipping_carrier_id', $request->carrier_id);
+            }
+
+            if ($request->has('carrier_service_id') && $request->carrier_service_id != '') {
+                $query->where('order_operation.shipping_carrier_service_id', $request->carrier_service_id);
+            }
+
+            if ($request->has('carrier_package') && $request->carrier_package != '') {
+                $query->where('order_operation.shipping_package_id', $request->carrier_package);
+            }
+
+
+        }
+
         /*if ($columnName != '') {
             switch (strtolower($columnName)) {
                 case 'order_id':
@@ -485,13 +502,13 @@ class ShipmentsController extends Controller
                     $totalQty = 0;
                     foreach ($order->operationItem as $opitem) {
                         $oitem = $opitem->orderItem;
-                        $image .= '<input type="checkbox" class="pro-id" name="shipment_id[]" data-status="'.$order->status.'" value="'.$order->oid.'" style="visibility:hidden;"><div class="d-flex" style="gap:5px">';
+                        $image .= '<input type="checkbox" class="pro-id" name="shipment_id[]" data-status="'.$order->status.'" value="'.$order->oid.'" style="visibility:hidden;"><div class="mb-1" style="gap:5px">';
                         if (isset($oitem->product) && !empty($oitem->product)) {
                             $imagename[] = $oitem->product->product_image;
                             if (!empty($oitem->product->image)) {
                                 $img = asset('storage/' . $oitem->product->image->getFileUrl());
 
-                                $image .= '<div class="main-image">
+                                $image .= '<div class="main-image mb-1">
                                                 <img src="'.$img.'" alt="'.$oitem->product->product_image.'" class="mainImage" width="70" height="70" data-product-id="'.$oitem->product->product_id.'">
                                             </div>';
 

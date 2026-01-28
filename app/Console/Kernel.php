@@ -2,55 +2,108 @@
 
 namespace App\Console;
 
+use App\Models\OrderSynchronization;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
-use App\Jobs\ListingItemSyncJob;
-use App\Jobs\ListingSyncJob;
-use App\Jobs\LogisticCentreSyncJob;
 use Illuminate\Support\Facades\Log;
 
 class Kernel extends ConsoleKernel
 {
     /**
      * Define the application's command schedule.
+     *
+     * Note: In Laravel 11+, routes/console.php is preferred for scheduling.
+     * This method is kept for backwards compatibility.
      */
     protected function schedule(Schedule $schedule): void
     {
-//        $schedule->command('logs:rotate')->everyOddHour();
-//        $schedule->command('app:result-feed-sync')->everyMinute();
-//        $schedule->command('app:run-daily-update-listing-sales')->twiceDaily(2, 14);
-//        $schedule->job(new ListingItemSyncJob())->daily();
-//        $schedule->job(new ListingSyncJob())->daily();
-//        $schedule->job(new LogisticCentreSyncJob())->daily();
+        try {
+            $jobs = \App\Models\ScheduledJobs::where('is_active', true)->get();
 
-        $jobs = \App\Models\ScheduledJobs::where('is_active', true)->get();
+            foreach ($jobs as $job) {
+                $type = $job->type ?? 'job';
 
-        foreach ($jobs as $job) {
-            $class = $job->job->class_name;
+                switch ($type) {
+                    case 'job':
+                        // Skip if no class_name for job type
+                        if (empty($job->class_name)) {
+                            continue 2;
+                        }
 
-            if (!class_exists($class)) continue;
+                        $class = $job->class_name;
 
-            $params = json_decode($job->parameters, true) ?? [];
+                        if (!class_exists($class)) {
+                            Log::warning("Scheduled job class not found: {$class}");
+                            continue 2;
+                        }
 
-            $schedule->job(new $class(...array_values($params)))
-                ->cron($job->cron_expression)
-                ->name("{$job->name}");
-        }
+                        $params = json_decode($job->parameters, true) ?? [];
 
-        /*$jobs = \App\Models\ScheduledJobs::where('is_active', 1)->get();
+                        $schedule->job(new $class(...array_values($params)))
+                            ->cron($job->cron_expression)
+                            ->name($job->name)
+                            ->after(function () use ($job) {
+                                $job->update([
+                                    'last_run_at' => now(),
+                                    'last_status' => 'success',
+                                ]);
+                            })
+                            ->onFailure(function () use ($job) {
+                                $job->update([
+                                    'last_run_at' => now(),
+                                    'last_status' => 'failed',
+                                ]);
+                            });
+                        break;
 
-        foreach ($jobs as $job) {
-            if (class_exists($job->class_name)) {
-                $class = $job->class_name;
-                if (class_exists($class)) {
-                    $schedule->job(app($class))
-                        ->cron($job->cron_expression)
-                        ->name($job->name);
-                }else{
-                    Log::warning("Scheduled job class not found: {$class}");
+                    case 'command':
+                        // Skip if no command for command type
+                        if (empty($job->command)) {
+                            continue 2;
+                        }
+
+                        $schedule->command($job->command)
+                            ->cron($job->cron_expression)
+                            ->name($job->name)
+                            ->after(function () use ($job) {
+                                $job->update([
+                                    'last_run_at' => now(),
+                                    'last_status' => 'success',
+                                ]);
+                            })
+                            ->onFailure(function () use ($job) {
+                                $job->update([
+                                    'last_run_at' => now(),
+                                    'last_status' => 'failed',
+                                ]);
+                            });
+                        break;
+
+                    case 'callback':
+                        // Handle specific callbacks based on the job name
+                        if ($job->name === 'Clear Order Synchronization') {
+                            $schedule->call(function () use ($job) {
+                                OrderSynchronization::where('updated_at', '<', now()->toDate())->delete();
+                                $job->update([
+                                    'last_run_at' => now(),
+                                    'last_status' => 'success',
+                                ]);
+                            })
+                                ->cron($job->cron_expression)
+                                ->name($job->name)
+                                ->onFailure(function () use ($job) {
+                                    $job->update([
+                                        'last_run_at' => now(),
+                                        'last_status' => 'failed',
+                                    ]);
+                                });
+                        }
+                        break;
                 }
             }
-        }*/
+        } catch (\Exception $e) {
+            Log::error("Failed to load scheduled jobs from database: " . $e->getMessage());
+        }
     }
 
     /**

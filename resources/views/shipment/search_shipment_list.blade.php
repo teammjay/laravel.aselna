@@ -17,11 +17,11 @@
             </td>--}}
             <td>
                 <input type="checkbox" class="pro-id" name="shipment_id[]" data-status="{{ $shipment['status'] }}" value="{{ $shipment['oid'] }}" style="visibility:hidden;">
-                <div class="d-flex" style="gap:5px">
+                <div style="gap:5px">
                 @if(!empty($shipment['image']))
                     @foreach($shipment['image'] as $key=>$img)
                         @if($img != '')
-                            <div class="main-image">
+                            <div class="main-image mb-1">
                                 <img src="{{ $img }}" alt="{{ $shipment['imagename'][$key] }}" class="mainImage" width="70" height="70" data-product-id="{{ $shipment['product_id'][$key] }}">
                             </div>
                         @endif
