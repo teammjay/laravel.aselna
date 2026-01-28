@@ -547,6 +547,9 @@
 
         $(document).on('mousedown','#shipment-list tr',function (e) {
             let ele = $(this);
+            if ($(e.target).is('img')) {
+                return;
+            }
             if (e.ctrlKey) {
                 // Prevent text selection
                 e.preventDefault();
