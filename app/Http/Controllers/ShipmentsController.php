@@ -1333,7 +1333,7 @@ class ShipmentsController extends Controller
     {
         Log::info("Coming HEre");
         $mergedOperations = OrderOperation::where('is_merged', true)
-            ->where('status','0')
+            ->whereIn('status',[0,20])
             ->whereNotNull('merged_with')->get();
 
         foreach ($mergedOperations as $mergedOperation) {
