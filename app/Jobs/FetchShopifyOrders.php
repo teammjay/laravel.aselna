@@ -273,7 +273,7 @@ class FetchShopifyOrders implements ShouldQueue
                                             $parts = explode('-', $item['sku']);
                                             $product_code = isset($parts[0]) ? $parts[0] : '';
                                             Log::info('Product Code: ' . $product_code);
-                                            $product_detail = Catalog::where('product_sku',$product_code)->first();
+                                            $product_detail = Catalog::where('product_sku',$product_code)->orderBy('product_status','asc')->first();
                                         }
 
                                         if ($product_detail) {
