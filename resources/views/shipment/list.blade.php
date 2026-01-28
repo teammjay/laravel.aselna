@@ -194,6 +194,9 @@
                                 <div class="card-body">
                                     <button class="btn btn-default w-100" id="update_selected">Update Selected</button>
                                     <button class="btn btn-default mt-2 w-100" id="update_all">Update All</button>
+                                    <button class="btn btn-primary mt-2 w-100" id="search_selected">Search Selected</button>
+                                    <button class="btn btn-secondary mt-2 w-100" id="reset_search">Reset</button>
+                                    <input type="hidden" id="is_searched">
                                 </div>
                             </div>
                         </div>
@@ -784,6 +787,19 @@
             $('#store_id').val($(this).val());
             loadDatatables();
         });
+
+        $(document).on('click','#search_selected',function () {
+            $('#is_searched').val(1);
+            loadDatatables();
+        });
+
+        $(document).on('click','#reset_search',function () {
+            $('#is_searched').val('');
+            $('#store_id').val('');
+            $('#listing_store').val('').trigger('change');
+        });
+
+
 
         $(document).on('click','.show-detail',function () {
             var operation_id = $(this).data('id');
@@ -1830,6 +1846,10 @@
             type: 'POST',
             data: {
                 'store_id':$('#listing_store').val(),
+                'carrier_id':$('#carrier_id').val(),
+                'carrier_service_id':$('#carrier_service_id').val(),
+                'carrier_package':$('#carrier_package').val(),
+                'is_searched':$('#is_searched').val(),
                 'combine_address' : $('#same_address').is(':checked'),
             },
             headers: {
