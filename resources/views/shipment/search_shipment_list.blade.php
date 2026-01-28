@@ -17,7 +17,7 @@
             </td>--}}
             <td>
                 <input type="checkbox" class="pro-id" name="shipment_id[]" data-status="{{ $shipment['status'] }}" value="{{ $shipment['oid'] }}" style="visibility:hidden;">
-                <div style="gap:5px">
+                <div class="image-grid">
                 @if(!empty($shipment['image']))
                     @foreach($shipment['image'] as $key=>$img)
                         @if($img != '')
