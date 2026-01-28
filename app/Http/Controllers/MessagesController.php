@@ -730,6 +730,7 @@ class MessagesController extends Controller
                     'trackingNumber' => $trackingNumber,
                     'return_address' => $returnAddress,
                     'carrier_name' => isset($orderOperation->carrier) ? $orderOperation->carrier->name : '',
+                    'shipment_carrier' => isset($orderOperation->carrier) ? $orderOperation->carrier->name : '',
                     'rma_number' => (isset($rma_number) && $rma_number != '') ? $rma_number : '',
                 ];
                 $template_code = \Blade::render($templateDetail->template_code, $data);
