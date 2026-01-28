@@ -502,7 +502,7 @@ class ShipmentsController extends Controller
                     $totalQty = 0;
                     foreach ($order->operationItem as $opitem) {
                         $oitem = $opitem->orderItem;
-                        $image .= '<input type="checkbox" class="pro-id" name="shipment_id[]" data-status="'.$order->status.'" value="'.$order->oid.'" style="visibility:hidden;"><div class="" style="gap:5px">';
+                        $image .= '<input type="checkbox" class="pro-id" name="shipment_id[]" data-status="'.$order->status.'" value="'.$order->oid.'" style="visibility:hidden;"><div class="mb-1" style="gap:5px">';
                         if (isset($oitem->product) && !empty($oitem->product)) {
                             $imagename[] = $oitem->product->product_image;
                             if (!empty($oitem->product->image)) {
