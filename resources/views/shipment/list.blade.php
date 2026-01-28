@@ -85,6 +85,20 @@
         .bg-gray.bg-blue {
             background-color: #007bff!important;
         }
+        .image-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 50px); /* 2 images per row */
+            gap: 6px;
+            align-items: center;
+        }
+
+        .mainImage {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+        }
     </style>
 @stop
 
