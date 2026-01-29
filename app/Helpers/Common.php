@@ -104,4 +104,65 @@ class Common
         }
         return false;
     }
+
+    public static function splitEmailBody($body)
+    {
+        $body = html_entity_decode($body);
+        $body = strip_tags($body);
+        $body = preg_replace("/\r\n|\r/", "\n", $body);
+
+        $patterns = [
+            '/On\s+[A-Z][a-z]{2,8}\s+\d{1,2},\s+\d{4},\s+at\s+\d{1,2}:\d{2}\s?(AM|PM),\s+.+?wrote:/i',
+            '/On\s+[A-Z][a-z]{2,8}\s+\d{1,2},\s+\d{4}.+?wrote:/is',
+            //'/On\s.+?\n.+?wrote:/is',
+            '/\bOn\s.+?\swrote:/i',
+            '/^From:\s.+/mi',
+            '/^Sent:\s.+/mi',
+            '/^-----Original Message-----/mi',
+            '/^_{5,}$/m',
+            '/^\>+/m',
+        ];
+
+        $positions = [];
+
+        foreach ($patterns as $pattern) {
+            if (preg_match($pattern, $body, $match, PREG_OFFSET_CAPTURE)) {
+                $positions[] = $match[0][1];
+            }
+        }
+
+        if (!empty($positions)) {
+            $position = min($positions);
+            $message = trim(substr($body, 0, $position));
+
+            $message = self::removeSignatures($message);
+
+            return [
+                'message' => trim($message),
+                'history' => trim(substr($body, $position)),
+            ];
+        }
+
+        $message = self::removeSignatures($body);
+        return [
+            'message' => trim($message),
+            'history' => null,
+        ];
+    }
+
+    private static function removeSignatures($text)
+    {
+        $signaturePatterns = [
+            '/Sent from my iPhone/i',
+            '/Sent from my iPad/i',
+            '/Sent from my Android/i',
+            '/Sent from my Galaxy/i',
+            '/Get Outlook for iOS/i',
+            '/Sent from Mail for Windows/i',
+            '/Sent from Yahoo Mail/i',
+        ];
+
+        return preg_replace($signaturePatterns, '', $text);
+    }
+
 }
