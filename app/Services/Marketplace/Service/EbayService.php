@@ -1158,6 +1158,10 @@ class EbayService implements MarketplaceServiceInterface
                     //Log::info('Order : ' . json_encode($order));
                     $newOrder = Order::where('order_id', $order['orderId'])->first();
 
+                    if (isset($newOrder) && ($newOrder->order_status == OrderStatus::Canceled)) {
+                        continue;
+                    }
+
                     $persist = false;
                     $statusChange = false;
 
