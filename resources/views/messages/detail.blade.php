@@ -1,6 +1,7 @@
 @php
     use App\Constants\FilterCodes;
     use App\Constants\OrderStatus;
+    use App\Helpers\Common;
 @endphp
 @extends('adminlte::page')
 
@@ -180,15 +181,32 @@
                         <div class="col-md-12 mail-box" id="scrollable">
                             @if(count($messages ?? []) > 0)
                                 @foreach($messages as $key=>$message)
+                                    @php
+                                        //dd($message->message);
+                                        $body = html_entity_decode(\Mews\Purifier\Facades\Purifier::clean($message->message));
+                                        $emailcontent = \App\Helpers\Common::splitEmailBody($body);
+
+                                    @endphp
                                     <div class="time-center">{{ $message->message_date }}</div>
                                     <div class="msg-container @if($message->author == 1) darker @endif">
                                         {{--<iframe srcdoc="{!! htmlspecialchars($message->message) !!}"></iframe>--}}
                                         <div class="mb-3">
-                                            @if(stripos($message->message, '<table') !== false)
+                                            {{--@if(stripos($message->message, '<table') !== false)
                                                 {!! (html_entity_decode(\Mews\Purifier\Facades\Purifier::clean($message->message))) !!}
 
                                             @else
                                                 {!! html_entity_decode(\Mews\Purifier\Facades\Purifier::clean($message->message)) !!}
+                                            @endif--}}
+                                            <div class="email-message">
+                                                {!! html_entity_decode(\Mews\Purifier\Facades\Purifier::clean($emailcontent['message'])) !!}
+                                            </div>
+
+                                            @if(isset($emailcontent['history']) && $emailcontent['history'] != null)
+                                                <div class="showHistory" style="color:#888; cursor:pointer; margin:10px 0;"><i class="fa fa-solid fa-ellipsis-h"></i></div>
+
+                                                <div class="emailHistory" style="display:none; border-top:1px solid #ddd; margin-top:10px; padding-top:10px;">
+                                                    {!! html_entity_decode(\Mews\Purifier\Facades\Purifier::clean(nl2br($emailcontent['history']))) !!}
+                                                </div>
                                             @endif
                                         </div>
                                         @if(isset($message->attachments))
@@ -520,7 +538,12 @@
         };
 
 
+
         $(document).ready(function () {
+
+            $(document).on('click','.showHistory',function () {
+                $(this).parent().find('.emailHistory').toggle();
+            })
 
             $('#message_template').select2();
             $(document).on('click','#search_order',function () {
