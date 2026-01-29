@@ -134,6 +134,11 @@ class FetchShopifyOrders implements ShouldQueue
                             $order['id'] = end($parts);
                             Log::info('Shopify shopping Order: ' . json_encode($order));
 
+                            $isOrderexists = Order::where('order_id', $order['id'])->first();
+                            if (isset($isOrderexists) && ($isOrderexists->order_status == OrderStatus::Canceled)) {
+                                continue;
+                            }
+
                             /* create customer*/
 
                             $customerData = [

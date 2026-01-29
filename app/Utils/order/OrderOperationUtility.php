@@ -256,6 +256,10 @@ class OrderOperationUtility
             unset($orderOperation->shipping_solution_carrier_package);
             unset($orderOperation->shipping_solution_carrier_service);
 
+            $orderOperation->tracking_number = $response['trackingNumber'];
+            $orderOperation->status = OrderOperationStatus::LabelCreated;
+            $orderOperation->save();
+
             if (!OrderOperationType::isReturn($operation_type)) {
                 $result = self::waitForOperationCompleted($response['trackingNumber']);
 
