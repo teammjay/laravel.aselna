@@ -576,6 +576,10 @@ class WalmartService implements MarketplaceServiceInterface
                 foreach ($response['list']['elements']['order'] as $sorder) {
                     $order = Order::where('order_id', $sorder['customerOrderId'])->where('purchase_order_id', $sorder['purchaseOrderId'])->first();
 
+                    if (isset($order) && ($order->order_status == OrderStatus::Canceled)) {
+                        continue;
+                    }
+
                     $persist = false;
                     $statusChange = false;
 
