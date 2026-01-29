@@ -105,9 +105,9 @@ class Common
         return false;
     }
 
-    public static function splitEmailBody($body)
+    public static function splitEmailBody($messagebody)
     {
-        $body = html_entity_decode($body);
+        $body = html_entity_decode($messagebody);
         $body = strip_tags($body);
         $body = preg_replace("/\r\n|\r/", "\n", $body);
 
@@ -143,7 +143,7 @@ class Common
             ];
         }
 
-        $message = self::removeSignatures($body);
+        $message = self::removeSignatures($messagebody);
         return [
             'message' => trim($message),
             'history' => null,
