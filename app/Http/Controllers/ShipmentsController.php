@@ -248,6 +248,10 @@ class ShipmentsController extends Controller
                     $status = 3;
                     $status_message = 'Label Printed. Remain to mark as shipped in marketplace.';
                 }
+                if ($order->status == OrderOperationStatus::LabelCreated) {
+                    $status = 3;
+                    $status_message = 'Label Created. Remain to print & mark as shipped in marketplace.';
+                }
                 $packageName = isset($order->shippingPackage) ? $order->shippingPackage->name : '';
                 if($package_id){
                     $packageDetail = ShippingPackage::findOrFail($package_id);
