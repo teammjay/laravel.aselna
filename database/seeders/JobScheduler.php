@@ -454,7 +454,7 @@ class JobScheduler extends Seeder
                 //FonusCombinedSyncJob
                 'name' => 'Fonus Scheduler Cron Job',
                 'description' => 'Fonus Scheduler Cron Job',
-                'class_name' => 'App\Jobs\Fonus\FonusCombinedSyncJob'
+                'class_name' => 'App\Jobs\Sync\FonusCombinedSyncJob',
             ]
         ];
 
