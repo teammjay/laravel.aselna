@@ -43,12 +43,12 @@ class SyncShopifyItems implements ShouldQueue
         try {
             $storeIds = Store::join('store_type', 'store_type.id', '=', 'store.store_type_id')
                 ->where('store_type.code', 'shopify')
-                ->whereIn('store.name',['Odemobile'])
+                ->whereIn('store.name',['NevaWireless'])
                 ->pluck('store.id');
             // store products sync
             $this->syncStoreProducts($storeIds);
             // listing Item sync
-//            $this->syncListingItems($storeIds);
+            $this->syncListingItems($storeIds);
             // listing Item data
             $this->syncListingItemDetails($storeIds);
         } catch (Exception $e) {
