@@ -31,4 +31,9 @@ class DeviceCarrier extends Model
     {
         return $this->belongsTo(Carrier::class, 'carrier_id','id');
     }
+
+    public function device()
+    {
+        return $this->belongsTo(Device::class, 'device_id','id');
+    }
 }
