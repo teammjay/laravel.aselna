@@ -82,7 +82,7 @@ class ProductSyncJob implements ShouldQueue
                 'product_sku' => $product->custom_label,
 //                'parent_id' => $product->parent_id,
                 //            'product_image_url' => 'as',
-//                'product_status' => CatalogStatus::getStatusName($product->status),
+                'product_status' => CatalogStatus::getStatusName($product->status),
 //                'dimensions_length' => $product->dimensions_length,
 //                'dimensions_height' => $product->dimensions_height,
 //                'dimensions_width' => $product->dimensions_width,
