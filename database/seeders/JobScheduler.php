@@ -451,10 +451,10 @@ class JobScheduler extends Seeder
                 'class_name' => 'App\Jobs\Sync\ShopifyOnlySyncJob',
             ],
             [
-                //FonusSchedulerCronSeeder
+                //FonusCombinedSyncJob
                 'name' => 'Fonus Scheduler Cron Job',
                 'description' => 'Fonus Scheduler Cron Job',
-                'class_name' => 'App\Jobs\Fonus\FonusSchedulerCronJob'
+                'class_name' => 'App\Jobs\Fonus\FonusCombinedSyncJob'
             ]
         ];
 
