@@ -15,6 +15,7 @@ use App\Jobs\Fonus\ProductChannelSyncJob;
 use App\Jobs\Fonus\ProductInterfacesSyncJob;
 use App\Jobs\Fonus\ProductKeyFeaturesSyncJob;
 use App\Jobs\Fonus\ProductSyncJob;
+use App\Jobs\ProductAlternativeImagesSyncJob;
 use App\Jobs\ProductImagesSyncJob;
 use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -57,7 +58,8 @@ class FonusCombinedSyncJob implements ShouldQueue
                 new ProductInterfacesSyncJob(), // DONE
                 new ProductImagesSyncJob(), // DONE
                 new ProductChannelSyncJob(), // DONE
-                new DeviceChannelSyncJob()
+                new DeviceChannelSyncJob(),// DONE
+                new ProductAlternativeImagesSyncJob() // DONE
             ];
 
             foreach ($chain as $job) {
