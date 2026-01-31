@@ -7,9 +7,11 @@ use App\Jobs\Concerns\TrackableJob;
 use App\Jobs\Fonus\BrandSyncJob;
 use App\Jobs\Fonus\CategorySyncJob;
 use App\Jobs\Fonus\DeviceCarrierSyncJob;
+use App\Jobs\Fonus\DeviceChannelSyncJob;
 use App\Jobs\Fonus\DevicesInterfacesSyncJob;
 use App\Jobs\Fonus\DevicesSyncJob;
 use App\Jobs\Fonus\InterfacesSyncJob;
+use App\Jobs\Fonus\ProductChannelSyncJob;
 use App\Jobs\Fonus\ProductInterfacesSyncJob;
 use App\Jobs\Fonus\ProductKeyFeaturesSyncJob;
 use App\Jobs\Fonus\ProductSyncJob;
@@ -53,7 +55,9 @@ class FonusCombinedSyncJob implements ShouldQueue
                 new DeviceCarrierSyncJob(), // DONE
                 new DevicesInterfacesSyncJob(),// DONE
                 new ProductInterfacesSyncJob(), // DONE
-                new ProductImagesSyncJob(),
+                new ProductImagesSyncJob(), // DONE
+                new ProductChannelSyncJob(), // DONE
+                new DeviceChannelSyncJob()
             ];
 
             foreach ($chain as $job) {
