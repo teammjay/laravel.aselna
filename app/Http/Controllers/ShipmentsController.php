@@ -95,6 +95,16 @@ class ShipmentsController extends Controller
                 $query->where('order_operation.shipping_package_id', $request->carrier_package);
             }
 
+            if ($request->has('product_code') && $request->product_code != '') {
+                /*$query->whereHas('order.orderItem.product', function ($q) use ($request){
+                    $q->orWhere('product_code', '%' . $request->product_code . '%');
+                });*/
+
+                QueryFilters::applyRelationFilter($query, $request, 'order.orderItem.product', 'product_sku', 'product_code_operator', 'product_code');
+            }
+
+
+
 
         }
 
@@ -680,7 +690,7 @@ class ShipmentsController extends Controller
         $shipping_carrier_id = $request->input('carrier_id');
         $selected_service = $request->input('selected_service');
         $carrier_servie = ShippingCarrierService::where('shipping_carrier_id', $shipping_carrier_id)->orderBy('name', 'asc')->get();
-        $option = '';
+        $option = '<option value="">--</option>';
         if (!empty($carrier_servie)) {
             foreach ($carrier_servie as $service) {
                 if($selected_service != '' && $service->id == $selected_service){

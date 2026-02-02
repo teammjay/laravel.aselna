@@ -166,6 +166,7 @@
                                         <div class="d-flex align-items-center justify-content-between">
                                             <label for="carrier_id" class="m-0">Carrier</label>
                                             <select class="form-control w-75" id="carrier_id">
+                                                <option value="">--</option>
                                                 @if(count($shippingCarrier ?? []) > 0)
                                                     @foreach($shippingCarrier as $sCarrier)
                                                         <option value="{{ $sCarrier->id }}">{{ $sCarrier->name }}</option>
@@ -208,6 +209,7 @@
                                 <div class="card-body">
                                     <button class="btn btn-default w-100" id="update_selected">Update Selected</button>
                                     <button class="btn btn-default mt-2 w-100" id="update_all">Update All</button>
+                                    <input type="text" class="form-control mt-3" id="product_code" placeholder="Search by Product Code">
                                     <button class="btn btn-primary mt-2 w-100" id="search_selected">Search Selected</button>
                                     <button class="btn btn-secondary mt-2 w-100" id="reset_search">Reset</button>
                                     <input type="hidden" id="is_searched">
@@ -813,6 +815,7 @@
         $(document).on('click','#reset_search',function () {
             $('#is_searched').val('');
             $('#store_id').val('');
+            $('#product_code').val('');
             $('#listing_store').val('').trigger('change');
         });
 
@@ -1867,6 +1870,8 @@
                 'carrier_service_id':$('#carrier_service_id').val(),
                 'carrier_package':$('#carrier_package').val(),
                 'is_searched':$('#is_searched').val(),
+                'product_code':$('#product_code').val(),
+                'product_code_operator':'contains',
                 'combine_address' : $('#same_address').is(':checked'),
             },
             headers: {

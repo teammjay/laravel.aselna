@@ -206,6 +206,11 @@ class FetchShopifyOrders implements ShouldQueue
                                 }
                             }
 
+                            if(isset($order['displayFinancialStatus']) && strtolower($order['displayFinancialStatus']) == 'expired'){
+                                $orderstatus = OrderStatus::Canceled;
+                                $orderOperationstatus = OrderOperationStatus::Canceled;
+                            }
+
                             $orderData = [
                                 'order_id' => $order['id'],
                                 'order_date' => date('Y-m-d H:i:s', strtotime($order['createdAt'])),
