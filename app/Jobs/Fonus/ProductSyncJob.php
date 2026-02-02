@@ -39,7 +39,7 @@ class ProductSyncJob implements ShouldQueue
         try {
             DB::connection('fonus_db')->table('tbl_product')
                 ->orderBy('date_updated', 'desc')
-                ->chunk(100, function ($products) {
+                ->chunk(1000, function ($products) {
                     foreach ($products as $product) {
                         $this->syncFonusProduct($product);
                     }
@@ -63,6 +63,7 @@ class ProductSyncJob implements ShouldQueue
             return;
         }
         Log::info("Syncing Product :: " . $product->custom_label);
+        Log::info('Product status id :: ' . $product->status_id);
 
         $manufacturer = Manufacturer::where('code', $product->manufacturer_id)->first();
 
@@ -82,7 +83,7 @@ class ProductSyncJob implements ShouldQueue
                 'product_sku' => $product->custom_label,
 //                'parent_id' => $product->parent_id,
                 //            'product_image_url' => 'as',
-                'product_status' => CatalogStatus::getStatusName($product->status),
+                'product_status' => CatalogStatus::getFonusStatus($product->status_id),
 //                'dimensions_length' => $product->dimensions_length,
 //                'dimensions_height' => $product->dimensions_height,
 //                'dimensions_width' => $product->dimensions_width,

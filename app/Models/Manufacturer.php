@@ -26,7 +26,7 @@ class Manufacturer extends Model
     }
 
 
-    protected $fillable = ['id', 'name', 'code', 'notes', 'image_id', 'thumbnail_id', 'client_id', 'sort_order', 'version', 'created_by', 'updated_by', 'deleted_by', 'deleted_at'];
+    protected $fillable = ['id', 'name', 'code', 'notes', 'image_id', 'thumbnail_id', 'client_id', 'sort_order', 'version', 'created_by', 'updated_by', 'deleted_by', 'deleted_at','image_url'];
 
     public function Catalog()
     {
