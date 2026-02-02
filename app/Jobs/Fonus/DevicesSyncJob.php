@@ -125,7 +125,8 @@ class DevicesSyncJob implements ShouldQueue
     {
 
         $alreadyExists = Device::where('code', $device->gadget_id)->first();
-        if (isset($alreadyExists) && $alreadyExists->updated_at > $device->date_updated) {
+        // exlude where date is $device->date_updated 0000-00-00 00:00:00
+        if (isset($alreadyExists) && $alreadyExists->updated_at > $device->date_updated && $device->date_updated != '0000-00-00 00:00:00') {
             return;
         }
         Log::info('Syncing Device ID: ' . $device->gadget_id . ' - ' . $device->gadget_model_name);
