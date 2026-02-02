@@ -43,6 +43,11 @@ class PopularDevicesSyncJob implements ShouldQueue
                 $this->createPopularDevice($device);
             }
 
+            PopularDevice::orderBy('device_id')
+                ->chunk(1000, function ($popularDevices) {
+                    $this->deleteMissingPopularDevices($popularDevices);
+                });
+
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('Fonus Popular devices Job Failed', [
@@ -66,6 +71,20 @@ class PopularDevicesSyncJob implements ShouldQueue
                 'device_type_id' => $deviceType->id,
                 'priority' => $device->priority,
             ]);
+        }
+    }
+
+    private function deleteMissingPopularDevices($popularDevices)
+    {
+        $existingCodes = DB::connection('fonus_db')->table('tbl_popular_devices')
+            ->pluck('device_id')
+            ->toArray();
+
+        foreach ($popularDevices as $popularDevice) {
+            $device = Device::find($popularDevice->device_id);
+            if ($device && !in_array($device->code, $existingCodes)) {
+                $popularDevice->delete();
+            }
         }
     }
 }

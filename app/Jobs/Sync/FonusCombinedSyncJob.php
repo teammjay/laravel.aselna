@@ -5,6 +5,7 @@ namespace App\Jobs\Sync;
 
 use App\Jobs\Concerns\TrackableJob;
 use App\Jobs\Fonus\BrandSyncJob;
+use App\Jobs\Fonus\CarrierSyncJob;
 use App\Jobs\Fonus\CategorySyncJob;
 use App\Jobs\Fonus\DeviceCarrierSyncJob;
 use App\Jobs\Fonus\DeviceChannelSyncJob;
@@ -12,6 +13,8 @@ use App\Jobs\Fonus\DevicesInterfacesSyncJob;
 use App\Jobs\Fonus\DevicesSyncJob;
 use App\Jobs\Fonus\DeviceTypeSyncJob;
 use App\Jobs\Fonus\InterfacesSyncJob;
+use App\Jobs\Fonus\ManufacturerSyncJob;
+use App\Jobs\Fonus\PopularDevicesSyncJob;
 use App\Jobs\Fonus\ProductChannelSyncJob;
 use App\Jobs\Fonus\ProductInterfacesSyncJob;
 use App\Jobs\Fonus\ProductKeyFeaturesSyncJob;
@@ -19,6 +22,7 @@ use App\Jobs\Fonus\ProductSyncJob;
 use App\Jobs\Fonus\ProductTitleKeyword;
 use App\Jobs\ProductAlternativeImagesSyncJob;
 use App\Jobs\ProductImagesSyncJob;
+use App\Models\Carrier;
 use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -49,21 +53,24 @@ class FonusCombinedSyncJob implements ShouldQueue
 
         try {
             $chain = [
-//                new ProductSyncJob(), // Partial Done
-//                new ProductKeyFeaturesSyncJob(), // DONE
-//                new InterfacesSyncJob(), // DONE
-//                new CategorySyncJob(), // DONE
-//                new BrandSyncJob(), // DONE
-//                new DevicesSyncJob(), // DONE
-//                new DeviceCarrierSyncJob(), // DONE
-//                new DevicesInterfacesSyncJob(),// DONE
-//                new ProductInterfacesSyncJob(), // DONE
-//                new ProductTitleKeyword(), // DONE
-//                new ProductChannelSyncJob(), // DONE
-//                new DeviceChannelSyncJob(),// DONE
-//                new ProductImagesSyncJob(), // DONE
-//                new ProductAlternativeImagesSyncJob(), // DONE
-                new DeviceTypeSyncJob()
+                new ManufacturerSyncJob(), // DONE
+                new CarrierSyncJob(), // DONE
+                new ProductSyncJob(), // Partial Done
+                new ProductKeyFeaturesSyncJob(), // DONE
+                new InterfacesSyncJob(), // DONE
+                new CategorySyncJob(), // DONE
+                new BrandSyncJob(), // DONE
+                new DeviceTypeSyncJob(),// DONE
+                new DevicesSyncJob(), // DONE
+                new DeviceCarrierSyncJob(), // DONE
+                new DevicesInterfacesSyncJob(),// DONE
+                new ProductInterfacesSyncJob(), // DONE
+                new ProductTitleKeyword(), // DONE
+                new ProductChannelSyncJob(), // DONE
+                new DeviceChannelSyncJob(),// DONE
+                new ProductImagesSyncJob(), // DONE
+                new ProductAlternativeImagesSyncJob(), // DONE
+                new PopularDevicesSyncJob(), // DONE
             ];
 
             foreach ($chain as $job) {
