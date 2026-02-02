@@ -34,10 +34,12 @@ class ProductTitleKeyword implements ShouldQueue
         $this->updateTrackingRecord(['tags' => 'Fonus Title Keyword Sync job']);
 
         try {
-            $titleKeywords = DB::connection('fonus_db')->table('tbl_title_keywords')->get();
-            foreach ($titleKeywords as $titleKeyword) {
-                $this->createOrUpdateTitleKeyword($titleKeyword);
-            }
+            DB::connection('fonus_db')->table('tbl_title_keywords')
+                ->orderBy('title_id')->chunk(1000, function ($titleKeywords) {
+                    foreach ($titleKeywords as $titleKeyword) {
+                        $this->createOrUpdateTitleKeyword($titleKeyword);
+                    }
+                });
 
             \App\Models\ProductTitleKeyword::orderBy('product_id')
                 ->chunk(1000, function ($titleKeywords) {
