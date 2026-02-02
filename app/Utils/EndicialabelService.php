@@ -388,7 +388,7 @@ class EndicialabelService
                 $labelRequest->addChild('ToCompany', $shipmentDetails['toAddress']['company'] ?? '');
                 $labelRequest->addChild('ToName', $shipmentDetails['toAddress']['name']);
             }else{
-                $labelRequest->addChild('ToCompany', $shipmentDetails['toAddress']['name']);
+                $labelRequest->addChild('ToCompany', htmlspecialchars($shipmentDetails['toAddress']['name'], ENT_XML1 | ENT_COMPAT, 'UTF-8'));
             }
 
 //            $labelRequest->addChild('', $shipmentDetails['toAddress']['company'] ?? '');
