@@ -93,7 +93,7 @@ class ManufacturerSyncJob implements ShouldQueue
             ->toArray();
 
         foreach ($manufacturers as $manufacturer) {
-            if (!in_array($manufacturer->code, $existingCodes)) {
+            if ( isset($manufacturer->code) && !in_array($manufacturer->code, $existingCodes)) {
                 Log::info("Deleting Manufacturer ID: " . $manufacturer->code . ' - ' . $manufacturer->name);
                 Manufacturer::where('code', $manufacturer->code)->delete();
             }
