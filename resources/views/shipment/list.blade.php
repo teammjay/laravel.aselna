@@ -99,6 +99,19 @@
             border-radius: 6px;
             border: 1px solid #ddd;
         }
+
+        #clearBtn {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #999;
+            font-size: 20px;
+            display: none; /* Hidden by default */
+        }
+
+        #clearBtn:hover { color: #333; }
     </style>
 @stop
 
@@ -135,6 +148,10 @@
                                     </div>
                                     <div class="form-group">
                                         <input type="checkbox" name="ship_options" value="stop_on_error"> <span>Stop On Error</span>
+                                    </div>
+                                    <div class="form-group" style="position:relative;">
+                                        <input type="text" class="form-control mt-3" id="product_code" placeholder="Search by Product Code">
+                                        <span id="clearBtn">&times;</span>
                                     </div>
                                 </div>
                             </div>
@@ -208,6 +225,7 @@
                                 <div class="card-body">
                                     <button class="btn btn-default w-100" id="update_selected">Update Selected</button>
                                     <button class="btn btn-default mt-2 w-100" id="update_all">Update All</button>
+
                                     <button class="btn btn-primary mt-2 w-100" id="search_selected">Search Selected</button>
                                     <button class="btn btn-secondary mt-2 w-100" id="reset_search">Reset</button>
                                     <input type="hidden" id="is_searched">
@@ -791,14 +809,10 @@
             }
         });
 
-
-
-
-
-        $('#filter-form').on('submit', function(e) {
+        /*$('#filter-form').on('submit', function(e) {
             e.preventDefault(); // Prevent default form submission
             loadDatatables();
-        });
+        });*/
 
         $(document).on('change','#listing_store',function () {
             $('#store_id').val($(this).val());
@@ -810,9 +824,31 @@
             loadDatatables();
         });
 
+        $(document).on('input','#product_code',function (e) {
+            let currentVal = $(this).val().trim();
+
+            const $clearBtn = $('#clearBtn');
+
+            if (currentVal.length > 0) {
+                $clearBtn.show();
+            } else {
+                $clearBtn.hide();
+            }
+            if((currentVal.length >= 3 || currentVal.length === 0) && e.which !== 13) {
+                loadDatatables();
+            }
+        });
+
+        $(document).on('click','#clearBtn',function () {
+            $('#product_code').val('').focus();
+            $(this).hide();
+            loadDatatables();
+        });
+
         $(document).on('click','#reset_search',function () {
             $('#is_searched').val('');
             $('#store_id').val('');
+            $('#product_code').val('');
             $('#listing_store').val('').trigger('change');
         });
 
@@ -955,7 +991,7 @@
         });
 
         $(document).on('click','#edit_address',function () {
-            var address_id = $(this).data('id');
+            let address_id = $(this).data('id');
             if(address_id != '' && address_id != null){
                 $.ajax({
                     url: "{{ route('shipment.getshippingaddress') }}",
@@ -1867,6 +1903,8 @@
                 'carrier_service_id':$('#carrier_service_id').val(),
                 'carrier_package':$('#carrier_package').val(),
                 'is_searched':$('#is_searched').val(),
+                'product_code':$('#product_code').val(),
+                'product_code_operator':'contains',
                 'combine_address' : $('#same_address').is(':checked'),
             },
             headers: {

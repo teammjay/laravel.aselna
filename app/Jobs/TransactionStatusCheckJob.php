@@ -267,21 +267,75 @@ class TransactionStatusCheckJob implements ShouldQueue
                                 $transactionObj = AccountTransaction::where('tracking_number', $transaction)->first();
 
                                 if(isset($res_trans['tracking_number']) && $res_trans['tracking_number'] == $transaction){
-                                    $status = 'Pending';
+                                    $status = 'Other';
                                     $status_event = $res_trans['status'];
                                     $status_description = $res_trans['status_description'];
                                     Log::info('Tracking Number:' . $transaction.'- Status:'.$status_event);
                                     if ($status_event != '') {
-                                        switch (trim($status_event)) {
+                                        /*switch (trim($status_event)) {
                                             case 'D':
                                                 $status = 'completed';
                                                 break;
                                             default:
                                                 $status = 'pending';
                                                 break;
+                                        }*/
+
+                                        switch (trim($status_event)) {
+                                            case 'N':
+                                                $status = 'New Item';
+                                                break;
+                                            case 'D':
+                                                $status = 'Delivered';
+                                                break;
+                                            case 'O':
+                                                $status = 'Out for Delivery';
+                                                break;
+                                            case 'P':
+                                                $status = 'Available for Pickup';
+                                                break;
+                                            case 'R':
+                                                $status = 'Returned to Sender';
+                                                break;
+                                            case 'U':
+                                                $status = 'Undeliverable';
+                                                break;
+                                            case 'V':
+                                                $status = 'Delivery Status Not Updated';
+                                                break;
+                                            case 'L':
+                                                $status = 'Notice Left for Recipient';
+                                                break;
+                                            case 'F':
+                                                $status = 'Forwarded to New Address';
+                                                break;
+                                            case 'E':
+                                                $status = 'Dead Letter';
+                                                break;
+                                            case 'C':
+                                                $status = 'Customer Recall';
+                                                break;
+                                            case 'I':
+                                                $status = 'Scanned in Route';
+                                                break;
+                                            /*case 'D':
+                                                $status = 'completed';
+                                                break;*/
+                                            default:
+                                                $status = 'Other';
+                                                break;
                                         }
                                     }else{
-                                        $status = 'completed';
+                                        if($transactionObj){
+
+                                            $date = \Carbon\Carbon::parse($transactionObj->transaction_date);
+                                            if ($date->diffInDays(now()) >= 10) {
+                                                Log::info('Transaction with no status after 10 days: ' . $transaction);
+                                                $status = 'Status not found';
+                                            }
+
+                                        }
+
                                     }
 
                                     if ($transactionObj) {
@@ -294,11 +348,11 @@ class TransactionStatusCheckJob implements ShouldQueue
                                         Log::info('Update Tracking status:' . json_encode($updateRecords));
                                     }
                                 }else{
-                                    $updateRecords = [
+                                    /*$updateRecords = [
                                         'status' => 'completed',
                                         'status_event' => '',
                                         'status_description' => 'Status Not Found'
-                                    ];
+                                    ];*/
                                 }
 
                                 if($transactionObj && $updateRecords) {

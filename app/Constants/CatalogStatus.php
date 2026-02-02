@@ -22,4 +22,17 @@ class CatalogStatus
     {
         return self::names[$statusId];
     }
+
+    public static function getFonusStatus($statusId)
+    {
+        switch ($statusId) {
+            case 1:
+                return 'active';
+            case 2:
+                return 'temporaryDisabled';
+            case 3:
+                return 'discontinued';
+        }
+        return 'draft';
+    }
 }
