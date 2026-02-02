@@ -27,4 +27,10 @@ class ProductTitleKeyword extends Model
 
 
     protected $fillable = ['id','product_id','keyword', 'priority','created_by','updated_by','created_at','updated_at'];
+
+    // product
+    public function product()
+    {
+        return $this->belongsTo(Catalog::class, 'product_id', 'product_id');
+    }
 }

@@ -10,11 +10,13 @@ use App\Jobs\Fonus\DeviceCarrierSyncJob;
 use App\Jobs\Fonus\DeviceChannelSyncJob;
 use App\Jobs\Fonus\DevicesInterfacesSyncJob;
 use App\Jobs\Fonus\DevicesSyncJob;
+use App\Jobs\Fonus\DeviceTypeSyncJob;
 use App\Jobs\Fonus\InterfacesSyncJob;
 use App\Jobs\Fonus\ProductChannelSyncJob;
 use App\Jobs\Fonus\ProductInterfacesSyncJob;
 use App\Jobs\Fonus\ProductKeyFeaturesSyncJob;
 use App\Jobs\Fonus\ProductSyncJob;
+use App\Jobs\Fonus\ProductTitleKeyword;
 use App\Jobs\ProductAlternativeImagesSyncJob;
 use App\Jobs\ProductImagesSyncJob;
 use App\Services\CriticalErrorService;
@@ -47,19 +49,21 @@ class FonusCombinedSyncJob implements ShouldQueue
 
         try {
             $chain = [
-                new ProductSyncJob(), // Partial Done
-                new ProductKeyFeaturesSyncJob(), // DONE
-                new InterfacesSyncJob(), // DONE
-                new CategorySyncJob(), // DONE
-                new BrandSyncJob(), // DONE
-                new DevicesSyncJob(), // DONE
-                new DeviceCarrierSyncJob(), // DONE
-                new DevicesInterfacesSyncJob(),// DONE
-                new ProductInterfacesSyncJob(), // DONE
-                new ProductImagesSyncJob(), // DONE
-                new ProductChannelSyncJob(), // DONE
-                new DeviceChannelSyncJob(),// DONE
-                new ProductAlternativeImagesSyncJob() // DONE
+//                new ProductSyncJob(), // Partial Done
+//                new ProductKeyFeaturesSyncJob(), // DONE
+//                new InterfacesSyncJob(), // DONE
+//                new CategorySyncJob(), // DONE
+//                new BrandSyncJob(), // DONE
+//                new DevicesSyncJob(), // DONE
+//                new DeviceCarrierSyncJob(), // DONE
+//                new DevicesInterfacesSyncJob(),// DONE
+//                new ProductInterfacesSyncJob(), // DONE
+//                new ProductTitleKeyword(), // DONE
+//                new ProductChannelSyncJob(), // DONE
+//                new DeviceChannelSyncJob(),// DONE
+//                new ProductImagesSyncJob(), // DONE
+//                new ProductAlternativeImagesSyncJob(), // DONE
+                new DeviceTypeSyncJob()
             ];
 
             foreach ($chain as $job) {
