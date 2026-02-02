@@ -59,6 +59,10 @@ class ProductKeyFeaturesSyncJob implements ShouldQueue
     {
         try {
             $aselnaProduct = Catalog::where('product_code', $product->product_id)->first();
+            if (isset($aselnaProduct) && $aselnaProduct->updated_at >= $product->date_updated) {
+//            Log::info("Product Skipped :: " . $product->custom_label);
+                return;
+            }
             $product_id = $aselnaProduct->product_id;
             Log::info('Syncing Key Features for Product Sku: ' . $aselnaProduct->product_sku . ' Product ID: ' . $product_id);
             if (!isset($product)) return;

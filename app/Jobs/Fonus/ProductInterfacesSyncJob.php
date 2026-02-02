@@ -63,6 +63,10 @@ class ProductInterfacesSyncJob implements ShouldQueue
         if (!isset($product) || !isset($attribute)) {
             return;
         }
+        if (isset($product) && $product->updated_at >= $productAttribute->date_updated) {
+//            Log::info("Product Skipped :: " . $product->custom_label);
+            return;
+        }
         $alreadyExists = ProductInterface::where('product_id', $product->id)
             ->where('interface_id', $attribute->id)
             ->first();

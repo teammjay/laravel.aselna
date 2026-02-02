@@ -70,9 +70,9 @@ class FonusCombinedSyncJob implements ShouldQueue
                 new ProductTitleKeyword(), // DONE
                 new ProductChannelSyncJob(), // DONE
 //                new DeviceChannelSyncJob(),// DONE
+                new PopularDevicesSyncJob(), // DONE
                 new ProductImagesSyncJob(), // DONE
                 new ProductAlternativeImagesSyncJob(), // DONE
-                new PopularDevicesSyncJob(), // DONE
             ];
 
             foreach ($chain as $job) {
