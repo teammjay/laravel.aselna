@@ -63,6 +63,7 @@ class ProductSyncJob implements ShouldQueue
             return;
         }
         Log::info("Syncing Product :: " . $product->custom_label);
+        Log::info('Product status id :: ' . $product->status_id);
 
         $manufacturer = Manufacturer::where('code', $product->manufacturer_id)->first();
 
