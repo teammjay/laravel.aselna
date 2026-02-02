@@ -16,6 +16,7 @@ use App\Jobs\Fonus\InterfacesSyncJob;
 use App\Jobs\Fonus\ManufacturerSyncJob;
 use App\Jobs\Fonus\PopularDevicesSyncJob;
 use App\Jobs\Fonus\ProductChannelSyncJob;
+use App\Jobs\Fonus\ProductcolorSyncJob;
 use App\Jobs\Fonus\ProductInterfacesSyncJob;
 use App\Jobs\Fonus\ProductKeyFeaturesSyncJob;
 use App\Jobs\Fonus\ProductSyncJob;
@@ -53,6 +54,7 @@ class FonusCombinedSyncJob implements ShouldQueue
 
         try {
             $chain = [
+                new ProductcolorSyncJob(), // DONE
                 new ManufacturerSyncJob(), // DONE
                 new CarrierSyncJob(), // DONE
                 new ProductSyncJob(), // Partial Done
