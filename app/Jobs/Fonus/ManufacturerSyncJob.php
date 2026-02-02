@@ -66,7 +66,7 @@ class ManufacturerSyncJob implements ShouldQueue
                     mkdir(storage_path('app/public/manufacturer_images/'), 0777, true);
                 }
                 if (!file_exists(storage_path('app/public/manufacturer_images/' . $manufacture->picture1))) {
-                    $image = file_get_contents('https://fonusaccessory.com/inv/inv_images/manufacturer_images/' . $manufacture->picture1);
+                    $image = file_get_contents(env('FONUS_BASE_URL') . 'inv_images/manufacturer_images/' . $manufacture->picture1);
                     file_put_contents(storage_path('app/public/manufacturer_images/' . $manufacture->picture1), $image);
                 }
             } catch (Exception $e) {

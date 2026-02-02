@@ -104,7 +104,7 @@ class ProductImagesSyncJob implements ShouldQueue
         try {
             if(!isset($mainImageDetail)) {
                 Log::info('ProductImagesSyncJob: ' . $productImage->picture_name);
-                $imagePath = 'https://fonusaccessory.com/inv/inv_images/main_product_images/' . $productImage->picture_name;
+                $imagePath = env('FONUS_BASE_URL') . 'inv_images/main_product_images/' . $productImage->picture_name;
                 $mainImageDetail = FileUtility::saveImage($imagePath, 'product_images', $productImage->picture_name);
             }
         } catch (Exception $e) {
@@ -116,7 +116,7 @@ class ProductImagesSyncJob implements ShouldQueue
 
         try {
             if(!isset($thumbnailImageDetail)) {
-                $imageThumbnail = 'https://fonusaccessory.com/inv/inv_images/main_product_images/' . $productImage->thumbnail_picture_name;
+                $imageThumbnail = env('FONUS_BASE_URL') . 'inv_images/main_product_images/' . $productImage->thumbnail_picture_name;
                 $thumbnailImageDetail = FileUtility::saveImage($imageThumbnail, 'product_images', $productImage->thumbnail_picture_name);
             }
         } catch (Exception $e) {
@@ -173,7 +173,7 @@ class ProductImagesSyncJob implements ShouldQueue
             $image_name = strtolower($Image->name);
             if (!ProductImages::where('image', '=', $image_name)->exists() && isset($image_name) && env('APP_ENV') !== 'local') {
                 if (!file_exists(storage_path('app/public/product_images/' . $image_name))) {
-                    $imagePath = 'https://fonusaccessory.com/inv/inv_images/main_product_images/' . $image_name;
+                    $imagePath = env('FONUS_BASE_URL') . 'inv_images/main_product_images/' . $image_name;
                     $mainImageDetail = FileUtility::saveImage($imagePath, 'product_images', $image_name);
                     if (isset($mainImageDetail)) {
                         $imageData['image'] = $mainImageDetail->id;
@@ -196,7 +196,7 @@ class ProductImagesSyncJob implements ShouldQueue
             $thunmail_name = strtolower($Thumbnail->name);
             if (!ProductImages::where('thumbnail_image', '=', $thunmail_name)->exists() && isset($thunmail_name) && env('APP_ENV') !== 'local') {
                 if (!file_exists(storage_path('app/public/product_images/' . $thunmail_name))) {
-                    $imageThumbnail = file_get_contents('https://fonusaccessory.com/inv/inv_images/main_product_images/' . $thunmail_name);
+                    $imageThumbnail = file_get_contents(env('FONUS_BASE_URL') . 'inv_images/main_product_images/' . $thunmail_name);
                     $thumbnailImageDetail = FileUtility::saveImage($imageThumbnail, 'product_images', $thunmail_name);
                     if (isset($thumbnailImageDetail)) {
                         $imageData['thumbnail_image'] = $thumbnailImageDetail->id;
