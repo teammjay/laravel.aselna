@@ -37,10 +37,13 @@ class ProductChannelSyncJob implements ShouldQueue
         $this->updateTrackingRecord(['tags' => 'Fonus Product Channel']);
 
         try {
-            $productChannels = DB::connection('fonus_db')->table('tbl_product_channels')->get();
-            foreach ($productChannels as $productChannel) {
-                $this->createOrUpdateProductChannel($productChannel);
-            }
+            $productChannels = DB::connection('fonus_db')->table('tbl_product_channels')
+                ->orderBy('product_id')
+                ->chunk(1000, function ($productChannels) {
+                    foreach ($productChannels as $productChannel) {
+                        $this->createOrUpdateProductChannel($productChannel);
+                    }
+                });
         }catch (\Throwable $e) {
             Log::error('Fonus Product Channel Sync Job Failed: ' . $e->getTraceAsString());
 
