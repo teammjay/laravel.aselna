@@ -146,6 +146,10 @@ class SyncAllOrderStatusJob implements ShouldQueue
                                 $order->order_status = OrderStatus::Refund;
                                 $operation->status = OrderOperationStatus::REFUNDED;
                                 break;
+                            case 'expired';
+                                $order->order_status = OrderStatus::Canceled;
+                                $operation->status = OrderOperationStatus::Canceled;
+                                break;
                         }
 
                         $order->save();

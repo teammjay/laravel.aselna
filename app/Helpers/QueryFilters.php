@@ -81,6 +81,9 @@ class QueryFilters
                     case 'is_set':
                         $q->whereNotNull($field);
                         break;
+                    dafault:
+                        $q->whereLike($field, '%' . $value . '%');
+                        break;
                 }
             });
         }
