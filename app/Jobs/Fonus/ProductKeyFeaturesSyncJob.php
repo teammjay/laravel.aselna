@@ -39,7 +39,7 @@ class ProductKeyFeaturesSyncJob implements ShouldQueue
         try {
             DB::connection('fonus_db')->table('tbl_product')
                 ->orderBy('date_updated', 'desc')
-                ->chunk(100, function ($products) {
+                ->chunk(1000, function ($products) {
                     foreach ($products as $product) {
                         $this->syncProductKeyFeatures($product);
                     }
