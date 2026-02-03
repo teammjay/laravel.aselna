@@ -41,7 +41,7 @@ class ProductTitleKeyword implements ShouldQueue
                     }
                 });
 
-            \App\Models\ProductTitleKeyword::orderBy('product_id')
+            \App\Models\ProductTitleKeyword::orderBy('id')
                 ->chunk(1000, function ($titleKeywords) {
                     $this->deleteMissingTitleKeywords($titleKeywords);
                 });

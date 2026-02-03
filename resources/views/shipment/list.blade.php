@@ -654,6 +654,12 @@
                     return false;
                 }
                 var shipment_id = $('input[name="shipment_id[]"]:checked').val();
+                var shipment_hold = $('input[name="shipment_id[]"]:checked').data('onhold');
+                if(shipment_hold){
+                    alert('This shipment is in hold.')
+                    return false;
+                }
+
                 if (shipment_id != '' && shipment_id != null) {
                     $.ajax({
                         url: "{{ route('shipment.getshippingdetail') }}",
@@ -1135,9 +1141,10 @@
                 isProcessingCancelled = false;
                 $('input[name="shipment_id[]"]').each(function () {
                     const status = $(this).data('status');
+                    const hold_shipment = $(this).data('onhold');
 
-                    if (status === 1 || status === 2) {
-                        return;
+                    if (status === 1 || status === 2 || hold_shipment === 1) {
+                        return true;
                     }
                     shipment_ids.push($(this).val());
                 });
@@ -1246,8 +1253,9 @@
                 isProcessingCancelled = false;
                 $('input[name="shipment_id[]"]:checked').each(function () {
                     const status = $(this).data('status');
-                    if (status === 1 || status === 2) {
-                        return;
+                    const hold_shipment = $(this).data('onhold');
+                    if (status === 1 || status === 2 || hold_shipment === 1) {
+                        return true;
                     }
                     shipment_ids.push($(this).val());
                 });
@@ -1258,6 +1266,8 @@
                     alert('Please select shipment first.');
                     return false;
                 }
+
+                //console.log(shipment_ids);
 
                 // Create a modal for progress display
                 if (!$('#progressModal').length) {
@@ -1397,7 +1407,7 @@
 
                 // Update the progress UI
                 const progress = Math.round(((current_index) / total_count) * 100);
-                console.log(progress);
+                //console.log(progress);
                 $('#progress-status').text(`Processing ${current_index + 1}/${total_count} shipments`);
                 $('#progress-bar').css('width', `${progress}%`).attr('aria-valuenow', progress).text(`${progress}%`);
 
@@ -1682,10 +1692,13 @@
                 });
 
                 if (row.any()) {
+                    var rowNode = row.node();
                     var rowIndex = row.index();
 
                     table.cell(rowIndex, 3).data(operation.carrier_service);
                     table.cell(rowIndex, 2).data(operation.shipping_package);
+
+                    $(rowNode).attr('data-onhold', operation.hold_shipment);
                 }
             });
 
@@ -1701,11 +1714,14 @@
             });
 
             if (row.any()) {
+                var rowNode = row.node();
                 var rowIndex = row.index();
 
                 table.cell(rowIndex, 8).data(operation.weight_value);
                 table.cell(rowIndex, 3).data(operation.carrier_service);
                 table.cell(rowIndex, 2).data(operation.shipping_package);
+
+                $(rowNode).attr('data-onhold', operation.hold_shipment);
 
                 if(operation.items){
                     var itemsStr = operation.items
@@ -1827,6 +1843,8 @@
             alert('Noting to ppdate. Please select option to update.');
             return false;
         }
+
+
 
         $.ajax({
             url: "{{ route('shipment.updateshippingdetails') }}",

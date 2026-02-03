@@ -40,7 +40,11 @@ class TransactionStatusCheckJob implements ShouldQueue
                 $q->where('canceled', 0)
                     ->orWhereNull('canceled');
             })
-            ->where('status','pending')
+            ->where(function ($q) {
+                $q->where('status','!=', 'Delivered')->where('status','!=', 'Status not found')
+                    ->orWhereNull('status');
+            })
+            //->where('status','!=','Delivered')
             ->orderBy('transaction_date','asc')
             ->chunk(100, function ($transactions) {
                 $this->checkTransactionStatus($transactions);
@@ -265,7 +269,7 @@ class TransactionStatusCheckJob implements ShouldQueue
                         if(!empty($response['transaction_status'])) {
                             foreach ($response['transaction_status'] as $res_trans) {
                                 $transactionObj = AccountTransaction::where('tracking_number', $transaction)->first();
-
+                                $updateRecords = [];
                                 if(isset($res_trans['tracking_number']) && $res_trans['tracking_number'] == $transaction){
                                     $status = 'Other';
                                     $status_event = $res_trans['status'];

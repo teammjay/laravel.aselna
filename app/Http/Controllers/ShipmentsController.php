@@ -87,9 +87,7 @@ class ShipmentsController extends Controller
             });*/
 
             QueryFilters::applyRelationFilter($query, $request, 'order.orderItem.product', 'product_sku', 'product_code_operator', 'product_code');
-        }
-
-        if ($request->has('is_searched') && $request->is_searched == 1) {
+        } else if ($request->has('is_searched') && $request->is_searched == 1) {
 
                 if ($request->has('carrier_id') && $request->carrier_id != '') {
                     $query->where('order_operation.shipping_carrier_id', $request->carrier_id);
@@ -302,6 +300,7 @@ class ShipmentsController extends Controller
                     'product_ids' => $product_ids,
                     'total_qty' => $total_qty,
                     'op_status' => $order->status,
+                    'hold_shipment' => $order->hold_shipment,
                     'operation_retry_count' => $order->operation_retry_count,
                     'carrier_service_name' => $order->carrierService->name ?? NULL,
                 );
@@ -644,6 +643,7 @@ class ShipmentsController extends Controller
         $ship_from = $request->input('ship_from');
         $ship_option = $request->input('ship_option');
         $carrier_package = $request->input('carrier_package');
+
 
         if (!empty($selected_shipment)) {
             $updatedRecord = [];
@@ -1204,6 +1204,8 @@ class ShipmentsController extends Controller
         $skus = $request->input('sku');
         $quantities = $request->input('quantity');
         $opi_ids = $request->input('opi_ids');
+        $hold_shipment = $request->input('hold_shipment');
+        $holdshipment = ($hold_shipment === 'on') ? 1 : 0;
 
         if ($order_operation_id) {
             $updateRecord = array(
@@ -1215,6 +1217,7 @@ class ShipmentsController extends Controller
                 'insurance_value' => $insurance_value,
                 'weight_value' => $weight_value,
                 'weight_weight_unit' => $weight_type,
+                'hold_shipment' => $holdshipment
             );
 
             $orderOperation = OrderOperation::findOrFail($order_operation_id);
