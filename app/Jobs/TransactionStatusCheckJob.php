@@ -40,7 +40,11 @@ class TransactionStatusCheckJob implements ShouldQueue
                 $q->where('canceled', 0)
                     ->orWhereNull('canceled');
             })
-            ->where('status','!=','Delivered')
+            ->where(function ($q) {
+                $q->where('status','!=', 'Delivered')
+                    ->orWhereNull('status');
+            })
+            //->where('status','!=','Delivered')
             ->orderBy('transaction_date','asc')
             ->chunk(100, function ($transactions) {
                 $this->checkTransactionStatus($transactions);
