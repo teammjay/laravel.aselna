@@ -654,6 +654,12 @@
                     return false;
                 }
                 var shipment_id = $('input[name="shipment_id[]"]:checked').val();
+                var shipment_hold = $('input[name="shipment_id[]"]:checked').data('onhold');
+                if(shipment_hold){
+                    alert('This shipment is in hold.')
+                    return false;
+                }
+
                 if (shipment_id != '' && shipment_id != null) {
                     $.ajax({
                         url: "{{ route('shipment.getshippingdetail') }}",
@@ -1135,9 +1141,10 @@
                 isProcessingCancelled = false;
                 $('input[name="shipment_id[]"]').each(function () {
                     const status = $(this).data('status');
+                    const hold_shipment = $(this).data('onhold');
 
-                    if (status === 1 || status === 2) {
-                        return;
+                    if (status === 1 || status === 2 || hold_shipment === 1) {
+                        return true;
                     }
                     shipment_ids.push($(this).val());
                 });
@@ -1246,8 +1253,9 @@
                 isProcessingCancelled = false;
                 $('input[name="shipment_id[]"]:checked').each(function () {
                     const status = $(this).data('status');
-                    if (status === 1 || status === 2) {
-                        return;
+                    const hold_shipment = $(this).data('onhold');
+                    if (status === 1 || status === 2 || hold_shipment === 1) {
+                        return true;
                     }
                     shipment_ids.push($(this).val());
                 });
@@ -1827,6 +1835,8 @@
             alert('Noting to ppdate. Please select option to update.');
             return false;
         }
+
+
 
         $.ajax({
             url: "{{ route('shipment.updateshippingdetails') }}",
