@@ -41,7 +41,7 @@ class TransactionStatusCheckJob implements ShouldQueue
                     ->orWhereNull('canceled');
             })
             ->where(function ($q) {
-                $q->where('status','!=', 'Delivered')
+                $q->where('status','!=', 'Delivered')->where('status','!=', 'Status not found')
                     ->orWhereNull('status');
             })
             //->where('status','!=','Delivered')
