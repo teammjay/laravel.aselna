@@ -40,7 +40,7 @@ class ProductSyncJob implements ShouldQueue
 
         try {
             DB::connection('fonus_db')->table('tbl_product')
-                ->orderBy('product_id','desc')
+                ->orderBy('product_id')
                 ->chunk(1000, function ($products) {
                     foreach ($products as $product) {
                         $this->syncFonusProduct($product);
