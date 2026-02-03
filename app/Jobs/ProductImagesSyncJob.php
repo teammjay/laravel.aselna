@@ -126,11 +126,11 @@ class ProductImagesSyncJob implements ShouldQueue
             Log::error('ProductImagesSyncJob: ' . $e->getMessage());
         }
 
-        if ($productImage->picture_id === 1) {
-            $product->update([
-                'product_image_url' => $thumbnailImageDetail ? $thumbnailImageDetail->id : $mainImageDetail->id
-            ]);
-        }
+//        if ($productImage->picture_id === 1) {
+//            $product->update([
+//                'product_image_url' => $thumbnailImageDetail ? $thumbnailImageDetail->id : $mainImageDetail->id
+//            ]);
+//        }
 
 
         try {

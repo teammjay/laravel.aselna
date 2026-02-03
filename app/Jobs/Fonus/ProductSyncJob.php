@@ -7,6 +7,8 @@ use App\Jobs\Concerns\TrackableJob;
 use App\Models\Catalog;
 use App\Models\Manufacturer;
 use App\Services\CriticalErrorService;
+use App\Utils\FileUtility;
+use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
@@ -66,6 +68,19 @@ class ProductSyncJob implements ShouldQueue
         Log::info('Product status id :: ' . $product->status_id);
 
         $manufacturer = Manufacturer::where('code', $product->manufacturer_id)->first();
+        $mainImage = null;
+
+        try {
+            if(!isset($mainImage)) {
+                $imageThumbnail = env('FONUS_BASE_URL') . 'inv_images/main_product_images/' . $product->picture1;
+                $mainImage = FileUtility::saveImage($imageThumbnail, 'product_images', $product->picture1);
+            }
+        } catch (Exception $e) {
+
+            \App\Helpers\ErrorLogger::log($e, __METHOD__);
+
+            Log::error('ProductImagesSyncJob: ' . $e->getMessage());
+        }
 
         Catalog::updateOrCreate(
             ['product_code' => $product->product_id],
@@ -106,6 +121,7 @@ class ProductSyncJob implements ShouldQueue
                 //            'product_pick_location' => ,
 //                'title_template' => $product->title_template,
 //                'description_template' => $product->description_template,
+                'product_image_url' => $mainImage ? $mainImage->id : null,
                 'created_by' => 'system',
                 'updated_by' => 'system',
             ]
