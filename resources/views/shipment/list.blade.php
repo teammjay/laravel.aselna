@@ -1267,6 +1267,8 @@
                     return false;
                 }
 
+                //console.log(shipment_ids);
+
                 // Create a modal for progress display
                 if (!$('#progressModal').length) {
                     $('body').append(`
@@ -1405,7 +1407,7 @@
 
                 // Update the progress UI
                 const progress = Math.round(((current_index) / total_count) * 100);
-                console.log(progress);
+                //console.log(progress);
                 $('#progress-status').text(`Processing ${current_index + 1}/${total_count} shipments`);
                 $('#progress-bar').css('width', `${progress}%`).attr('aria-valuenow', progress).text(`${progress}%`);
 
@@ -1690,10 +1692,13 @@
                 });
 
                 if (row.any()) {
+                    var rowNode = row.node();
                     var rowIndex = row.index();
 
                     table.cell(rowIndex, 3).data(operation.carrier_service);
                     table.cell(rowIndex, 2).data(operation.shipping_package);
+
+                    $(rowNode).attr('data-onhold', operation.hold_shipment);
                 }
             });
 
@@ -1709,11 +1714,14 @@
             });
 
             if (row.any()) {
+                var rowNode = row.node();
                 var rowIndex = row.index();
 
                 table.cell(rowIndex, 8).data(operation.weight_value);
                 table.cell(rowIndex, 3).data(operation.carrier_service);
                 table.cell(rowIndex, 2).data(operation.shipping_package);
+
+                $(rowNode).attr('data-onhold', operation.hold_shipment);
 
                 if(operation.items){
                     var itemsStr = operation.items
