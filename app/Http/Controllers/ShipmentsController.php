@@ -87,9 +87,7 @@ class ShipmentsController extends Controller
             });*/
 
             QueryFilters::applyRelationFilter($query, $request, 'order.orderItem.product', 'product_sku', 'product_code_operator', 'product_code');
-        }
-
-        if ($request->has('is_searched') && $request->is_searched == 1) {
+        } else if ($request->has('is_searched') && $request->is_searched == 1) {
 
                 if ($request->has('carrier_id') && $request->carrier_id != '') {
                     $query->where('order_operation.shipping_carrier_id', $request->carrier_id);
