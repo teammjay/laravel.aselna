@@ -84,7 +84,7 @@ class ProductAlternativeImagesSyncJob implements ShouldQueue
         try {
             if (!file_exists(storage_path('app/public/product_images/' . $productImage->picture_name))) {
                 Log::info('ProductImagesSyncJob: ' . $productImage->picture_name);
-                $imagePath = 'https://fonusaccessory.com/inv/inv_images/additional_main_images/' . $productImage->picture_name;
+                $imagePath = env('FONUS_BASE_URL') . 'inv_images/additional_main_images/' . $productImage->picture_name;
                 $mainImageDetail = FileUtility::saveImage($imagePath, 'product_additional_images', $productImage->picture_name);
             } else {
                 $mainImageDetail = SysFile::where('name', $productImage->picture_name)->first();
@@ -99,7 +99,7 @@ class ProductAlternativeImagesSyncJob implements ShouldQueue
 
         try {
             if (!file_exists(storage_path('app/public/product_images/' . $productImage->tn_picture_name))) {
-                $imageThumbnail = 'https://fonusaccessory.com/inv/inv_images/additional_main_images/' . $productImage->tn_picture_name;
+                $imageThumbnail = env('FONUS_BASE_URL') . 'inv_images/additional_main_images/' . $productImage->tn_picture_name;
                 $thumbnailImageDetail = FileUtility::saveImage($imageThumbnail, 'product_additional_images', $productImage->tn_picture_name);
             } else {
                 $thumbnailImageDetail = SysFile::where('name', $productImage->thumbnail_picture_name)->first();
@@ -148,7 +148,7 @@ class ProductAlternativeImagesSyncJob implements ShouldQueue
             $image_name = strtolower($Image->name);
             if (!ProductImageAlternative::where('image', '=', $image_name)->exists() && isset($image_name) && env('APP_ENV') !== 'local') {
                 if (!file_exists(storage_path('app/public/product_additional_images/' . $image_name))) {
-                    $imagePath = 'https://fonusaccessory.com/inv/inv_images/additional_main_images/' . $image_name;
+                    $imagePath = env('FONUS_BASE_URL') . 'inv_images/additional_main_images/' . $image_name;
                     $mainImageDetail = FileUtility::saveImage($imagePath, 'product_additional_images/', $image_name);
                     $imageData['image'] = $mainImageDetail->id;
                 }
@@ -171,7 +171,7 @@ class ProductAlternativeImagesSyncJob implements ShouldQueue
             $thunmail_name = strtolower($Thumbnail->name);
             if (!ProductImageAlternative::where('thumbnail_image', '=', $thunmail_name)->exists() && isset($thunmail_name) && env('APP_ENV') !== 'local') {
                 if (!file_exists(storage_path('app/public/product_additional_images/' . $thunmail_name))) {
-                    $imagePath = 'https://fonusaccessory.com/inv/inv_images/additional_main_images/' . $thunmail_name;
+                    $imagePath = env('FONUS_BASE_URL') . 'inv_images/additional_main_images/' . $thunmail_name;
                     $mainImageDetail = FileUtility::saveImage($imagePath, 'product_additional_images/', $thunmail_name);
 
                     $imageData['thumbnail_image'] = $mainImageDetail->id;

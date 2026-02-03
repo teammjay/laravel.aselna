@@ -71,7 +71,7 @@ class CategorySyncJob implements ShouldQueue
             try {
                 if(!isset($imageDetail)) {
                     Log::info('CategoryImagesSync: ' . $imageName);
-                    $imagePath = 'https://fonusaccessory.com/inv/inv_images/category_images/' . $imageName;
+                    $imagePath = env('FONUS_BASE_URL') . 'inv_images/category_images/' . $imageName;
                     $imageDetail = FileUtility::saveImage($imagePath, 'category_images', $imageName);
                 }
             } catch (Exception $e) {

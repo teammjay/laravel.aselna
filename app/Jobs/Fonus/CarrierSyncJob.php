@@ -61,7 +61,7 @@ class CarrierSyncJob implements ShouldQueue
                     mkdir(storage_path('app/public/carrier_images/'), 0777, true);
                 }
                 if (!file_exists(storage_path('app/public/carrier_images/' . $carrier->picture1))) {
-                    $image = file_get_contents('https://fonusaccessory.com/inv/inv_images/carrier_images/' . $carrier->picture1);
+                    $image = file_get_contents(env('FONUS_BASE_URL') . 'inv_images/carrier_images/' . $carrier->picture1);
                     file_put_contents(storage_path('app/public/carrier_images/' . $carrier->picture1), $image);
                 }
             } catch (Exception $e) {

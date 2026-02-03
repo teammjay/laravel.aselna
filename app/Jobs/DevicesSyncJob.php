@@ -90,7 +90,7 @@ class DevicesSyncJob implements ShouldQueue
             Log::info('Syncing Images Also');
             try {
                 if (!file_exists(storage_path('app/public/device_images/' . $device->picture1))) {
-                    $image = file_get_contents('https://fonusaccessory.com/inv/inv_images/device_images/' . $device->picture1);
+                    $image = file_get_contents(env('FONUS_BASE_URL') . 'inv_images/device_images/' . $device->picture1);
                     file_put_contents(storage_path('app/public/device_images/' . $device->picture1), $image);
                 }
             } catch (Exception $e) {
@@ -100,7 +100,7 @@ class DevicesSyncJob implements ShouldQueue
 
             if (!file_exists(storage_path('app/public/device_images/' . $device->thumbnail_picture1))) {
                 try {
-                    $image = file_get_contents('https://fonusaccessory.com/inv/inv_images/device_images/' . $device->thumbnail_picture1);
+                    $image = file_get_contents(env('FONUS_BASE_URL') . 'inv_images/device_images/' . $device->thumbnail_picture1);
                     file_put_contents(storage_path('app/public/device_images/' . $device->thumbnail_picture1), $image);
                 } catch (Exception $e) {
 
@@ -168,8 +168,8 @@ class DevicesSyncJob implements ShouldQueue
 
         try {
             $image_name = strtolower($device->code) . '_1.jpg';
-            Log::info('Image URL: ' . 'https://fonusaccessory.com/inv/inv_images/device_images/' . $image_name);
-            $image = file_get_contents('https://fonusaccessory.com/inv/inv_images/device_images/' . $image_name);
+            Log::info('Image URL: ' . env('FONUS_BASE_URL') . 'inv_images/device_images/' . $image_name);
+            $image = file_get_contents(env('FONUS_BASE_URL') . 'inv_images/device_images/' . $image_name);
             file_put_contents(storage_path('app/public/device_images/' . $image_name), $image);
             $deviceData['image'] = $image_name;
         } catch (Exception $e) {
@@ -179,7 +179,7 @@ class DevicesSyncJob implements ShouldQueue
 
         try {
             $thumbnail_name = 'th_' . strtolower($device->code) . '_1.jpg';
-            $thumbnail = file_get_contents('https://fonusaccessory.com/inv/inv_images/device_images/' . $thumbnail_name);
+            $thumbnail = file_get_contents(env('FONUS_BASE_URL') . 'inv_images/device_images/' . $thumbnail_name);
             file_put_contents(storage_path('app/public/device_images/' . $thumbnail_name), $thumbnail);
             $deviceData['thumbnail_image'] = $thumbnail_name;
         } catch (Exception $e) {

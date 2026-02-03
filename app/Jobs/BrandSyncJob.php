@@ -88,7 +88,7 @@ class BrandSyncJob implements ShouldQueue
             $image_name = $Image->name;
             if (isset($image_name) && env('APP_ENV') != 'local') {
                 if (!file_exists(storage_path('app/public/device_images/' . $image_name))) {
-                    $image = file_get_contents('https://fonusaccessory.com/inv/inv_images/brand_images/' . $image_name);
+                    $image = file_get_contents(env('FONUS_BASE_URL') . 'inv_images/brand_images/' . $image_name);
                     file_put_contents(storage_path('app/public/brand_images/' . $image_name), $image);
                     $brandData['image'] = $image_name;
                 }
@@ -103,7 +103,7 @@ class BrandSyncJob implements ShouldQueue
             $thumbnail_name = $Thumbnail->name;
             if (isset($thumbnail_name) && env('APP_ENV') != 'local') {
                 if (!file_exists(storage_path('app/public/device_images/' . $thumbnail_name))) {
-                    $thumbnail = file_get_contents('https://fonusaccessory.com/inv/inv_images/brand_images/' . $thumbnail_name);
+                    $thumbnail = file_get_contents(env('FONUS_BASE_URL') . 'inv_images/brand_images/' . $thumbnail_name);
                     file_put_contents(storage_path('app/public/brand_images/' . $thumbnail_name), $thumbnail);
                     $brandData['thumbnail_image'] = $thumbnail_name;
                 }
