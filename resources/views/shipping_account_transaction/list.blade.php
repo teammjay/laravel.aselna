@@ -209,10 +209,21 @@
                             </div>
                             <div class="col-8">
                                 <select class="form-control" name="status" id="status">
-                                    <option value=""></option>
-                                    <option value="pending">Pending</option>
-                                    <option value="completed">Completed</option>
-                                    <option value="failed">Failed</option>
+                                    <option value="">- - -</option>
+                                    <option value="Available for Pickup">Available for Pickup</option>
+                                    <option value="Customer Recall">Customer Recall</option>
+                                    <option value="Dead Letter">Dead Letter</option>
+                                    <option value="Delivered">Delivered</option>
+                                    <option value="Delivery Status Not Updated">Delivery Status Not Updated</option>
+                                    <option value="Forwarded to New Address">Forwarded to New Address</option>
+                                    <option value="New Item">New Item</option>
+                                    <option value="Notice Left for Recipient">Notice Left for Recipient</option>
+                                    <option value="Other">Other</option>
+                                    <option value="Out for Delivery">Out for Delivery</option>
+                                    <option value="Returned to Sender">Returned to Sender</option>
+                                    <option value="Scanned in Route">Scanned in Route</option>
+                                    <option value="Status not found">Status not found</option>
+                                    <option value="Undeliverable">Undeliverable</option>
                                 </select>
                             </div>
                         </div>
