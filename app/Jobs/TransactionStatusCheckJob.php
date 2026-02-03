@@ -269,7 +269,7 @@ class TransactionStatusCheckJob implements ShouldQueue
                         if(!empty($response['transaction_status'])) {
                             foreach ($response['transaction_status'] as $res_trans) {
                                 $transactionObj = AccountTransaction::where('tracking_number', $transaction)->first();
-
+                                $updateRecords = [];
                                 if(isset($res_trans['tracking_number']) && $res_trans['tracking_number'] == $transaction){
                                     $status = 'Other';
                                     $status_event = $res_trans['status'];
