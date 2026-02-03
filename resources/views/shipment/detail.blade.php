@@ -105,6 +105,7 @@
                     </select>
                 </div>
             </div>
+
             <div class="row mt-1 g-3 align-items-center">
                 <div class="col-md-4">
                     <label for="shipping_address">Shipping Address</label>
@@ -150,6 +151,15 @@
                 </div>
                 <div class="col-md-8">
                     <input type="text" class="form-control" id="store" name="store" value="{{ $shipmentDetail->store->name }} {{ (!empty((array)$shipmentDetail->store->storeType)) ? ' - '.$shipmentDetail->store->storeType->name : '' }}" readonly>
+                </div>
+            </div>
+
+            <div class="row mt-1 g-3 align-items-center">
+                <div class="col-md-4">
+                    <label for="store">Hold Shipment</label>
+                </div>
+                <div class="col-md-8">
+                    <input type="checkbox" id="hold_shipment" name="hold_shipment" @if($shipmentDetail->hold_shipment == 1) checked @endif>
                 </div>
             </div>
         </div>
