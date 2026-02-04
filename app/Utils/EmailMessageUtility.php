@@ -100,7 +100,7 @@ class EmailMessageUtility
 
                     if (!empty($attachments) && is_array($attachments)) {
                         foreach ($attachments as $attachment){
-                            if(file_exists($attachment)) {
+                            if(file_exists($attachment) && is_file($attachment)) {
                                 $m->attach($attachment);
                             }
                         }

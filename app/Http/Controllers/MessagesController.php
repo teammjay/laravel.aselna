@@ -649,10 +649,11 @@ class MessagesController extends Controller
         $returnAddress = $imageName = $imageUrl = $imagesPath = "";
         $orderDetail = [];
         if(isset($order_id) && $order_id != ''){
-            $orderDetail = Order::where('order_id',$order_id)->orWhere('purchase_order_id',$order_id)->first();
+            $orderDetail = Order::with('customer','customerAddress')->where('order_id',$order_id)->orWhere('purchase_order_id',$order_id)->first();
             if($orderDetail !=NULL){
                 $orderOperation = OrderOperation::where('order_id',$orderDetail->id)->orderBy('created_at','desc')->first();
                 $operation_id = $orderOperation->id;
+                $customer_name = (isset($orderDetail->customerAddress) && $orderDetail->customerAddress->first_name != '') ? $orderDetail->customerAddress->first_name : $orderDetail->customer->first_name;
             }
         }
 
@@ -927,7 +928,7 @@ class MessagesController extends Controller
 
                         $fullPath = storage_path('app/public/' . trim($path));
 
-                        if (file_exists($fullPath)) {
+                        if (file_exists($fullPath) && is_file($fullPath)) {
                             $filepath[] = $fullPath;
                         }
                     }
@@ -2100,7 +2101,7 @@ class MessagesController extends Controller
                 $files[] = [
                     'image_name'  => $file->getClientOriginalName(),
                     'image_url'   => $imageUrl,
-                    'imagesPath'  => 'labels/' . $imageName
+                    'imagesPath'  => storage_path('app/public/labels/' . $imageName)
                 ];
             }
         }
