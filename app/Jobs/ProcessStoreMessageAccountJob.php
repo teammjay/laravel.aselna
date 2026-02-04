@@ -122,6 +122,17 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
                                     }
                                 }
 
+                                if(isset($email['from']) && $email['from'] != ''){
+                                    $orderDetail = Order::with('customer', 'orderOperation')->where('buyer_email', trim($email['from']))->first();
+                                    if ($orderDetail) {
+                                        $order_id = $orderDetail->order_id;
+                                        $related_order_id = $orderDetail->id;
+                                        $store_id = $orderDetail->store_id;
+                                        $customer_id = isset($orderDetail->customer) ? $orderDetail->customer->id : NULL;
+                                        $order_operation_id = isset($orderDetail->orderOperation) ? $orderDetail->orderOperation->id : NULL;
+                                    }
+                                }
+
                                 if (isset($email['parsedData']['purchase_order_number'])) {
                                     $po_no = html_entity_decode($email['parsedData']['purchase_order_number']);
                                 }

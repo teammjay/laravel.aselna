@@ -172,7 +172,7 @@
                             @if($orderDetail->customerAddress->address_line_2 != '')
                                 {{ $orderDetail->customerAddress->address_line_2 }},<br>
                             @endif
-                            {{ $orderDetail->customerAddress->city}}, {{$orderDetail->customerAddress->state}} {{$orderDetail->customerAddress->zip}}
+                            {{ $orderDetail->customerAddress->city}}, {{ $orderDetail->customerAddress->state_code ?? $orderDetail->customerAddress->state}} {{$orderDetail->customerAddress->zip}}
                         </div>
                     </div>
                     <div class="row pt-2">

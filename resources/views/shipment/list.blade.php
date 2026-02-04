@@ -82,8 +82,8 @@
             margin-left: 5px;
             vertical-align: text-bottom;
         }
-        .bg-gray.bg-blue {
-            background-color: #007bff!important;
+        .bg-gray.bg-blue, .bg-pink.bg-blue {
+            background-color: #007bff !important;
         }
         .image-grid {
             display: grid;
@@ -1699,6 +1699,11 @@
                     table.cell(rowIndex, 2).data(operation.shipping_package);
 
                     $(rowNode).attr('data-onhold', operation.hold_shipment);
+                    if(operation.hold_shipment == 1){
+                        $(rowNode).addClass('bg-pink');
+                    }else{
+                        $(rowNode).removeClass('bg-pink');
+                    }
                 }
             });
 
@@ -1722,6 +1727,12 @@
                 table.cell(rowIndex, 2).data(operation.shipping_package);
 
                 $(rowNode).attr('data-onhold', operation.hold_shipment);
+
+                if(operation.hold_shipment == 1){
+                    $(rowNode).addClass('bg-pink');
+                }else{
+                    $(rowNode).removeClass('bg-pink');
+                }
 
                 if(operation.items){
                     var itemsStr = operation.items

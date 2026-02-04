@@ -23,8 +23,11 @@ class CustomerAddress extends Model
         'address_type',
         'address_line_1',
         'address_line_2',
+        'phone',
+        'email',
         'city',
         'state',
+        'state_code',
         'zip',
         'country',
         'country_code'
