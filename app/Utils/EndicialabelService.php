@@ -141,6 +141,10 @@ class EndicialabelService
                     $this->generateStampText($imagePath,$imageData, $shippingDetail['RubberStamp3']);
                 }
 
+                if (isset($shippingDetail['RubberStamp4'])){
+                    $this->generateStampText($imagePath,$imageData, $shippingDetail['RubberStamp4']);
+                }
+
                 $imageUrl = asset('storage/labels/' . $trackingNumber . '.txt');
                 Log::info('Label image saved to: ' . $imageUrl);
 
