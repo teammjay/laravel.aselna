@@ -920,7 +920,17 @@ class MessagesController extends Controller
                     ];*/
 
                     $imapConfig = [];
-                    $filepath = $imagepath;
+                    $filepath = [];
+                    $paths = explode(',', $imagepath);
+
+                    foreach ($paths as $path) {
+
+                        $fullPath = storage_path('app/public/' . trim($path));
+
+                        if (file_exists($fullPath)) {
+                            $filepath[] = $fullPath;
+                        }
+                    }
 
                     if ($prev_content != '' && (isset($ticketDetail->store->storeType->name) && strtolower($ticketDetail->store->storeType->name) == 'ebay')) {
                         Log::info("Email Previous Content" . $prev_content);
@@ -957,31 +967,36 @@ class MessagesController extends Controller
                         $hd_message = HDMessage::create($hdMessageData);
 
                         if ($filepath) {
+                            $image_names = explode('<br>', $imagepath);
+                            foreach ($paths as $key=>$path) {
 
-                            $extension = pathinfo($filepath, PATHINFO_EXTENSION);
-                            $fileSize = filesize($filepath);
-                            $filedata = [
-                                'name' => $imagename,
-                                'ext' => $extension ?: 'jpg', // Default to 'jpg' if missing
-                                'file_size' => $fileSize ?: 'Unknown', // Use 'Unknown' if not determined
-                                'location' => 'labels/',
-                                'created_by' => 'admin',
-                            ];
-
-                            $fileDetail = SysFile::create($filedata);
-                            $file_id = $fileDetail->id;
-
-                            if ($ticket_id && $file_id) {
-                                $attachementData = [
-                                    'client_id' => NULL,
-                                    'message_id' => $hd_message->id,
-                                    'attachment_id' => NULL,
-                                    'file_id' => $file_id,
+                                $extension = pathinfo($path, PATHINFO_EXTENSION);
+                                $fileSize = filesize($path);
+                                $filedata = [
+                                    'name' => $image_names[$key],
+                                    'ext' => $extension ?: 'jpg', // Default to 'jpg' if missing
+                                    'file_size' => $fileSize ?: 'Unknown', // Use 'Unknown' if not determined
+                                    'location' => 'labels/',
                                     'created_by' => 'admin',
                                 ];
 
-                                HdMessageAttachment::create($attachementData);
+                                $fileDetail = SysFile::create($filedata);
+                                $file_id = $fileDetail->id;
+
+                                if ($ticket_id && $file_id) {
+                                    $attachementData = [
+                                        'client_id' => NULL,
+                                        'message_id' => $hd_message->id,
+                                        'attachment_id' => NULL,
+                                        'file_id' => $file_id,
+                                        'created_by' => 'admin',
+                                    ];
+
+                                    HdMessageAttachment::create($attachementData);
+                                }
+
                             }
+
                         }
 
                         if ($ticket_status == 1) {
@@ -2058,16 +2073,44 @@ class MessagesController extends Controller
     public function imageUpload(Request $request){
 
         $request->validate([
-            'attach_file' => 'required|mimetypes:image/jpeg,image/png,application/pdf'
+            'attach_file.*' => 'required|mimetypes:image/jpeg,image/png,application/pdf'
         ]);
 
         $ticket_id= $request->input('ticket_id');
 
-        $imageName = time().'.'.$request->attach_file->extension();
+        $files = [];
+
+        if ($request->hasFile('attach_file')) {
+
+            foreach ($request->file('attach_file') as $file) {
+
+                $imageName = time() . '_' . uniqid() . '.' . $file->extension();
+
+                $path = storage_path('app/public/labels/');
+
+                // Create folder if not exists
+                if (!file_exists($path)) {
+                    mkdir($path, 0777, true);
+                }
+
+                $file->move($path, $imageName);
+
+                $imageUrl = asset('storage/labels/' . $imageName);
+
+                $files[] = [
+                    'image_name'  => $file->getClientOriginalName(),
+                    'image_url'   => $imageUrl,
+                    'imagesPath'  => 'labels/' . $imageName
+                ];
+            }
+        }
+
+
+        /*$imageName = time().'.'.$request->attach_file->extension();
         $storagePath = storage_path('app/public/labels/' . $imageName);
         $path = storage_path('app/public/labels/');
         $request->attach_file->move($path, $imageName);
-        $imageUrl = asset('storage/labels/' .$imageName );
+        $imageUrl = asset('storage/labels/' .$imageName );*/
 
         /*if ($imageName !== false) {
 
@@ -2106,9 +2149,10 @@ class MessagesController extends Controller
 
         return response()->json([
             'success' => true,
-            'image_name' => $imageName,
+            'files' => $files,
+            /*'image_name' => $imageName,
             'image_url' => $imageUrl,
-            'imagesPath' => $storagePath,
+            'imagesPath' => $storagePath,*/
         ]);
 
     }
