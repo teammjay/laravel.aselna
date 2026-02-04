@@ -10,7 +10,7 @@
                 }
             }
         @endphp
-        <tr data-id="{{ $shipment['oid'] }}" data-status="{{ $shipment['status'] }}" data-onhold="{{ $shipment['hold_shipment'] }}" class="shipment-row {{ ($moreQty > 0 || $shipment['status'] == 1) ? 'bg-red' : '' }} {{ ($shipment['status'] == 2) ? 'bg-warning' : '' }} {{ ($shipment['op_status'] == 3) ? 'bg-gray' : '' }} {{  ($shipment['carrier_service_name'] == 'Priority' || $shipment['carrier_service_name'] == 'Priority Express') ? 'bg-purple' : '' }}">
+        <tr data-id="{{ $shipment['oid'] }}" data-status="{{ $shipment['status'] }}" data-onhold="{{ $shipment['hold_shipment'] }}" class="shipment-row {{ ($moreQty > 0 || $shipment['status'] == 1) ? 'bg-red' : '' }} {{ ($shipment['status'] == 2) ? 'bg-warning' : '' }} {{ ($shipment['op_status'] == 3) ? 'bg-gray' : '' }} {{  ($shipment['carrier_service_name'] == 'Priority' || $shipment['carrier_service_name'] == 'Priority Express') ? 'bg-purple' : '' }} {{  ($shipment['hold_shipment'] == 1) ? 'bg-pink' : '' }}">
 
             {{--<td>
                 <button type="button" class="btn btn-warning show-detail" data-id="{{ $shipment['oid'] }}">Show Detail</button><input type="checkbox" class="pro-id" name="shipment_id[]" value="{{ $shipment['oid'] }}" style="visibility:hidden;">
