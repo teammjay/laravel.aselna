@@ -286,7 +286,7 @@
                                         </div>--}}
 
                                         <div class="col-md-8">
-                                            <input type="file" class="btn btn-default" name="attach_file" id="attach_file">
+                                            <input type="file" class="btn btn-default" name="attach_file" id="attach_file" multiple>
                                             <input type="hidden" id="image_url" value="">
                                             <input type="hidden" id="image_storage_path" value="">
                                             <div class="btn-group lableImageGroup hide" role="group">
@@ -1252,7 +1252,28 @@
 
             $(document).on('click','.download_image',function () {
                 let imgUrl = $('#image_url').val();
-                window.open(imgUrl, '_blank');
+
+                if (!imgUrl) {
+                    alert('No files to download');
+                    return;
+                }
+
+                let urls = imgUrl.split(',');
+
+                urls.forEach(function(url) {
+
+                    let a = document.createElement('a');
+                    a.href = url.trim();
+                    a.download = url.split('/').pop();   // filename
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+
+                });
+
+                /*urls.forEach(function(url) {
+                    window.open(url.trim(), '_blank');
+                });*/
             });
 
             $(document).on('click','.delete_images',function () {
@@ -1548,8 +1569,19 @@
             });
 
             $('#attach_file').on('change', function() {
+
+                let files = this.files;
+
+                if(files.length === 0){
+                    return;
+                }
+
                 let formData = new FormData();
-                formData.append('attach_file', this.files[0]);
+
+                for(let i = 0; i < files.length; i++){
+                    formData.append('attach_file[]', files[i]);
+                }
+                //formData.append('attach_file', this.files[0]);
                 formData.append('ticket_id', ticket_id);
 
                 $.ajax({
@@ -1563,16 +1595,54 @@
                     },
                     success: function(response) {
                         //alert(response.success);
-                        if(response.image_url){
+                        if(response.files){
+
+                            $('.lableImageGroup').removeClass('hide');
+
+                            let names = [];
+                            let urls = [];
+                            let paths = [];
+
+                            response.files.forEach(function(file){
+                                names.push(file.image_name);
+                                urls.push(file.image_url);
+                                paths.push(file.imagesPath);
+                            });
+
+                            $('#image_url').val(urls.join(','));
+                            $('#image_storage_path').val(paths.join(','));
+                            $('.lable-image').html(names.join('<br>'));
+
+                            $('#attach_file').val('');
+                        }
+                        /*if(response.image_url){
                             $('.lableImageGroup').removeClass('hide');
                             $('#image_url').val(response.image_url);
                             $('#image_storage_path').val(response.imagesPath);
                             $('.lable-image').html(response.image_name);
                             $('#attach_file').val('');
-                        }
+                        }*/
                     },
                     error: function(xhr) {
-                        alert('Upload failed');
+                        $('#attach_file').val('');
+                        if (xhr.status === 422) {
+
+                            let errors = xhr.responseJSON.errors;
+                            let messages = [];
+
+                            if (errors.attach_file) {
+                                messages = errors.attach_file;
+                            }
+
+                            if (errors['attach_file.0']) {
+                                messages = errors['attach_file.0'];
+                            }
+
+                            alert(messages.join('\n'));
+
+                        } else {
+                            alert('Upload failed. Please try again.');
+                        }
                     }
                 });
             });
