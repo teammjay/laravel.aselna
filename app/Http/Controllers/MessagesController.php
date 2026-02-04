@@ -928,7 +928,7 @@ class MessagesController extends Controller
 
                         $fullPath = storage_path('app/public/' . trim($path));
 
-                        if (file_exists($fullPath)) {
+                        if (file_exists($fullPath) && is_file($fullPath)) {
                             $filepath[] = $fullPath;
                         }
                     }
