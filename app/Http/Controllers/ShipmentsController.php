@@ -1042,6 +1042,16 @@ class ShipmentsController extends Controller
                 ]);
             }
 
+            if ($operation->hold_shipment == 1) {
+                return response()->json([
+                    'success' => false,
+                    'process_id' => $process_id,
+                    'order_id' => $order_id,
+                    'status' => 'error',
+                    'message' => 'Skipping, Shipment is on hold for this order operation'
+                ]);
+            }
+
             $store = $operation->store;
 
             $package_id = '';
