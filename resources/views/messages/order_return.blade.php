@@ -189,7 +189,7 @@
                                                 {{ $shipmentDetail->order->customerAddress->address_line_2 }},<br>
                                             @endif
                                             {{$shipmentDetail->order->customerAddress->city}},
-                                            {{$shipmentDetail->order->customerAddress->state}} {{$shipmentDetail->order->customerAddress->zip}}
+                                            {{ $shipmentDetail->order->customerAddress->state_code ?? $shipmentDetail->order->customerAddress->state }} {{$shipmentDetail->order->customerAddress->zip}}
                                         </a>
                                     @endif
                                 </div>

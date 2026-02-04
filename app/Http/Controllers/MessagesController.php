@@ -2204,7 +2204,9 @@ class MessagesController extends Controller
             if(isset($orderOperation->order->customerAddress->city) && $orderOperation->order->customerAddress->city != ''){
                 $shipmentAddress .= trim($orderOperation->order->customerAddress->city);
             }
-            if(isset($orderOperation->order->customerAddress->state) && $orderOperation->order->customerAddress->state != ''){
+            if(isset($orderOperation->order->customerAddress->state_code) && $orderOperation->order->customerAddress->state_code != ''){
+                $shipmentAddress .= ', '.trim($orderOperation->order->customerAddress->state_code);
+            }else if(isset($orderOperation->order->customerAddress->state) && $orderOperation->order->customerAddress->state != ''){
                 $shipmentAddress .= ', '.trim($orderOperation->order->customerAddress->state);
             }
             if(isset($orderOperation->order->customerAddress->zip) && $orderOperation->order->customerAddress->zip != ''){

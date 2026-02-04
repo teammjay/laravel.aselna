@@ -216,7 +216,8 @@
                                                 {{ $orderDetail->customerAddress->address_line_2 }},<br>
                                             @endif
                                             {{ $orderDetail->customerAddress->city}}
-                                            , {{$orderDetail->customerAddress->state}} {{$orderDetail->customerAddress->zip}}
+                                            , {{ $orderDetail->customerAddress->state_code ?? $orderDetail->customerAddress->state }} {{$orderDetail->customerAddress->zip}}
+                                        </a>
                                         </a>
                                     @elseif(isset($orderDetail->customer->addresse))
                                         <a href="javascript:void(0);" class="text-blue" id="edit_address"
@@ -228,7 +229,7 @@
                                                 {{ $orderDetail->customer->addresse->address_line_2 }},<br>
                                             @endif
                                             {{ $orderDetail->customer->addresse->city}}
-                                            , {{ $orderDetail->customer->addresse->state }} {{ $orderDetail->customer->addresse->zip }}
+                                            , {{ $orderDetail->customer->addresse->state_code ?? $orderDetail->customer->addresse->state  }} {{ $orderDetail->customer->addresse->zip }}
                                         </a>
                                     @endif
                                 </div>
@@ -308,7 +309,7 @@
                                             @if($orderDetail->customerAddress->address_line_2 != '')
                                                 {{ $orderDetail->customerAddress->address_line_2 }},<br>
                                             @endif
-                                            {{ $orderDetail->customerAddress->city}}, {{$orderDetail->customerAddress->state}} {{$orderDetail->customerAddress->zip}}
+                                            {{ $orderDetail->customerAddress->city}}, {{ $orderDetail->customerAddress->state_code ?? $orderDetail->customerAddress->state }} {{$orderDetail->customerAddress->zip}}
                                         </div>
                                     </div>
                                     <div class="row pt-3">
