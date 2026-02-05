@@ -121,6 +121,15 @@ class OrdersController extends Controller
 
         }
 
+        if ($request->has('buyer_email') && $request->buyer_email != '') {
+
+            $query->where(function ($q) use ($request) {
+                $q->whereRelation('customer', 'email', '=', $request->buyer_email)
+                    ->orWhere('buyer_email', '=', $request->buyer_email);
+            });
+
+        }
+
         if ($request->has('customer_email') && $request->customer_email != '') {
 
             $query->where(function ($q) use ($request) {
