@@ -1184,6 +1184,8 @@
             });
 
             loadDatatables();
+        }else{
+            loadDatatables();
         }
     });
 
