@@ -19,6 +19,7 @@ use App\Jobs\Fonus\ProductChannelSyncJob;
 use App\Jobs\Fonus\ProductcolorSyncJob;
 use App\Jobs\Fonus\ProductInterfacesSyncJob;
 use App\Jobs\Fonus\ProductKeyFeaturesSyncJob;
+use App\Jobs\Fonus\ProductSpecificationsSyncJob;
 use App\Jobs\Fonus\ProductSyncJob;
 use App\Jobs\Fonus\ProductTitleKeyword;
 use App\Jobs\ProductAlternativeImagesSyncJob;
@@ -73,6 +74,7 @@ class FonusCombinedSyncJob implements ShouldQueue
                 new PopularDevicesSyncJob(), // DONE
                 new ProductImagesSyncJob(), // DONE
                 new ProductAlternativeImagesSyncJob(), // DONE
+                new ProductSpecificationsSyncJob()
             ];
 
             foreach ($chain as $job) {

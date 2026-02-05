@@ -992,7 +992,7 @@
             }
         });
 
-        loadDatatables();
+        //loadDatatables();
 
         $(document).on('click', '#sync_price', function() {
             let selected_list = [];
@@ -1183,6 +1183,8 @@
 
             });
 
+            loadDatatables();
+        }else{
             loadDatatables();
         }
     });
