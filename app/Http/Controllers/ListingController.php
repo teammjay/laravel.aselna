@@ -116,86 +116,105 @@ class ListingController extends Controller
         $columnName = $request['columns'][$columnIndex]['data'] ?? 'created_at';
         $columnSortOrder = $request['order'][0]['dir'] ?? 'desc';
 
-        // 1. Base Query with Joins (instead of EXISTS/whereRelation)
-        $query = ListingItem::query()
-            ->select([
-                'listing_item.*', // Select all or specific columns
-                'products.product_sku as p_sku',
-                'products.dimensions_width as p_width',
-                'product_color.name as color_name',
-                'store.name as store_name',
-                'store_type.name as store_type_name',
-                'listing_generation_type.name as gen_name'
-            ])
-            // Join relationships to avoid N+1 and slow EXISTS queries
-            ->join('store_product', 'listing_item.store_product_id', '=', 'store_product.id')
-            ->join('products', 'store_product.product_id', '=', 'products.product_id')
-            ->leftJoin('store', 'store_product.store_id', '=', 'store.id')
-            ->leftJoin('store_type', 'store.store_type_id', '=', 'store_type.id')
-            ->leftJoin('product_color', 'products.product_color', '=', 'product_color.id')
-            ->leftJoin('listing_generation_type', 'listing_item.generation_type_id', '=', 'listing_generation_type.code')
-            ->leftJoin('manufacturer', 'listing_item.manufacturer_id', '=', 'manufacturer.id');
+        $shadowQuery = ListingItem::query();
 
-        // 2. Optimized Filtering
-        $query->when($request->store_id, fn($q, $v) => $q->where('store_product.store_id', $v));
-        $query->when($request->product_status, fn($q, $v) => $q->where('products.product_status', $v));
-        $query->when($request->product_type, fn($q, $v) => $q->where('products.product_type', $v));
-        $query->when($request->listing_status, fn($q, $v) => $q->where('listing_item.status', $v));
-        $query->when($request->quantity, fn($q, $v) => $q->where('listing_item.quantity', $v));
+        // Determine minimal joins needed for FILTERING and SORTING only
+            $needsProducts = $request->filled('product_status') || $request->filled('product_type') || $request->filled('product_code')
+                || in_array($columnName, ['product_sku', 'product_size']);
+            $needsStore = $request->filled('store_id') || $columnName === 'store_name';
 
-        // Custom QueryFilters (Ensure these use table aliases like 'products.sku' not just 'sku')
-        QueryFilters::applyFilter($query, $request, 'listing_item.sku', 'sku_operator', 'sku');
-        QueryFilters::applyFilter($query, $request, 'products.product_sku', 'product_code_operator', 'product_code');
+        Log::info(' Needs Products: ' . ($needsProducts ? 'Yes' : 'No') . ', Needs Store: ' . ($needsStore ? 'Yes' : 'No'));
 
-        // 3. Optimized Sorting
+        if ($needsProducts || $needsStore) {
+            $shadowQuery->join('store_product', 'listing_item.store_product_id', '=', 'store_product.id');
+        }
+        if ($needsProducts) {
+            $shadowQuery->join('products', 'store_product.product_id', '=', 'products.product_id');
+        }
+        if ($needsStore) {
+            $shadowQuery->leftJoin('store', 'store_product.store_id', '=', 'store.id');
+        }
+
+        $shadowQuery->when($request->store_id, fn($q, $v) => $q->where('store_product.store_id', $v));
+        $shadowQuery->when($request->product_status, fn($q, $v) => $q->where('products.product_status', $v));
+        $shadowQuery->when($request->product_type, fn($q, $v) => $q->where('products.product_type', $v));
+        $shadowQuery->when($request->listing_status, fn($q, $v) => $q->where('listing_item.status', $v));
+        $shadowQuery->when($request->quantity, fn($q, $v) => $q->where('listing_item.quantity', $v));
+
+        QueryFilters::applyFilter($shadowQuery, $request, 'listing_item.sku', 'sku_operator', 'sku');
+        QueryFilters::applyFilter($shadowQuery, $request, 'products.product_sku', 'product_code_operator', 'product_code');
+        QueryFilters::applyFilter($shadowQuery, $request, 'listing_item.title', 'title_operator', 'title');
+        QueryFilters::applyFilter($shadowQuery, $request, 'listing_item.price', 'price_operator', 'price');
+        QueryFilters::applyFilter($shadowQuery, $request, 'listing_item.id', 'id_operator', 'id');
+        QueryFilters::applyFilter($shadowQuery, $request, 'listing_item.sales_count', 'sales_count_operator', 'sales_count');
+        QueryFilters::applyFilter($shadowQuery, $request, 'listing_item.manufacturer_id', 'manufacturer_operator', 'manufacturer');
+        QueryFilters::applyFilter($shadowQuery, $request, 'listing_item.sync_message', 'sync_message_operator', 'sync_message');
+        QueryFilters::applyFilter($shadowQuery, $request, 'listing_item.upc', 'upc_operator', 'upc');
+        QueryFilters::applyFilter($shadowQuery, $request, 'listing_item.store_sku', 'store_sku_operator', 'store_sku');
+        QueryFilters::applyFilter($shadowQuery, $request, 'listing_item.sync_status', 'sync_status_operator', 'sync_status');
+
+        // Apply Sorting
         $sortableColumns = [
             'product_sku'  => 'products.product_sku',
             'store_name'   => 'store.name',
-            'product_size' => 'products.dimensions_width',
             'created_at'   => 'listing_item.created_at',
-            'qty'          => 'listing_item.quantity',
-            'price'        => 'listing_item.price'
         ];
-
         $sortColumn = $sortableColumns[$columnName] ?? 'listing_item.' . $columnName;
-        $query->orderBy($sortColumn, $columnSortOrder);
+        $shadowQuery->orderBy($sortColumn, $columnSortOrder);
 
-        //echo $query->toRawSql();die;
+        // Get only the IDs and total count
+        $paginator = $shadowQuery->paginate($perPage, ['listing_item.id'], 'page', floor($start / $perPage) + 1);
+        $ids = $paginator->pluck('id')->toArray();
 
-        // 4. Execution (Pagination)
-        $products = $query->paginate($perPage, ['*'], 'page', floor($start / $perPage) + 1);
+        $items = ListingItem::with([
+            'storeProduct.product.color',
+            'storeProduct.store.storeType',
+            'generationType',
+            'manufacturer'
+        ])
+            ->whereIn('id', $ids)
+//            ->orderByRaw('FIELD(id, ' . implode(',', $ids) . ')')
+            ->get();
 
-        // 5. Build Data (Cleaner Loop)
         $data = [];
-        foreach ($products as $item) {
-            $data[] = [
-                "sku" => $item->sku . '<input type="checkbox" class="proList" name="listing_item[]" data-sku="' . $item->sku . '" data-code="' . $item->p_sku . '" value="' . $item->id . '" style="visibility:hidden;">',
-                "sales_count" => $item->sales_count ?? 0,
-                "last_sale_date" => $item->last_sale_date ?? '',
-                "store_sku" => $item->store_sku,
-                "product_sku" => $item->p_sku,
-                "store_name" => $item->store_name . ($item->store_type_name ? ' - ' . $item->store_type_name : ''),
-                "title" => Str::limit($item->title, 50),
-                "status" => ListingStatus::getListingStatusName($item->status),
-                "product_size" => $item->p_width,
-                "product_color" => $item->color_name,
-                "sync_status" => ListingSyncStatus::getListingSyncStatusName($item->sync_status),
-                "generation_type_name" => $item->gen_name,
-                "price" => $item->price,
-                "qty" => $item->quantity,
-                "upc" => $item->upc,
-                "manufacturer" => $item->manufacturer_name ?? '',
-                "created_at" => $item->created_at->format('Y-m-d H:i:s'),
-                "listing_id" => $item->id,
-                "title_url" => ListingUtility::generateTitleUrlOptimised($item->store_type_name,$item->store_sku),
-                "sync_count" => '',
-            ];
+        foreach ($items as $product) {
+            if (!empty((array)$product->storeProduct) && !empty((array)$product->storeProduct->product)) {
+                $productcode = $product->storeProduct->product->product_sku;
+            } else {
+                $productcode = '';
+            };
+
+            $data[] = array(
+                "sku" => $product->sku . '<input type="checkbox" class="proList" name="listing_item[]" data-sku="' . $product->sku . '" data-code="' . $productcode . '" value="' . $product->id . '" style="visibility:hidden;">',
+                "sales_count" => $product->sales_count ?? 0,
+                "last_sale_date" => $product->last_sale_date ?? '',
+                "store_sku" => $product->store_sku,
+                "product_sku" => (!empty((array)$product->storeProduct) && !empty((array)$product->storeProduct->product)) ? $product->storeProduct->product->product_sku : '',
+                "store_name" => ((!empty((array)$product->storeProduct) && !empty((array)$product->storeProduct->store)) ? $product->storeProduct->store->name : '') . ((!empty((array)$product->storeProduct) && !empty((array)$product->storeProduct->store) && !empty((array)$product->storeProduct->store->storeType)) ? ' - ' . $product->storeProduct->store->storeType->name : ''),
+                "title" => strlen($product->title) > 50 ? substr($product->title, 0, 50) . "..." : $product->title,
+                "status" => ListingStatus::getListingStatusName($product->status),
+                "product_size" => (!empty((array)$product->storeProduct) && !empty((array)$product->storeProduct->product)) ? $product->storeProduct->product->dimensions_width : '',
+                "product_color" => (isset($product->storeProduct->product) && !empty((array)$product->storeProduct->product->color) && !empty((array)$product->storeProduct->product->color)) ? $product->storeProduct->product->color->name : '',
+                "sync_status" => ListingSyncStatus::getListingSyncStatusName($product->sync_status),
+                "generation_type_name" => (!empty($product->generationType)) ? $product->generationType->name : '',
+                "price" => $product->price,
+                "qty" => $product->quantity,
+                "upc" => $product->upc,
+                "manufacturer" => (isset($product->manufacturer)) ? $product->manufacturer->name : '',
+                "created_at" => date('Y-m-d H:i:s', strtotime($product->created_at)),
+                "title_url" => ListingUtility::generateTitleUrl($product),
+                "sync_count" => $product->sync_count,
+                "listing_id" => $product->id
+                /*"action" => '<a href="'.route('listing.edit', $product->id).'" class="btn btn-primary">
+                                <i class="fas fa-fw fa-pencil-alt"></i>
+                            </a>',*/
+            );
         }
 
         return response()->json([
             "draw" => intval($draw),
-            "iTotalRecords" => $products->total(),
-            "iTotalDisplayRecords" => $products->total(),
+            "iTotalRecords" => $paginator->total(),
+            "iTotalDisplayRecords" => $paginator->total(),
             "aaData" => $data
         ]);
     }
