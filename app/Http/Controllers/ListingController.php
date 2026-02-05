@@ -122,7 +122,26 @@ class ListingController extends Controller
         $columnSortOrder = $request['order'][0]['dir'];
 
         // add select
-        $query = ListingItem::select('listing_item.*')->with([
+        $query = ListingItem::query()
+            ->select([
+                'listing_item.id',
+                'listing_item.sku',
+                'listing_item.title',
+                'listing_item.price',
+                'listing_item.quantity',
+                'listing_item.status',
+                'listing_item.sync_status',
+                'listing_item.store_product_id',
+                'listing_item.created_at',
+                'listing_item.last_sale_date',
+                'listing_item.sales_count',
+                'listing_item.store_sku',
+                'listing_item.upc',
+                'listing_item.manufacturer_id',
+                'listing_item.device_id',
+                'listing_item.brand_id',
+            ])
+            ->with([
             'storeProduct:id,store_id,product_id',
             'storeProduct.store.storeType:id,name',
             'storeProduct.store:id,name,store_type_id',
@@ -133,7 +152,23 @@ class ListingController extends Controller
             'manufacturer:id,name'
         ]);
 
-        if ($request->has('store_id') && $request->store_id != '') {
+        $query->when($request->store_id, fn($q,$v) =>
+            $q->whereRelation('storeProduct','store_id',$v)
+        );
+
+        $query->when($request->product_status, fn($q,$v) =>
+            $q->whereRelation('storeProduct.product','product_status',$v)
+        );
+
+        $query->when($request->product_type, fn($q,$v) =>
+            $q->whereRelation('storeProduct.product','product_type',$v)
+        );
+
+        $query->when($request->device_type, fn($q,$v) =>
+            $q->whereRelation('device.deviceType','id',$v)
+        );
+
+        /*if ($request->has('store_id') && $request->store_id != '') {
             $query->whereRelation('storeProduct', 'store_id', $request->store_id);
         }
 
@@ -149,7 +184,7 @@ class ListingController extends Controller
         // Filter by device type
         if ($request->has('device_type') && $request->device_type != '') {
             $query->whereRelation('device.deviceType', 'id', $request->device_type);
-        }
+        }*/
 
         // Filter by product code
         QueryFilters::applyRelationFilter($query, $request, 'storeProduct.product', 'product_sku', 'product_code_operator', 'product_code');
@@ -188,8 +223,32 @@ class ListingController extends Controller
         QueryFilters::applyFilter($query, $request, 'listing_item.sync_status', 'sync_status_operator', 'sync_status');
 
 
+        $query->when($request->device, fn($q,$v) =>
+            $q->where('listing_item.device_id',$v)
+        );
+
+        $query->when($request->device_brand, fn($q,$v) =>
+            $q->where('listing_item.brand_id',$v)
+        );
+
+        $query->when($request->quantity, fn($q,$v) =>
+            $q->where('listing_item.quantity',$v)
+        );
+
+        $query->when($request->created_at, fn($q,$v) =>
+            $q->where('listing_item.created_at',$v)
+        );
+
+        $query->when($request->last_sale_date, fn($q,$v) =>
+            $q->where('listing_item.last_sale_date',$v)
+        );
+
+        $query->when($request->status, fn($q,$v) =>
+            $q->where('listing_item.status',$v)
+        );
+
         // Filter by device
-        if ($request->has('device') && $request->device != '') {
+        /*if ($request->has('device') && $request->device != '') {
             $query->where('listing_item.device_id', $request->device);
         }
 
@@ -216,32 +275,41 @@ class ListingController extends Controller
         // Filter by product status
         if ($request->has('listing_status') && $request->listing_status != '') {
             $query->where('listing_item.status', $request->listing_status);
-        }
+        }*/
 
 
         if ($columnName != '') {
             switch (strtolower($columnName)) {
                 case 'product_sku':
 
-                    $query->join('store_product', 'store_product.id', '=', 'listing_item.store_product_id')
+                    $query->orderByRelation('storeProduct.product.product_sku', $columnSortOrder);
+
+                    /*$query->join('store_product', 'store_product.id', '=', 'listing_item.store_product_id')
                         ->join('products', 'products.product_id', '=', 'store_product.product_id')
-                        ->orderBy('products.product_sku', $columnSortOrder);
+                        ->orderBy('products.product_sku', $columnSortOrder);*/
                     break;
                 case 'product_size':
 
-                    $query->join('store_product', 'store_product.id', '=', 'listing_item.store_product_id')
+                    $query->orderByRelation('storeProduct.product.dimensions_width', $columnSortOrder);
+
+                    /*$query->join('store_product', 'store_product.id', '=', 'listing_item.store_product_id')
                         ->join('products', 'products.product_id', '=', 'store_product.product_id')
-                        ->orderBy('products.dimensions_width', $columnSortOrder);
+                        ->orderBy('products.dimensions_width', $columnSortOrder);*/
                     break;
                 case 'product_color':
-                    $query->join('store_product', 'store_product.id', '=', 'listing_item.store_product_id')
+
+                    $query->orderByRelation('storeProduct.product.product_color', $columnSortOrder);
+
+                    /*$query->join('store_product', 'store_product.id', '=', 'listing_item.store_product_id')
                         ->join('products', 'products.product_id', '=', 'store_product.product_id')
-                        ->orderBy('products.product_color', $columnSortOrder);
+                        ->orderBy('products.product_color', $columnSortOrder);*/
                     break;
                 case 'store_name':
-                    $query->join('store_product', 'store_product.id', '=', 'listing_item.store_product_id')
+                    $query->orderByRelation('storeProduct.store.name', $columnSortOrder);
+
+                    /*$query->join('store_product', 'store_product.id', '=', 'listing_item.store_product_id')
                         ->join('store', 'store_product.store_id', '=', 'store.id')
-                        ->orderBy('store.name', $columnSortOrder);
+                        ->orderBy('store.name', $columnSortOrder);*/
                     break;
                 case 'generation_type_name':
                     $query->join('listing_generation_type', 'listing_generation_type.code', '=', 'listing_item.generation_type_id')
@@ -250,7 +318,7 @@ class ListingController extends Controller
             }
 
             //$totalRecords = $query->count();
-            $totalRecords = (clone $query)->toBase()->getCountForPagination();
+            //$totalRecords = (clone $query)->toBase()->getCountForPagination();
             $sortableColumns = [
                 'sku' => 'sku',
                 'sales_count' => 'sales_count',
@@ -284,7 +352,8 @@ class ListingController extends Controller
             ->take($perPage)
             ->get();*/
         $products = $query->paginate($perPage, ['*'], 'page', floor($start / $perPage) + 1);
-        $totalRecordwithFilter = $totalRecords;
+        //$totalRecordwithFilter = $totalRecords;
+        $totalRecordwithFilter = $products->total();
 //        echo $query->toSql();die;
         //dd(DB::getQueryLog());
 
