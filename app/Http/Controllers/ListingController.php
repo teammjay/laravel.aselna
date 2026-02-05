@@ -243,7 +243,7 @@ class ListingController extends Controller
             $q->where('listing_item.last_sale_date',$v)
         );
 
-        $query->when($request->status, fn($q,$v) =>
+        $query->when($request->listing_status, fn($q,$v) =>
             $q->where('listing_item.status',$v)
         );
 
