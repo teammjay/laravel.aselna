@@ -279,6 +279,16 @@
                                         </div>
                                     </div>
                                 </div>
+                                <div class="col-md-4">
+                                    <div class="row">
+                                        <div class="col-4 text-right">
+                                            Buyer Email
+                                        </div>
+                                        <div class="col-8">
+                                            <input type="text" name="buyer_email" id="buyer_email" class="form-control">
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
                             <div class="row pt-3">
