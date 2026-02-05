@@ -208,7 +208,7 @@ class EndicialabelService
             // Remove the last line from the array
 
             // Add the text to the second last line
-            $lines[] = '^FO30,1016^FB507,2,3,L,0^A0N,30,30^FD';
+            $lines[] = '^FO30,1016^FB507,5,3,L,0^A0N,30,30^FD';
             $lines[] = ' ' . $text;
             $lines[] = '^FS';
 
