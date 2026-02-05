@@ -136,6 +136,25 @@ class ListingUtility
         }
     }
 
+    public static function generateTitleUrlOptimised($store_type_name, $store_sku): string
+    {
+        //Log::info("Product: " . json_encode($product));
+        if (isset($store_type_name)) {
+            return match (strtolower($store_type_name)) {
+                "ebay" => "https://www.ebay.com/itm/" . $store_sku . "/" . $store_sku,
+                "amazon" => "https://www.amazon.com/dp/" . $store_sku,
+//                "shopify" => "https://" . $product->store_sku . "/products/" . $product->store_sku,
+//                "magento" => "https://" . $product->store_sku . "/product/" . $product->store_sku,
+                "walmart" => "https://www.walmart.com/ip/" . $store_sku,
+                "newegg" => "https://www.newegg.com/p/" . $store_sku,
+                "temu" => "https://www.temu.com/goods.html?goods_id=" . $store_sku,
+                default => "",
+            };
+        } else {
+            return "";
+        }
+    }
+
 
     public static function generateItemUrl($store_type, $store_sku = '', $site_url = '', $store_url = '', $collection_url = null): string
     {

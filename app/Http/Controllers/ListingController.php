@@ -107,10 +107,103 @@ class ListingController extends Controller
         return view('listing.inactive', compact('stores', 'device_types', 'product_types', 'manufacturers', 'devices', 'brands'))->with('perPage', $this->perPage);
     }
 
+    public function filter(Request $request)
+    {
+        $draw = $request['draw'];
+        $start = $request['start'] ?? 0;
+        $perPage = $request['length'] ?? 10;
+        $columnIndex = $request['order'][0]['column'] ?? 0;
+        $columnName = $request['columns'][$columnIndex]['data'] ?? 'created_at';
+        $columnSortOrder = $request['order'][0]['dir'] ?? 'desc';
+
+        // 1. Base Query with Joins (instead of EXISTS/whereRelation)
+        $query = ListingItem::query()
+            ->select([
+                'listing_item.*', // Select all or specific columns
+                'products.product_sku as p_sku',
+                'products.dimensions_width as p_width',
+                'product_color.name as color_name',
+                'store.name as store_name',
+                'store_type.name as store_type_name',
+                'listing_generation_type.name as gen_name'
+            ])
+            // Join relationships to avoid N+1 and slow EXISTS queries
+            ->join('store_product', 'listing_item.store_product_id', '=', 'store_product.id')
+            ->join('products', 'store_product.product_id', '=', 'products.product_id')
+            ->leftJoin('store', 'store_product.store_id', '=', 'store.id')
+            ->leftJoin('store_type', 'store.store_type_id', '=', 'store_type.id')
+            ->leftJoin('product_color', 'products.product_color', '=', 'product_color.id')
+            ->leftJoin('listing_generation_type', 'listing_item.generation_type_id', '=', 'listing_generation_type.code')
+            ->leftJoin('manufacturer', 'listing_item.manufacturer_id', '=', 'manufacturer.id');
+
+        // 2. Optimized Filtering
+        $query->when($request->store_id, fn($q, $v) => $q->where('store_product.store_id', $v));
+        $query->when($request->product_status, fn($q, $v) => $q->where('products.product_status', $v));
+        $query->when($request->product_type, fn($q, $v) => $q->where('products.product_type', $v));
+        $query->when($request->listing_status, fn($q, $v) => $q->where('listing_item.status', $v));
+        $query->when($request->quantity, fn($q, $v) => $q->where('listing_item.quantity', $v));
+
+        // Custom QueryFilters (Ensure these use table aliases like 'products.sku' not just 'sku')
+        QueryFilters::applyFilter($query, $request, 'listing_item.sku', 'sku_operator', 'sku');
+        QueryFilters::applyFilter($query, $request, 'products.product_sku', 'product_code_operator', 'product_code');
+
+        // 3. Optimized Sorting
+        $sortableColumns = [
+            'product_sku'  => 'products.product_sku',
+            'store_name'   => 'store.name',
+            'product_size' => 'products.dimensions_width',
+            'created_at'   => 'listing_item.created_at',
+            'qty'          => 'listing_item.quantity',
+            'price'        => 'listing_item.price'
+        ];
+
+        $sortColumn = $sortableColumns[$columnName] ?? 'listing_item.' . $columnName;
+        $query->orderBy($sortColumn, $columnSortOrder);
+
+        //echo $query->toRawSql();die;
+
+        // 4. Execution (Pagination)
+        $products = $query->paginate($perPage, ['*'], 'page', floor($start / $perPage) + 1);
+
+        // 5. Build Data (Cleaner Loop)
+        $data = [];
+        foreach ($products as $item) {
+            $data[] = [
+                "sku" => $item->sku . '<input type="checkbox" class="proList" name="listing_item[]" data-sku="' . $item->sku . '" data-code="' . $item->p_sku . '" value="' . $item->id . '" style="visibility:hidden;">',
+                "sales_count" => $item->sales_count ?? 0,
+                "last_sale_date" => $item->last_sale_date ?? '',
+                "store_sku" => $item->store_sku,
+                "product_sku" => $item->p_sku,
+                "store_name" => $item->store_name . ($item->store_type_name ? ' - ' . $item->store_type_name : ''),
+                "title" => Str::limit($item->title, 50),
+                "status" => ListingStatus::getListingStatusName($item->status),
+                "product_size" => $item->p_width,
+                "product_color" => $item->color_name,
+                "sync_status" => ListingSyncStatus::getListingSyncStatusName($item->sync_status),
+                "generation_type_name" => $item->gen_name,
+                "price" => $item->price,
+                "qty" => $item->quantity,
+                "upc" => $item->upc,
+                "manufacturer" => $item->manufacturer_name ?? '',
+                "created_at" => $item->created_at->format('Y-m-d H:i:s'),
+                "listing_id" => $item->id,
+                "title_url" => ListingUtility::generateTitleUrlOptimised($item->store_type_name,$item->store_sku),
+                "sync_count" => '',
+            ];
+        }
+
+        return response()->json([
+            "draw" => intval($draw),
+            "iTotalRecords" => $products->total(),
+            "iTotalDisplayRecords" => $products->total(),
+            "aaData" => $data
+        ]);
+    }
+
     /**
      * Filter listing.
      */
-    public function filter(Request $request)
+    public function filterbkp(Request $request)
     {
 
         //DB::enableQueryLog();
@@ -340,7 +433,7 @@ class ListingController extends Controller
         }
 
         //$productsRecord = $query->paginate($perPage); // Paginate results
-//        echo $query->toSql();die;
+        //echo $query->toRawSql();die;
         //$products = $query->skip($start)->take($perPage)->get(); // Paginate results
 
         /*echo '<pre>';
