@@ -278,6 +278,31 @@
     </div>
     <div id="ajax-gallery" style="display: none;"></div>
 
+    <div class="modal fade" id="createMessageModal">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="ecreateMessageModalLabel">Create Message</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-2 text-right">
+                            Subject
+                        </div>
+                        <div class="col-10">
+                            <input type="hidden" id="sel_order_id">
+                            <input type="text" class="form-control" id="message_title" placeholder="Enter message subject/title">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancle</button>
+                    <button type="button" class="btn btn-primary" id="saveTicket"><i class="fa fa-check"></i> Create Message</button>
+                </div>
+            </div>
+        </div>
+    </div>
 @stop
 
 @section('adminlte_js')
@@ -345,7 +370,36 @@
                     if ($(this).is(':checked')) {
                         flag = false;
                         let selectedId = $(this).val();
-                        location.href = "{{ url('orders/create_message') }}/" + selectedId;
+                        $('#sel_order_id').val(selectedId);
+                        $('#createMessageModal').modal('show');
+                        //location.href = "{{ url('orders/create_message') }}/" + selectedId;
+                    }
+                });
+            });
+
+            $('#saveTicket').on('click', function () {
+                let selectedId = $('#sel_order_id').val();
+                let subject = $('#message_title').val();
+                $.ajax({
+                    url: '{{ route('order.create_message') }}',
+                    method: 'POST',
+                    data: {
+                        order_id: selectedId,
+                        subject: subject,
+                        "_token": '{{ csrf_token() }}'
+                    },
+                    success: function (response) {
+                        if(response.success){
+                            if(response.url != '') {
+                                $('#createMessageModal').modal('hide');
+                                location.href = response.url;
+                            }
+                        }else{
+                            alert('Something went wrong while create message. Please try again later!');
+                        }
+                    },
+                    error: function () {
+                        alert('Something went wrong while create message. Please try again later!');
                     }
                 });
             });
