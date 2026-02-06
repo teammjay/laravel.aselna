@@ -297,7 +297,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancle</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancle</button>
                     <button type="button" class="btn btn-primary" id="saveTicket"><i class="fa fa-check"></i> Create Message</button>
                 </div>
             </div>
