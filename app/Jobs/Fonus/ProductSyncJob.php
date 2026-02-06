@@ -75,6 +75,8 @@ class ProductSyncJob implements ShouldQueue
         }
         Log::info("Syncing Product :: " . $product->custom_label);
         Log::info('Product status id :: ' . $product->status_id);
+        $alreadyExists = Catalog::select('updated_at','product_id','product_sku')->where('product_code', $product->product_id)->first();
+
 
         $manufacturer = Manufacturer::where('code', $product->manufacturer_id)->first();
         $mainImage = null;
@@ -90,7 +92,6 @@ class ProductSyncJob implements ShouldQueue
 
             Log::error('ProductImagesSyncJob: ' . $e->getMessage());
         }
-        $this->syncProductKeyFeatures($product, $alreadyExists);
 
         Catalog::updateOrCreate(
             ['product_code' => $product->product_id],
@@ -136,6 +137,8 @@ class ProductSyncJob implements ShouldQueue
                 'updated_by' => 'system',
             ]
         );
+
+        $this->syncProductKeyFeatures($product, $alreadyExists);
     }
 
     private function syncProductKeyFeatures($product,$aselnaProduct)
