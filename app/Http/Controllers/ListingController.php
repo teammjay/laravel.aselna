@@ -107,10 +107,122 @@ class ListingController extends Controller
         return view('listing.inactive', compact('stores', 'device_types', 'product_types', 'manufacturers', 'devices', 'brands'))->with('perPage', $this->perPage);
     }
 
+    public function filter(Request $request)
+    {
+        $draw = $request['draw'];
+        $start = $request['start'] ?? 0;
+        $perPage = $request['length'] ?? 10;
+        $columnIndex = $request['order'][0]['column'] ?? 0;
+        $columnName = $request['columns'][$columnIndex]['data'] ?? 'created_at';
+        $columnSortOrder = $request['order'][0]['dir'] ?? 'desc';
+
+        $shadowQuery = ListingItem::query();
+
+        // Determine minimal joins needed for FILTERING and SORTING only
+            $needsProducts = $request->filled('product_status') || $request->filled('product_type') || $request->filled('product_code')
+                || in_array($columnName, ['product_sku', 'product_size']);
+            $needsStore = $request->filled('store_id') || $columnName === 'store_name';
+
+        Log::info(' Needs Products: ' . ($needsProducts ? 'Yes' : 'No') . ', Needs Store: ' . ($needsStore ? 'Yes' : 'No'));
+
+        if ($needsProducts || $needsStore) {
+            $shadowQuery->join('store_product', 'listing_item.store_product_id', '=', 'store_product.id');
+        }
+        if ($needsProducts) {
+            $shadowQuery->join('products', 'store_product.product_id', '=', 'products.product_id');
+        }
+        if ($needsStore) {
+            $shadowQuery->leftJoin('store', 'store_product.store_id', '=', 'store.id');
+        }
+
+        $shadowQuery->when($request->store_id, fn($q, $v) => $q->where('store_product.store_id', $v));
+        $shadowQuery->when($request->product_status, fn($q, $v) => $q->where('products.product_status', $v));
+        $shadowQuery->when($request->product_type, fn($q, $v) => $q->where('products.product_type', $v));
+        $shadowQuery->when($request->listing_status, fn($q, $v) => $q->where('listing_item.status', $v));
+        $shadowQuery->when($request->quantity, fn($q, $v) => $q->where('listing_item.quantity', $v));
+
+        QueryFilters::applyFilter($shadowQuery, $request, 'listing_item.sku', 'sku_operator', 'sku');
+        QueryFilters::applyFilter($shadowQuery, $request, 'products.product_sku', 'product_code_operator', 'product_code');
+        QueryFilters::applyFilter($shadowQuery, $request, 'listing_item.title', 'title_operator', 'title');
+        QueryFilters::applyFilter($shadowQuery, $request, 'listing_item.price', 'price_operator', 'price');
+        QueryFilters::applyFilter($shadowQuery, $request, 'listing_item.id', 'id_operator', 'id');
+        QueryFilters::applyFilter($shadowQuery, $request, 'listing_item.sales_count', 'sales_count_operator', 'sales_count');
+        QueryFilters::applyFilter($shadowQuery, $request, 'listing_item.manufacturer_id', 'manufacturer_operator', 'manufacturer');
+        QueryFilters::applyFilter($shadowQuery, $request, 'listing_item.sync_message', 'sync_message_operator', 'sync_message');
+        QueryFilters::applyFilter($shadowQuery, $request, 'listing_item.upc', 'upc_operator', 'upc');
+        QueryFilters::applyFilter($shadowQuery, $request, 'listing_item.store_sku', 'store_sku_operator', 'store_sku');
+        QueryFilters::applyFilter($shadowQuery, $request, 'listing_item.sync_status', 'sync_status_operator', 'sync_status');
+
+        // Apply Sorting
+        $sortableColumns = [
+            'product_sku'  => 'products.product_sku',
+            'store_name'   => 'store.name',
+            'created_at'   => 'listing_item.created_at',
+        ];
+        $sortColumn = $sortableColumns[$columnName] ?? 'listing_item.' . $columnName;
+        $shadowQuery->orderBy($sortColumn, $columnSortOrder);
+
+        // Get only the IDs and total count
+        $paginator = $shadowQuery->paginate($perPage, ['listing_item.id'], 'page', floor($start / $perPage) + 1);
+        $ids = $paginator->pluck('id')->toArray();
+
+        $items = ListingItem::with([
+            'storeProduct.product.color',
+            'storeProduct.store.storeType',
+            'generationType',
+            'manufacturer'
+        ])
+            ->whereIn('id', $ids)
+//            ->orderByRaw('FIELD(id, ' . implode(',', $ids) . ')')
+            ->get();
+
+        $data = [];
+        foreach ($items as $product) {
+            if (!empty((array)$product->storeProduct) && !empty((array)$product->storeProduct->product)) {
+                $productcode = $product->storeProduct->product->product_sku;
+            } else {
+                $productcode = '';
+            };
+
+            $data[] = array(
+                "sku" => $product->sku . '<input type="checkbox" class="proList" name="listing_item[]" data-sku="' . $product->sku . '" data-code="' . $productcode . '" value="' . $product->id . '" style="visibility:hidden;">',
+                "sales_count" => $product->sales_count ?? 0,
+                "last_sale_date" => $product->last_sale_date ?? '',
+                "store_sku" => $product->store_sku,
+                "product_sku" => (!empty((array)$product->storeProduct) && !empty((array)$product->storeProduct->product)) ? $product->storeProduct->product->product_sku : '',
+                "store_name" => ((!empty((array)$product->storeProduct) && !empty((array)$product->storeProduct->store)) ? $product->storeProduct->store->name : '') . ((!empty((array)$product->storeProduct) && !empty((array)$product->storeProduct->store) && !empty((array)$product->storeProduct->store->storeType)) ? ' - ' . $product->storeProduct->store->storeType->name : ''),
+                "title" => strlen($product->title) > 50 ? substr($product->title, 0, 50) . "..." : $product->title,
+                "status" => ListingStatus::getListingStatusName($product->status),
+                "product_size" => (!empty((array)$product->storeProduct) && !empty((array)$product->storeProduct->product)) ? $product->storeProduct->product->dimensions_width : '',
+                "product_color" => (isset($product->storeProduct->product) && !empty((array)$product->storeProduct->product->color) && !empty((array)$product->storeProduct->product->color)) ? $product->storeProduct->product->color->name : '',
+                "sync_status" => ListingSyncStatus::getListingSyncStatusName($product->sync_status),
+                "generation_type_name" => (!empty($product->generationType)) ? $product->generationType->name : '',
+                "price" => $product->price,
+                "qty" => $product->quantity,
+                "upc" => $product->upc,
+                "manufacturer" => (isset($product->manufacturer)) ? $product->manufacturer->name : '',
+                "created_at" => date('Y-m-d H:i:s', strtotime($product->created_at)),
+                "title_url" => ListingUtility::generateTitleUrl($product),
+                "sync_count" => $product->sync_count,
+                "listing_id" => $product->id
+                /*"action" => '<a href="'.route('listing.edit', $product->id).'" class="btn btn-primary">
+                                <i class="fas fa-fw fa-pencil-alt"></i>
+                            </a>',*/
+            );
+        }
+
+        return response()->json([
+            "draw" => intval($draw),
+            "iTotalRecords" => $paginator->total(),
+            "iTotalDisplayRecords" => $paginator->total(),
+            "aaData" => $data
+        ]);
+    }
+
     /**
      * Filter listing.
      */
-    public function filter(Request $request)
+    public function filterbkp(Request $request)
     {
 
         //DB::enableQueryLog();
@@ -340,7 +452,7 @@ class ListingController extends Controller
         }
 
         //$productsRecord = $query->paginate($perPage); // Paginate results
-//        echo $query->toSql();die;
+        //echo $query->toRawSql();die;
         //$products = $query->skip($start)->take($perPage)->get(); // Paginate results
 
         /*echo '<pre>';
