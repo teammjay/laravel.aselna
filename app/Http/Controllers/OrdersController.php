@@ -248,8 +248,10 @@ class OrdersController extends Controller
         return view('orders.detail',compact('orderDetail', 'orderOperations'));
     }
 
-    public function create_message(string $id)
+    public function create_message(Request $request)
     {
+        $id = $request->order_id;
+        $suject = $request->subject;
         $orderDetail = Order::with('customer','orderItem','orderItem.product','store','store.storeType','customerAddress')->findOrFail($id);
 
         $customer_id = isset($orderDetail->customer) ? $orderDetail->customer->id : NULL;
@@ -260,7 +262,11 @@ class OrdersController extends Controller
         if($ticket_exist){
             $ticket_id = $ticket_exist->id;
             //echo $ticket_id;die;
-            return redirect()->route('message.detail',$ticket_id);
+            //return redirect()->route('message.detail',$ticket_id);
+            return response()->json([
+                'success' => true,
+                'url' => route('message.detail',$ticket_id)
+            ]);
         }
 
         $ticket_code = $orderDetail->store->short_code . '-' . ProcessStoreMessageAccountJob::getNextTicketNumberForStore($orderDetail->store_id);
@@ -271,7 +277,7 @@ class OrdersController extends Controller
             'ticket_type_id' => $ticketTypeDetail->id,
             'status' => HdTicketStatus::NEEDS_ACTION,
             'related_order_id' => $orderDetail->id,
-            'subject' => 'RMA',
+            'subject' => $suject,
             'customer_id' => $customer_id,
             'order_id' => trim($orderDetail->order_id),
             'store_id' => $orderDetail->store_id,
@@ -289,8 +295,13 @@ class OrdersController extends Controller
         /*echo '<pre>';
         print_r($orderDetail);
         echo '</pre>';die;*/
-        return redirect()->route('message.detail',$ticket_id);
+        //return redirect()->route('message.detail',$ticket_id);
         //return view('orders.create_message',compact('orderDetail'));
+
+        return response()->json([
+            'success' => true,
+            'url' => route('message.detail',$ticket_id)
+        ]);
     }
 
     public function importCsv(){
