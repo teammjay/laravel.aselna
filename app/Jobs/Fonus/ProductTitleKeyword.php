@@ -17,7 +17,7 @@ class ProductTitleKeyword implements ShouldQueue
         Queueable::withChain as queueableWithChain;
     }
 
-    public $timeout = 5000;
+    public $timeout = 50000;
 
     /**
      * Create a new job instance.
@@ -57,7 +57,7 @@ class ProductTitleKeyword implements ShouldQueue
 
     private function createOrUpdateTitleKeyword(mixed $titleKeyword)
     {
-        $aselnaProduct = Catalog::where('product_code', $titleKeyword->product_id)->first();
+        $aselnaProduct = Catalog::select('product_id')->where('product_code', $titleKeyword->product_id)->first();
         if ($aselnaProduct) {
             \App\Models\ProductTitleKeyword::updateOrCreate(
                 [

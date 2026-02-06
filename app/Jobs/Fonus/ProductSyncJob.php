@@ -6,6 +6,7 @@ use App\Constants\CatalogStatus;
 use App\Jobs\Concerns\TrackableJob;
 use App\Models\Catalog;
 use App\Models\Manufacturer;
+use App\Models\ProductKeyFeatures;
 use App\Services\CriticalErrorService;
 use App\Utils\FileUtility;
 use Exception;
@@ -22,6 +23,7 @@ class ProductSyncJob implements ShouldQueue
     }
 
     public $timeout = 5000;
+    private $existingProductsMap;
 
     /**
      * Create a new job instance.
@@ -39,6 +41,8 @@ class ProductSyncJob implements ShouldQueue
         $this->updateTrackingRecord(['tags' => ' Fonus Products Sync job']);
 
         try {
+            $this->existingProductsMap = Catalog::pluck('updated_at', 'product_code')->toArray();
+
             DB::connection('fonus_db')->table('tbl_product')
                 ->orderBy('product_id')
                 ->chunk(1000, function ($products) {
@@ -59,13 +63,20 @@ class ProductSyncJob implements ShouldQueue
 
     private function syncFonusProduct(mixed $product)
     {
-        $alreadyExists = Catalog::where('product_code', $product->product_id)->first();
-        if (isset($alreadyExists) && $alreadyExists->updated_at >= $product->date_updated) {
-//            Log::info("Product Skipped :: " . $product->custom_label);
-            return;
+        if (isset($this->existingProductsMap[$product->product_id])) {
+            $localUpdatedAt = $this->existingProductsMap[$product->product_id];
+
+            // Debugging: If this log appears too often, you know your dates aren't matching up
+            // Log::info("Comparing Local: $localUpdatedAt vs Remote: {$product->date_updated}");
+
+            if (strtotime($localUpdatedAt) >= strtotime($product->date_updated)) {
+                return; // SKIPS INSTANTLY
+            }
         }
         Log::info("Syncing Product :: " . $product->custom_label);
         Log::info('Product status id :: ' . $product->status_id);
+        $alreadyExists = Catalog::select('updated_at','product_id','product_sku')->where('product_code', $product->product_id)->first();
+
 
         $manufacturer = Manufacturer::where('code', $product->manufacturer_id)->first();
         $mainImage = null;
@@ -126,5 +137,37 @@ class ProductSyncJob implements ShouldQueue
                 'updated_by' => 'system',
             ]
         );
+
+        $this->syncProductKeyFeatures($product, $alreadyExists);
+    }
+
+    private function syncProductKeyFeatures($product,$aselnaProduct)
+    {
+        try {
+            $product_id = $aselnaProduct->product_id;
+            Log::info('Syncing Key Features for Product Sku: ' . $aselnaProduct->product_sku . ' Product ID: ' . $product_id);
+            if (!isset($product)) return;
+            if (!isset($aselnaProduct)) return;
+            $bullet_points = [
+                '1' => $product->bullet_point1,
+                '2' => $product->bullet_point2,
+                '3' => $product->bullet_point3,
+                '4' => $product->bullet_point4,
+                '5' => $product->bullet_point5,
+                '6' => $product->bullet_point6,
+            ];
+            foreach ($bullet_points as $key => $value) {
+                ProductKeyFeatures::updateOrCreate(
+                    ['product_id' => $product_id, 'sort_order' => $key],
+                    [
+                        'product_id' => $product_id,
+                        'value' => $value,
+                        'sort_order' => $key,
+                    ]
+                );
+            }
+        } catch (Exception $e) {
+            Log::info('Key Features Error ::' . $e->getMessage());
+        }
     }
 }

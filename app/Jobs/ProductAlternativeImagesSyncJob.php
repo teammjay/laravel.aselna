@@ -70,10 +70,10 @@ class ProductAlternativeImagesSyncJob implements ShouldQueue
 
     private function createProductImageFonus(mixed $productImage)
     {
-        $product = Catalog::where('product_code', $productImage->product_id)->first();
+        $product = Catalog::select('product_id')->where('product_code', $productImage->product_id)->first();
         if (!$product) return;
 
-        $ourMainImage = ProductImages::where('product_id',$product->product_id)->where('main_image',1)->first();
+        $ourMainImage = ProductImages::select('id')->where('product_id',$product->product_id)->where('main_image',1)->first();
 
         $imageData = [
             'product_id' => $product->product_id,

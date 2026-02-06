@@ -59,7 +59,6 @@ class FonusCombinedSyncJob implements ShouldQueue
                 new ManufacturerSyncJob(), // DONE
                 new CarrierSyncJob(), // DONE
                 new ProductSyncJob(), // Partial Done
-                new ProductKeyFeaturesSyncJob(), // DONE
                 new InterfacesSyncJob(), // DONE
                 new CategorySyncJob(), // DONE
                 new BrandSyncJob(), // DONE
