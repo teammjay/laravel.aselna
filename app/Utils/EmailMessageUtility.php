@@ -98,6 +98,7 @@ class EmailMessageUtility
                         }
                     }
 
+                    Log::info("File attachments: " . json_encode($attachments));
                     if (!empty($attachments) && is_array($attachments)) {
                         foreach ($attachments as $attachment){
                             if(file_exists($attachment) && is_file($attachment)) {
