@@ -57,7 +57,7 @@ class ProductTitleKeyword implements ShouldQueue
 
     private function createOrUpdateTitleKeyword(mixed $titleKeyword)
     {
-        $aselnaProduct = Catalog::where('product_code', $titleKeyword->product_id)->first();
+        $aselnaProduct = Catalog::select('product_id')->where('product_code', $titleKeyword->product_id)->first();
         if ($aselnaProduct) {
             \App\Models\ProductTitleKeyword::updateOrCreate(
                 [
