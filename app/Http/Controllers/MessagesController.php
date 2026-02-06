@@ -926,9 +926,10 @@ class MessagesController extends Controller
 
                     foreach ($paths as $path) {
 
-                        $fullPath = storage_path('app/public/' . trim($path));
-
+                        $fullPath = trim($path);
+                        Log::info("Attach file path: " . $fullPath);
                         if (file_exists($fullPath) && is_file($fullPath)) {
+                            Log::info("Attach file path: " . $fullPath);
                             $filepath[] = $fullPath;
                         }
                     }
@@ -968,13 +969,13 @@ class MessagesController extends Controller
                         $hd_message = HDMessage::create($hdMessageData);
 
                         if ($filepath) {
-                            $image_names = explode('<br>', $imagepath);
+                            $image_names = explode('<br>', $imagename);
                             foreach ($paths as $key=>$path) {
 
                                 $extension = pathinfo($path, PATHINFO_EXTENSION);
                                 $fileSize = filesize($path);
                                 $filedata = [
-                                    'name' => $image_names[$key],
+                                    'name' => $image_names[$key] ,
                                     'ext' => $extension ?: 'jpg', // Default to 'jpg' if missing
                                     'file_size' => $fileSize ?: 'Unknown', // Use 'Unknown' if not determined
                                     'location' => 'labels/',
