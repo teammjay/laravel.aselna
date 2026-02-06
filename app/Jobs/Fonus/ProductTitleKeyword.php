@@ -17,7 +17,7 @@ class ProductTitleKeyword implements ShouldQueue
         Queueable::withChain as queueableWithChain;
     }
 
-    public $timeout = 5000;
+    public $timeout = 50000;
 
     /**
      * Create a new job instance.
