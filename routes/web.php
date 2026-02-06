@@ -507,7 +507,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/orders', 'index')->name('order.list');
         Route::post('orders/filter', 'filter')->name('order.filter');
         Route::get('/orders/edit/{id}', 'edit')->name('order.edit');
-        Route::get('/orders/create_message/{id}', 'create_message')->name('order.create_message');
+        Route::post('/orders/create_message', 'create_message')->name('order.create_message');
         Route::post('/orders/edit', 'update')->name('order.update');
         Route::post('/orders/getimages', 'getImages')->name('order.getimages');
         Route::get('/orders/importcsv', 'importCsv')->name('order.importcsv');
