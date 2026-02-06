@@ -6,6 +6,7 @@ use App\Constants\CatalogStatus;
 use App\Jobs\Concerns\TrackableJob;
 use App\Models\Catalog;
 use App\Models\Manufacturer;
+use App\Models\ProductKeyFeatures;
 use App\Services\CriticalErrorService;
 use App\Utils\FileUtility;
 use Exception;
@@ -59,9 +60,8 @@ class ProductSyncJob implements ShouldQueue
 
     private function syncFonusProduct(mixed $product)
     {
-        $alreadyExists = Catalog::where('product_code', $product->product_id)->first();
-        if (isset($alreadyExists) && $alreadyExists->updated_at >= $product->date_updated) {
-//            Log::info("Product Skipped :: " . $product->custom_label);
+        $alreadyExists = Catalog::select('updated_at','product_id','product_sku')->where('product_code', $product->product_id)->first();
+        if ($alreadyExists && strtotime($alreadyExists->updated_at) >= strtotime($product->date_updated)) {
             return;
         }
         Log::info("Syncing Product :: " . $product->custom_label);
@@ -81,6 +81,7 @@ class ProductSyncJob implements ShouldQueue
 
             Log::error('ProductImagesSyncJob: ' . $e->getMessage());
         }
+        $this->syncProductKeyFeatures($product, $alreadyExists);
 
         Catalog::updateOrCreate(
             ['product_code' => $product->product_id],
@@ -126,5 +127,35 @@ class ProductSyncJob implements ShouldQueue
                 'updated_by' => 'system',
             ]
         );
+    }
+
+    private function syncProductKeyFeatures($product,$aselnaProduct)
+    {
+        try {
+            $product_id = $aselnaProduct->product_id;
+            Log::info('Syncing Key Features for Product Sku: ' . $aselnaProduct->product_sku . ' Product ID: ' . $product_id);
+            if (!isset($product)) return;
+            if (!isset($aselnaProduct)) return;
+            $bullet_points = [
+                '1' => $product->bullet_point1,
+                '2' => $product->bullet_point2,
+                '3' => $product->bullet_point3,
+                '4' => $product->bullet_point4,
+                '5' => $product->bullet_point5,
+                '6' => $product->bullet_point6,
+            ];
+            foreach ($bullet_points as $key => $value) {
+                ProductKeyFeatures::updateOrCreate(
+                    ['product_id' => $product_id, 'sort_order' => $key],
+                    [
+                        'product_id' => $product_id,
+                        'value' => $value,
+                        'sort_order' => $key,
+                    ]
+                );
+            }
+        } catch (Exception $e) {
+            Log::info('Key Features Error ::' . $e->getMessage());
+        }
     }
 }

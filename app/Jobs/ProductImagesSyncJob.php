@@ -46,7 +46,7 @@ class ProductImagesSyncJob implements ShouldQueue
             $productImagesQ = DB::connection('fonus_db')
                 ->table('tbl_product_images')
                 ->where('picture_type_id', '=', '1')
-                ->orderBy('product_id', 'desc');
+                ->orderBy('product_id');
 
             if (env('APP_ENV') === 'local') {
                 $productImagesQ->limit(40);
@@ -87,12 +87,12 @@ class ProductImagesSyncJob implements ShouldQueue
 
     private function createProductImage(mixed $productImage)
     {
-        $product = Catalog::where('product_code', $productImage->product_id)->first();
+        $product = Catalog::select('product_id')->where('product_code', $productImage->product_id)->first();
         if (!$product) return;
         $mainImageDetail = null;
         $thumbnailImageDetail = null;
 
-        $SystemProductImage = ProductImages::where('product_id', $product->product_id)->where('sort_order', $productImage->picture_id)->first();
+        $SystemProductImage = ProductImages::select('updated_at')->where('product_id', $product->product_id)->where('sort_order', $productImage->picture_id)->first();
 
         Log::info('Product Image Date ' . $productImage->date_updated);
         // TODO Need to remove on 1 Jan 2026
