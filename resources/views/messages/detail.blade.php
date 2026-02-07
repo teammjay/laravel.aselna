@@ -1,8 +1,3 @@
-@php
-    use App\Constants\FilterCodes;
-    use App\Constants\OrderStatus;
-    use App\Helpers\Common;
-@endphp
 @extends('adminlte::page')
 
 @section('title', 'Message Detail')
@@ -1599,6 +1594,9 @@
 
                             $('.lableImageGroup').removeClass('hide');
 
+                            let oldUrls  = $('#image_url').val();
+                            let oldPaths = $('#image_storage_path').val();
+
                             let names = [];
                             let urls = [];
                             let paths = [];
@@ -1609,9 +1607,16 @@
                                 paths.push(file.imagesPath);
                             });
 
-                            $('#image_url').val(urls.join(','));
-                            $('#image_storage_path').val(paths.join(','));
-                            $('.lable-image').html(names.join('<br>'));
+
+                            let finalUrls  = oldUrls  ? oldUrls  + ',' + urls.join(',')  : urls.join(',');
+                            let finalPaths = oldPaths ? oldPaths + ',' + paths.join(',') : paths.join(',');
+
+                            $('#image_url').val(finalUrls);
+                            $('#image_storage_path').val(finalPaths);
+
+                            let oldLabel = $('.lable-image').html();
+                            let newlabels = oldLabel ? oldLabel + '<br>' + names.join('<br>') : names.join('<br>');
+                            $('.lable-image').html(newlabels);
 
                             $('#attach_file').val('');
                         }
