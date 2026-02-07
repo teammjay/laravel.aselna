@@ -23,6 +23,7 @@ class ProductSyncJob implements ShouldQueue
     }
 
     public $timeout = 5000;
+    private $existingProductsMap;
 
     /**
      * Create a new job instance.
@@ -40,6 +41,8 @@ class ProductSyncJob implements ShouldQueue
         $this->updateTrackingRecord(['tags' => ' Fonus Products Sync job']);
 
         try {
+            $this->existingProductsMap = Catalog::pluck('updated_at', 'product_code')->toArray();
+
             DB::connection('fonus_db')->table('tbl_product')
                 ->orderBy('product_id')
                 ->chunk(1000, function ($products) {
@@ -60,12 +63,20 @@ class ProductSyncJob implements ShouldQueue
 
     private function syncFonusProduct(mixed $product)
     {
-        $alreadyExists = Catalog::select('updated_at','product_id','product_sku')->where('product_code', $product->product_id)->first();
-        if ($alreadyExists && strtotime($alreadyExists->updated_at) >= strtotime($product->date_updated)) {
-            return;
+        if (isset($this->existingProductsMap[$product->product_id])) {
+            $localUpdatedAt = $this->existingProductsMap[$product->product_id];
+
+            // Debugging: If this log appears too often, you know your dates aren't matching up
+            // Log::info("Comparing Local: $localUpdatedAt vs Remote: {$product->date_updated}");
+
+            if (strtotime($localUpdatedAt) >= strtotime($product->date_updated)) {
+                return; // SKIPS INSTANTLY
+            }
         }
         Log::info("Syncing Product :: " . $product->custom_label);
         Log::info('Product status id :: ' . $product->status_id);
+        $alreadyExists = Catalog::select('updated_at','product_id','product_sku')->where('product_code', $product->product_id)->first();
+
 
         $manufacturer = Manufacturer::where('code', $product->manufacturer_id)->first();
         $mainImage = null;
@@ -81,7 +92,6 @@ class ProductSyncJob implements ShouldQueue
 
             Log::error('ProductImagesSyncJob: ' . $e->getMessage());
         }
-        $this->syncProductKeyFeatures($product, $alreadyExists);
 
         Catalog::updateOrCreate(
             ['product_code' => $product->product_id],
@@ -127,6 +137,8 @@ class ProductSyncJob implements ShouldQueue
                 'updated_by' => 'system',
             ]
         );
+
+        $this->syncProductKeyFeatures($product, $alreadyExists);
     }
 
     private function syncProductKeyFeatures($product,$aselnaProduct)
