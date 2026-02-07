@@ -290,7 +290,7 @@
                                             <input type="hidden" id="image_url" value="">
                                             <input type="hidden" id="image_storage_path" value="">
                                             <div class="btn-group lableImageGroup hide" role="group">
-                                                <button id="btnGroupDrop2" type="button" class="btn btn-default lable-image dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></button>
+                                                <button id="btnGroupDrop2" type="button" class="btn btn-default uploaded-lable-image dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></button>
                                                 <div class="dropdown-menu" aria-labelledby="btnGroupDrop2">
                                                     <a class="dropdown-item download_image" href="javascript:void(0);">Download</a>
                                                     <a class="dropdown-item delete_images" href="javascript:void(0);">Delete</a>
@@ -671,7 +671,7 @@
                                     $('.lableImageGroup').removeClass('hide');
                                     $('#image_url').val(data.image_url);
                                     $('#image_storage_path').val(data.imagesPath);
-                                    $('.lable-image').html(data.image_name);
+                                    $('.uploaded-lable-image').html(data.image_name);
                                 }
                             }
                         },
@@ -787,7 +787,7 @@
                     if($('#image_url').val() != ''){
                         var labelimage = $('#image_url').val();
                         var imagepath = $('#image_storage_path').val();
-                        var imagename = $('.lable-image').html();
+                        var imagename = $('.uploaded-lable-image').html();
                     }
                     $.ajax({
                         type: "POST",
@@ -945,7 +945,7 @@
                                     $('.lableImageGroup').removeClass('hide');
                                     $('#image_url').val(response.image_url);
                                     $('#image_storage_path').val(response.imagesPath);
-                                    $('.lable-image').html(response.image_name);
+                                    $('.uploaded-lable-image').html(response.image_name);
                                 }
 
                                 loadOrderDetail();
@@ -1004,7 +1004,7 @@
                                 $('.lableImageGroup').removeClass('hide');
                                 $('#image_url').val(data.image_url);
                                 $('#image_storage_path').val(data.imagesPath);
-                                $('.lable-image').html(data.image_name);
+                                $('.uploaded-lable-image').html(data.image_name);
                             }
 
                             //$('#message_to_send').html(data.templateCode);
@@ -1221,7 +1221,7 @@
                                 $('.lableImageGroup').removeClass('hide');
                                 $('#image_url').val(response.image_url);
                                 $('#image_storage_path').val(response.imagesPath);
-                                $('.lable-image').html(response.image_name);
+                                $('.uploaded-lable-image').html(response.image_name);
                             }
 
                             loadOrderDetail();
@@ -1280,7 +1280,7 @@
                 $('#image_url').val('');
                 $('#image_storage_path').val('');
                 $('.lableImageGroup').addClass('hide');
-                $('.lable-image').html('');
+                $('.uploaded-lable-image').html('');
                 $('#attach_file').val('');
             });
 
@@ -1389,7 +1389,7 @@
                 const trackingNumber = formData.get("tracking_number");
                 const label_generation = formData.get("label_generation");
 
-                if(label_generation.trim() != 1) {
+                if(label_generation.trim() !== 1) {
                     $('#tracking_number').removeClass('error');
                     if (!trackingNumber || trackingNumber.trim() === "") {
                         $('#tracking_number').addClass('error');
@@ -1557,7 +1557,7 @@
                             $('.lableImageGroup').addClass('hide');
                             $('#image_url').val('');
                             $('#image_storage_path').val('');
-                            $('.lable-image').html('');
+                            $('.uploaded-lable-image').html('');
                             //location.reload();
                         }
                     },
@@ -1576,13 +1576,37 @@
                     return;
                 }
 
-                let formData = new FormData();
+                let allowed = ['image/jpeg','image/png','application/pdf'];
+
+                let validFiles = [];
+                let invalidNames = [];
 
                 for(let i = 0; i < files.length; i++){
-                    formData.append('attach_file[]', files[i]);
+
+                    if(allowed.includes(files[i].type)){
+                        validFiles.push(files[i]);
+                    } else {
+                        invalidNames.push(files[i].name);
+                    }
                 }
+
+                if(invalidNames.length > 0){
+                    alert("These files are not allowed:\n" + invalidNames.join('\n'));
+                }
+
+                if(validFiles.length === 0){
+                    $('#attach_file').val('');
+                    return;
+                }
+
+                let formData = new FormData();
+
                 //formData.append('attach_file', this.files[0]);
                 formData.append('ticket_id', ticket_id);
+
+                validFiles.forEach(file => {
+                    formData.append('attach_file[]', file);
+                });
 
                 $.ajax({
                     url: '{{ route("message.imageupload") }}',
@@ -1599,6 +1623,9 @@
 
                             $('.lableImageGroup').removeClass('hide');
 
+                            let oldUrls  = $('#image_url').val();
+                            let oldPaths = $('#image_storage_path').val();
+
                             let names = [];
                             let urls = [];
                             let paths = [];
@@ -1609,9 +1636,16 @@
                                 paths.push(file.imagesPath);
                             });
 
-                            $('#image_url').val(urls.join(','));
-                            $('#image_storage_path').val(paths.join(','));
-                            $('.lable-image').html(names.join('<br>'));
+
+                            let finalUrls  = oldUrls  ? oldUrls  + ',' + urls.join(',')  : urls.join(',');
+                            let finalPaths = oldPaths ? oldPaths + ',' + paths.join(',') : paths.join(',');
+
+                            $('#image_url').val(finalUrls);
+                            $('#image_storage_path').val(finalPaths);
+
+                            let oldLabel = $('.uploaded-lable-image').html();
+                            let newlabels = oldLabel ? oldLabel + '<br>' + names.join('<br>') : names.join('<br>');
+                            $('.uploaded-lable-image').html(newlabels);
 
                             $('#attach_file').val('');
                         }
@@ -1619,7 +1653,7 @@
                             $('.lableImageGroup').removeClass('hide');
                             $('#image_url').val(response.image_url);
                             $('#image_storage_path').val(response.imagesPath);
-                            $('.lable-image').html(response.image_name);
+                            $('.uploaded-lable-image').html(response.image_name);
                             $('#attach_file').val('');
                         }*/
                     },
@@ -1630,13 +1664,11 @@
                             let errors = xhr.responseJSON.errors;
                             let messages = [];
 
-                            if (errors.attach_file) {
-                                messages = errors.attach_file;
-                            }
-
-                            if (errors['attach_file.0']) {
-                                messages = errors['attach_file.0'];
-                            }
+                            Object.keys(errors).forEach(function(key) {
+                                errors[key].forEach(function(msg) {
+                                    messages.push(msg);
+                                });
+                            });
 
                             alert(messages.join('\n'));
 
