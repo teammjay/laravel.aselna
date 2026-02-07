@@ -1576,13 +1576,37 @@
                     return;
                 }
 
-                let formData = new FormData();
+                let allowed = ['image/jpeg','image/png','application/pdf'];
+
+                let validFiles = [];
+                let invalidNames = [];
 
                 for(let i = 0; i < files.length; i++){
-                    formData.append('attach_file[]', files[i]);
+
+                    if(allowed.includes(files[i].type)){
+                        validFiles.push(files[i]);
+                    } else {
+                        invalidNames.push(files[i].name);
+                    }
                 }
+
+                if(invalidNames.length > 0){
+                    alert("These files are not allowed:\n" + invalidNames.join('\n'));
+                }
+
+                if(validFiles.length === 0){
+                    $('#attach_file').val('');
+                    return;
+                }
+
+                let formData = new FormData();
+
                 //formData.append('attach_file', this.files[0]);
                 formData.append('ticket_id', ticket_id);
+
+                validFiles.forEach(file => {
+                    formData.append('attach_file[]', file);
+                });
 
                 $.ajax({
                     url: '{{ route("message.imageupload") }}',
@@ -1640,13 +1664,11 @@
                             let errors = xhr.responseJSON.errors;
                             let messages = [];
 
-                            if (errors.attach_file) {
-                                messages = errors.attach_file;
-                            }
-
-                            if (errors['attach_file.0']) {
-                                messages = errors['attach_file.0'];
-                            }
+                            Object.keys(errors).forEach(function(key) {
+                                errors[key].forEach(function(msg) {
+                                    messages.push(msg);
+                                });
+                            });
 
                             alert(messages.join('\n'));
 
