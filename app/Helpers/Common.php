@@ -129,6 +129,7 @@ class Common
             '/^From:\s.+/mi',
             '/^Sent:\s.+/mi',
             '/^-----Original Message-----/mi',
+            '/^-------- Original message --------/mi',
             '/^_{5,}$/m',
             '/^\>+/m',
         ];
@@ -170,6 +171,7 @@ class Common
             '/Get Outlook for iOS/i',
             '/Sent from Mail for Windows/i',
             '/Sent from Yahoo Mail/i',
+            '/Sent from my T-Mobile 5G Device/i',
         ];
 
         return preg_replace($signaturePatterns, '', $text);
