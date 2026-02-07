@@ -1,3 +1,8 @@
+@php
+    use App\Constants\FilterCodes;
+    use App\Constants\OrderStatus;
+    use App\Helpers\Common;
+@endphp
 @extends('adminlte::page')
 
 @section('title', 'Message Detail')
