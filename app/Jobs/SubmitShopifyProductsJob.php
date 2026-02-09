@@ -553,7 +553,8 @@ class SubmitShopifyProductsJob implements ShouldQueue
         $productUpdateData = [
             'product' => [
                 'id' => $proDetail->marketplace_product_id,
-                'tags' => $tags['addTags']
+                'tags' => $tags['addTags'],
+                'status' => 'ACTIVE',
             ],
         ];
 
