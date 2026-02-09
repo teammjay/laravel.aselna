@@ -21,6 +21,10 @@ class ProductChannelSyncJob implements ShouldQueue
 
     public $timeout = 300000;
 
+    private $existingProductsMap;
+
+    private $storetypes;
+
     /**
      * Create a new job instance.
      */
@@ -37,7 +41,10 @@ class ProductChannelSyncJob implements ShouldQueue
         $this->updateTrackingRecord(['tags' => 'Fonus Product Channel']);
 
         try {
-            $productChannels = DB::connection('fonus_db')->table('tbl_product_channels')
+            $this->storetypes = StoreType::pluck('id','name')->toArray();
+            $this->existingProductsMap = Catalog::pluck('product_id', 'product_code')->toArray();
+
+            DB::connection('fonus_db')->table('tbl_product_channels')
                 ->orderBy('product_id')
                 ->chunk(1000, function ($productChannels) {
                     foreach ($productChannels as $productChannel) {
@@ -57,11 +64,11 @@ class ProductChannelSyncJob implements ShouldQueue
 
     private function createOrUpdateProductChannel(mixed $productChannel)
     {
-        $catalog = Catalog::where('product_code', $productChannel->product_id)->first();
-        $store_type = StoreType::where('code', $productChannel->channel)->first();
+        $catalog = $this->existingProductsMap[$productChannel->product_id] ?? null;
+        $store_type = $this->storetypes[$productChannel->channel] ?? null;
         if (isset($catalog) && isset($store_type)) {
-            $existingRecord = ProductChannelDetail::where('product_id', $catalog->id)
-                ->where('store_type_id', $store_type->id)
+            $existingRecord = ProductChannelDetail::where('product_id', $catalog)
+                ->where('store_type_id', $store_type)
                 ->first();
             if ($existingRecord) {
                 $existingRecord->update([
@@ -69,11 +76,11 @@ class ProductChannelSyncJob implements ShouldQueue
                 ]);
             } else {
                 ProductChannelDetail::updateOrCreate([
-                    'store_type_id' => $store_type->id,
-                    'product_id' => $catalog->product_id,
+                    'store_type_id' => $store_type,
+                    'product_id' => $catalog,
                 ],[
-                    'store_type_id' => $store_type->id,
-                    'product_id' => $catalog->product_id,
+                    'store_type_id' => $store_type,
+                    'product_id' => $catalog,
                     'status' => $productChannel->list,
                     'created_by' => 'system',
                     'updated_by' => 'system'
