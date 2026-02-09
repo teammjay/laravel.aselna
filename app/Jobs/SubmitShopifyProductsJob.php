@@ -553,15 +553,20 @@ class SubmitShopifyProductsJob implements ShouldQueue
         $productUpdateData = [
             'product' => [
                 'id' => $proDetail->marketplace_product_id,
-                'tags' => $tags['addTags']
+                'tags' => $tags['addTags'],
+                'status' => 'ACTIVE',
             ],
         ];
 
         if (isset($storeProduct->overwrite_description) && $storeProduct->overwrite_description == 1) {
             $productUpdateData['product']['descriptionHtml'] = $descriptionHtml;
+        }else if (strtolower($store->name) != 'odemobile') {
+            $productUpdateData['product']['descriptionHtml'] = $descriptionHtml;
         }
 
         if (isset($storeProduct->overwrite_title) && $storeProduct->overwrite_title == 1) {
+            $productUpdateData['product']['title'] = $productTitle;
+        }else if (strtolower($store->name) != 'odemobile') {
             $productUpdateData['product']['title'] = $productTitle;
         }
 
