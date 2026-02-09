@@ -477,9 +477,9 @@ class OrderUtility
         $ordersItems = $sorder['lineItems'];
         if (!empty($ordersItems)) {
             foreach ($ordersItems as $item) {
-                /*if (!isset($item['sku']) || $item['sku'] == '') {
+                if (!isset($item['sku']) || $item['sku'] == '') {
                     continue;
-                }*/
+                }
                 //Log:info("Inside Order :: " . json_encode($item));
                 $itemDetail = ListingItem::with('storeProduct', 'storeProduct.product')->where('sku', $item['sku'])->first();
 
