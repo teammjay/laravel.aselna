@@ -3,7 +3,16 @@
     @foreach($orderDetail->orderItem as $oitem)
         @php
             $url = '';
-            if(isset($oitem->listingItem) && !empty($oitem->listingItem)){
+
+            if(isset($oitem->listingItemViaId) && !empty($oitem->listingItemViaId)){
+                $store_sku = $oitem->listingItemViaId->store_sku;
+                $store_type = isset($orderDetail->store->storeType->name) ? $orderDetail->store->storeType->name : '';
+                $site_url = isset($orderDetail->store->store_url) ? $orderDetail->store->store_url : '';
+                $store_url = isset($oitem->listingItemViaId->store_url) ? $oitem->listingItemViaId->store_url : '';
+                if($store_sku != ''){
+                    $url = \App\Utils\ListingUtility::generateItemUrl($store_type, $store_sku, $site_url, $store_url);
+                }
+            }else if(isset($oitem->listingItem) && !empty($oitem->listingItem)){
                 $store_sku = $oitem->listingItem->store_sku;
                 $store_type = isset($orderDetail->store->storeType->name) ? $orderDetail->store->storeType->name : '';
                 $site_url = isset($orderDetail->store->store_url) ? $orderDetail->store->store_url : '';

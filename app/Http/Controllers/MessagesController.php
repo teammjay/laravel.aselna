@@ -67,7 +67,7 @@ class MessagesController extends Controller
         $columnName = $request['columns'][$columnIndex]['data'];
         $columnSortOrder = $request['order'][0]['dir'];
 
-        $query = Message::with('store','store.storeType','ticketType','customer','order.orderOperations');
+        $query = Message::with('store','store.storeType','ticketType','customer','order','order.orderOperations');
 
         if($request->has('status') && $request->status != ''){
             $query->where('status',$request->status);
@@ -104,6 +104,7 @@ class MessagesController extends Controller
         QueryFilters::applyRelationFilter($query, $request, 'customer', 'first_name', 'first_name_operator', 'first_name');
         QueryFilters::applyRelationFilter($query, $request, 'customer', 'last_name', 'last_name_operator', 'last_name');
         QueryFilters::applyRelationFilter($query, $request, 'order.orderOperations', 'rma_number', 'rma_operator', 'rma');
+        QueryFilters::applyRelationFilter($query, $request, 'order', 'purchase_order_id', 'purchase_order_id_operator', 'purchase_order_id');
 
         if ($columnName != '') {
             switch (strtolower($columnName)) {
@@ -532,7 +533,7 @@ class MessagesController extends Controller
 
         if($order_id){
 
-            $orderDetail = Order::with('store','store.storeType','orderItem','orderItem.listingItem','orderItem.product','orderItem.product.image','customer','customerAddress')->where('order_id',$order_id)->orWhere('purchase_order_id',$order_id)->first();
+            $orderDetail = Order::with('store','store.storeType','orderItem','orderItem.listingItem','orderItem.product','orderItem.product.image','customer','customerAddress','orderItem.listingItemViaId')->where('order_id',$order_id)->orWhere('purchase_order_id',$order_id)->first();
             if($orderDetail){
                 if($ticket_id) {
                     $ticketDetail = Message::findOrFail($ticket_id);
