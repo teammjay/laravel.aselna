@@ -286,6 +286,28 @@
                 </div>
             </div>
         </div>
+        <div class="col-md-4">
+            <div class="row">
+                <div class="col-3 text-right">
+                    Purchase Order Id
+                </div>
+                <div class="col-3">
+                    <select class="custom-select" id="purchase_order_id_operator" name="purchase_order_id_operator">
+                        <option value="{{FilterCodes::EQUAL}}">=</option>
+                        <option value="{{FilterCodes::CONTAINS}}">contains</option>
+                        <option value="{{FilterCodes::STARTS_WITH}}">starts with</option>
+                        <option value="{{FilterCodes::ENDS_WITH}}">ends with</option>
+                        <option value="{{FilterCodes::IN}}">in</option>
+                        <option value="{{FilterCodes::NOT_IN}}">not in</option>
+                        <option value="{{FilterCodes::DOESNT_CONTAIN}}">doesn't contain</option>
+                        <option value="{{FilterCodes::IS_SET}}">is set</option>
+                    </select>
+                </div>
+                <div class="col-6">
+                    <input type="text" name="purchase_order_id" id="purchase_order_id" class="form-control">
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="row">
