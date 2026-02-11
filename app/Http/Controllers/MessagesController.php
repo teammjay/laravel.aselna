@@ -1341,11 +1341,11 @@ class MessagesController extends Controller
                         if (isset($logisticDetail->returnAddress) && $logisticDetail->returnAddress->city != '') {
                             $returnAddress .= $logisticDetail->returnAddress->city . PHP_EOL;
                         }
-                        if (isset($logisticDetail->returnAddress) && $logisticDetail->returnAddress->state != '') {
-                            $returnAddress .= $logisticDetail->returnAddress->state . PHP_EOL;
+                        if (isset($logisticDetail->returnAddress) && $logisticDetail->returnAddress->state_or_region != '') {
+                            $returnAddress .= $logisticDetail->returnAddress->state_or_region . PHP_EOL;
                         }
-                        if (isset($logisticDetail->returnAddress) && $logisticDetail->returnAddress->zip != '') {
-                            $returnAddress .= $logisticDetail->returnAddress->zip . PHP_EOL;
+                        if (isset($logisticDetail->returnAddress) && $logisticDetail->returnAddress->postal_code != '') {
+                            $returnAddress .= $logisticDetail->returnAddress->postal_code . PHP_EOL;
                         }
                         $data = [
                             'customer_firstName' => isset($orderDetail->customer) ? $orderDetail->customer->full_name : '',
