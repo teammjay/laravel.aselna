@@ -1330,7 +1330,7 @@ class MessagesController extends Controller
                             $returnAddress .= $logisticDetail->returnAddress->company . PHP_EOL;
                         }
                         if (isset($logisticDetail->returnAddress) && $logisticDetail->returnAddress->address_line_1 != '') {
-                            $returnAddress .= $logisticDetail->returnAddress->address_line_1 . PHP_EOL;
+                            $returnAddress .= $logisticDetail->returnAddress->address_line_1 . ', ';
                         }
                         if (isset($logisticDetail->returnAddress) && $logisticDetail->returnAddress->address_line_2 != '') {
                             $returnAddress .= $logisticDetail->returnAddress->address_line_2 . PHP_EOL;
@@ -1339,10 +1339,10 @@ class MessagesController extends Controller
                             $returnAddress .= $logisticDetail->returnAddress->address_line_3 . PHP_EOL;
                         }
                         if (isset($logisticDetail->returnAddress) && $logisticDetail->returnAddress->city != '') {
-                            $returnAddress .= $logisticDetail->returnAddress->city . PHP_EOL;
+                            $returnAddress .= $logisticDetail->returnAddress->city . ', ';
                         }
                         if (isset($logisticDetail->returnAddress) && $logisticDetail->returnAddress->state_or_region != '') {
-                            $returnAddress .= $logisticDetail->returnAddress->state_or_region . PHP_EOL;
+                            $returnAddress .= $logisticDetail->returnAddress->state_or_region . ' ';
                         }
                         if (isset($logisticDetail->returnAddress) && $logisticDetail->returnAddress->postal_code != '') {
                             $returnAddress .= $logisticDetail->returnAddress->postal_code . PHP_EOL;
