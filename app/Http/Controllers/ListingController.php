@@ -2504,6 +2504,8 @@ class ListingController extends Controller
             $brandDeviceObjects[$brand][] = $device;
         }
 
+
+
         $compressedDevices = [];
         $modelSeries = [];
         foreach ($brandModels as $brand => $models) {
@@ -2513,6 +2515,8 @@ class ListingController extends Controller
             $prefixParts = [];
             $splitModels = array_map(fn($m) => explode(' ', $m), $models);
             $minLength = min(array_map('count', $splitModels));
+
+
 
             for ($i = 0; $i < $minLength; $i++) {
                 $word = $splitModels[0][$i];
@@ -2530,7 +2534,8 @@ class ListingController extends Controller
                 }
             }
 
-            $prefix = implode(' ', $prefixParts);
+            //$prefix = implode(' ', $prefixParts);
+            $prefix = $prefixParts[0] ?? '';
 
             $cleanModels = [];
             foreach ($models as $m) {

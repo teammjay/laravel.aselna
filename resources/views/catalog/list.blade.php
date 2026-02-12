@@ -303,6 +303,7 @@
                                     <option value=""> --</option>
                                     <option value="active" selected> Active</option>
                                     <option value="discontinued"> Discontinued</option>
+                                    <option value="temporaryDisabled"> Temporary Disabled</option>
                                     <option value="out_of_stock"> Out of stock</option>
                                     <option value="draft"> Draft</option>
                                 </select>
