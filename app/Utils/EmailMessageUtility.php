@@ -2,6 +2,7 @@
 
 namespace App\Utils;
 
+use App\Models\HDMessage;
 use App\Services\CriticalErrorService;
 use App\Utils\mail\AmazonEmailParser;
 use App\Utils\mail\EbayEmailParser;
@@ -221,6 +222,7 @@ class EmailMessageUtility
             $filteredMessages = collect();
             $page = 1;
 
+            $remainUIs = [];
             do {
                 Log::info('Page ::' . $page . ' :: Fetching batch of size ' . $batchSize);
                 $query = $folder->query()
@@ -232,7 +234,227 @@ class EmailMessageUtility
                     ->setFetchBody(false)
                     ->setFetchFlags(false);
 
-                $tempMessages = $query->get();
+                $tempMessages = $query->get()->sortByDesc(fn ($m) => $m->getUid());
+                Log::info("Fetched batch {$page} with " . $tempMessages->count() . " messages");
+
+                $imapMessageIds = [];
+                $imapUids = [];
+
+                foreach ($tempMessages as $msg) {
+                    $mid = $msg->message_id->first();
+                    $uid = $msg->getUid();
+
+                    if ($mid) {
+                        $imapMessageIds[] = $mid;
+                        $imapUids[$mid] = $uid;
+                    }
+                }
+
+                if (empty($imapMessageIds)) {
+                    break;
+                }
+
+                $existingIds = HDMessage::whereIn('message_id', $imapMessageIds)
+                    ->pluck('message_id')
+                    ->toArray();
+
+                foreach ($imapUids as $mid => $uid) {
+                    if (!in_array($mid, $existingIds)) {
+                        $remainUIs[] = $uid;
+                    }
+                }
+
+                // Break the loop if we've already reached our limit
+                if (count($remainUIs) >= $limit) {
+                    break;
+                }
+
+                $page++;
+
+                if (function_exists('gc_collect_cycles')) {
+                    gc_collect_cycles();
+                }
+
+                sleep(1); // prevent server throttling
+                Log::info('New Messages Count :: ' . count($remainUIs));
+                $query = null;
+            //} while ($tempMessages->count() > 0 && !($tempMessages->count() < $batchSize) && $filteredMessages->count() <= $limit);
+            } while (true);
+
+            Log::info("Found UID" . json_encode($remainUIs) . " messages matching the time criteria");
+            Log::info("Found " . count($remainUIs) . " messages matching the time criteria");
+
+            $emails = [];
+            foreach ($remainUIs as $key => $uid) {
+                try {
+
+
+                    // Step 2: Now fetch the full message content for this specific message
+                    //$uid = $uid;
+                    $fullMessage = $folder->query()->whereUid($uid)->get()->first();
+
+                    // Log the subject we're processing
+                    $subject = $fullMessage->subject->first() ?? 'No Subject';
+                    Log::info("Processing email #{$key}: {$subject}");
+
+                    // Get the body content
+                    $body = $fullMessage->getTextBody();
+                    if (empty($body)) {
+                        $body = $fullMessage->getHtmlBody();
+                    }
+
+                    // Process data for this specific message
+                    $parsedData = [];
+                    if ($store_type != '') {
+                        switch (strtolower($store_type)) {
+                            case 'walmart':
+                                $walmartEmailParser = new WalmartEmailParser($fullMessage);
+                                $walmartEmailParser->getMessage(strip_tags($body));
+                                $parsedData = $walmartEmailParser->getEntities();
+                                break;
+                            case 'amazon':
+                                $amazonEmailParser = new AmazonEmailParser($fullMessage);
+                                $amazonEmailParser->getMessage(strip_tags($body));
+                                $parsedData = $amazonEmailParser->getEntities();
+                                break;
+                            case 'shopify':
+                                $shopifyEmailParser = new ShopifyEmailParser($fullMessage);
+                                $shopifyEmailParser->getMessage(strip_tags($body));
+                                $parsedData = $shopifyEmailParser->getEntities();
+                                break;
+                            case 'ebay':
+                                $ebayEmailParser = new EbayEmailParser($fullMessage);
+                                $ebayEmailParser->getMessage(strip_tags($body));
+                                $parsedData = $ebayEmailParser->getEntities();
+                                break;
+                        }
+                    }
+
+                    // Handle message structure
+                    $structure = $fullMessage->getStructure();
+                    $part = isset($structure->parts[0]) ? $structure->parts[0] : null;
+
+                    $parts = [];
+                    if ($part) {
+                        $parts = [
+                            'mime_type' => $part->content_type ?? null,
+                            'content' => $part->content ?? null,
+                            'charset' => $part->charset ?? null,
+                        ];
+                    }
+
+                    if (str_contains($body, '<html>')) {
+                        $body = $this->formatHtml($body);
+                    }
+
+                    $attachments = [];
+                    if ($fullMessage->hasAttachments()) {
+                        $attachments = $fullMessage->getAttachments();
+                    }
+
+                    $mDate = $fullMessage->getDate()->first();
+                    $convertedDate = $mDate instanceof \Carbon\Carbon ? $mDate->copy()->setTimezone(config('app.timezone')) : null;
+                    $date = $convertedDate ? $convertedDate->format('Y-m-d H:i:s') : null;
+
+                    // Build the email data array
+                    $eData = [
+                        'subject' => $fullMessage->subject->first(),
+                        'full_name' => $fullMessage->fromaddress->first(),
+                        'name' => isset($fullMessage->getFrom()[0]) ? ($fullMessage->getFrom()[0]->personal ?? null) : null,
+                        'from' => isset($fullMessage->getFrom()[0]) ? ($fullMessage->getFrom()[0]->mail ?? null) : null,
+                        'reply_to' => isset($fullMessage->getReplyTo()[0]) ? ($fullMessage->getReplyTo()[0]->mail ?? null) : null,
+                        'reply_to_name' => isset($fullMessage->getReplyTo()[0]) ? ($fullMessage->getReplyTo()[0]->full ?? null) : null,
+                        'to' => isset($fullMessage->getTo()[0]) ? ($fullMessage->getTo()[0]->mail ?? null) : null,
+                        'cc' => isset($fullMessage->getCc()[0]) ? ($fullMessage->getCc()[0]->mail ?? null) : null,
+                        'bcc' => isset($fullMessage->getBcc()[0]) ? ($fullMessage->getBcc()[0]->mail ?? null) : null,
+                        'message_id' => $fullMessage->message_id->first(),
+                        'date' => $date ?? $filterDateObj->format('Y-m-d H:i:s'),
+                        'parsedData' => $parsedData,
+                        'parts' => $parts,
+                        'body' => $body,
+                        'in_reply_to' => $fullMessage->in_reply_to->first(),
+                        'references' => $fullMessage->references->all(),
+                        'attachments' => $attachments,
+                        'client_id' => null
+                    ];
+
+                    $emails[] = $eData;
+
+                    // Free up memory by unsetting large objects
+                    unset($fullMessage);
+                    unset($body);
+                    unset($parsedData);
+
+                    // Allow garbage collection to free memory
+                    if (function_exists('gc_collect_cycles')) {
+                        gc_collect_cycles();
+                    }
+
+                } catch (Exception $e) {
+                    Log::error("Error processing message #{$key}: " . $e->getMessage());
+                }
+            }
+
+            Log::info("Successfully processed " . count($emails) . " emails");
+            return $emails;
+        } catch (\Throwable $e) {
+
+            \App\Helpers\ErrorLogger::log($e, __METHOD__);
+
+            CriticalErrorService::report('Fetch emails failed:'.$storeName.'-'.$store_type, [
+                'marketplace' => ucfirst($store_type),
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
+                'method' => __METHOD__
+            ],['store_type' => $store_type,'store_name' => $storeName]);
+
+            Log::error("Failed to fetch emails: " . $e->getMessage());
+            Log::error("Failed to fetch emails: " . $e->getTraceAsString());
+            //return ['error' => 'Failed to fetch emails: ' . $e->getMessage()];
+            return [];
+        }
+    }
+
+    public function fetchEmailsOld($store_type, $filter_date, $folderName = 'INBOX', $limit = 10, $storeName = null)
+    {
+        try {
+            $this->client->connect();
+
+            $filterDateObj = \Carbon\Carbon::parse($filter_date, 'America/New_York');
+            $today = \Carbon\Carbon::now('America/New_York')->addDay();
+            $maxDate = $filterDateObj->copy()->addDays(3);
+
+            $toDate = $maxDate->lessThan($today) ? $maxDate : $today;
+
+            Log::info("Fetching email headers from folder: {$folderName} with filter date {$filterDateObj->toDateTimeString()} to {$toDate->toDateTimeString()} and limit {$limit}");
+
+            $folder = $this->client->getFolder($folderName);
+
+            $searchDateCriteria = $filterDateObj->format('d-M-Y');
+            $toDateCriteria = $toDate->format('d-M-Y');
+
+//            $query = $folder->query()
+//                ->where('SINCE', $searchDateCriteria)
+//                ->where('BEFORE', $toDateCriteria)
+//                ->setFetchOptions(\Webklex\PHPIMAP\IMAP::FT_UID | \Webklex\PHPIMAP\IMAP::FT_PEEK);
+//
+//            $messages = $query->get();
+            $batchSize = 10;
+
+            $filteredMessages = collect();
+            $page = 1;
+
+            do {
+                Log::info('Page ::' . $page . ' :: Fetching batch of size ' . $batchSize);
+                $query = $folder->query()
+                    ->since($searchDateCriteria)
+                    ->before($toDateCriteria)
+                    ->limit($batchSize, $page)
+                    ->setFetchOptions(\Webklex\PHPIMAP\IMAP::FT_UID | \Webklex\PHPIMAP\IMAP::FT_PEEK)
+                    //->setFetchOptions(\Webklex\PHPIMAP\IMAP::FT_UID)
+                    ->setFetchBody(false)
+                    ->setFetchFlags(false);
+
+                $tempMessages = $query->get()->sortByDesc(fn ($m) => $m->getUid());
                 Log::info("Fetched batch {$page} with " . $tempMessages->count() . " messages");
 
                 if ($tempMessages->count() === 0) {
