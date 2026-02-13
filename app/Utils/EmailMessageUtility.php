@@ -200,7 +200,7 @@ class EmailMessageUtility
 
             $filterDateObj = \Carbon\Carbon::parse($filter_date, 'America/New_York');
             $today = \Carbon\Carbon::now('America/New_York')->addDay();
-            $maxDate = $filterDateObj->copy()->addDays(3);
+            $maxDate = $filterDateObj->copy()->addDays(2);
 
             $toDate = $maxDate->lessThan($today) ? $maxDate : $today;
 
@@ -219,7 +219,6 @@ class EmailMessageUtility
 //            $messages = $query->get();
             $batchSize = 10;
 
-            $filteredMessages = collect();
             $page = 1;
 
             $remainUIs = [];
@@ -234,7 +233,7 @@ class EmailMessageUtility
                     ->setFetchBody(false)
                     ->setFetchFlags(false);
 
-                $tempMessages = $query->get()->sortByDesc(fn ($m) => $m->getUid());
+                $tempMessages = $query->get();
                 Log::info("Fetched batch {$page} with " . $tempMessages->count() . " messages");
 
                 $imapMessageIds = [];
@@ -449,7 +448,7 @@ class EmailMessageUtility
                     ->since($searchDateCriteria)
                     ->before($toDateCriteria)
                     ->limit($batchSize, $page)
-                    ->setFetchOptions(\Webklex\PHPIMAP\IMAP::FT_UID | \Webklex\PHPIMAP\IMAP::FT_PEEK)
+                    ->setFetchOptions(\Webklex\PHPIMAP\IMAP::FT_UID)
                     //->setFetchOptions(\Webklex\PHPIMAP\IMAP::FT_UID)
                     ->setFetchBody(false)
                     ->setFetchFlags(false);
