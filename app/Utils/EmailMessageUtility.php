@@ -263,10 +263,10 @@ class EmailMessageUtility
                     }
                 }
 
-                // Break the loop if we've already reached our limit
-                if (count($remainUIs) >= $limit) {
-                    break;
-                }
+//                // Break the loop if we've already reached our limit
+//                if (count($remainUIs) >= $limit) {
+//                    break;
+//                }
 
                 $page++;
 
@@ -277,8 +277,8 @@ class EmailMessageUtility
                 sleep(1); // prevent server throttling
                 Log::info('New Messages Count :: ' . count($remainUIs));
                 $query = null;
-            //} while ($tempMessages->count() > 0 && !($tempMessages->count() < $batchSize) && $filteredMessages->count() <= $limit);
-            } while (true);
+            } while ($tempMessages->count() > 0 && !($tempMessages->count() < $batchSize) && count($remainUIs) <= $limit);
+//            } while (true);
 
             Log::info("Found UID" . json_encode($remainUIs) . " messages matching the time criteria");
             Log::info("Found " . count($remainUIs) . " messages matching the time criteria");
