@@ -54,6 +54,7 @@ class   FetchEmailMessagesJob implements ShouldQueue
             /* get active store jobs*/
             $store_ids = Common::getActiveStoreJobs('FetchEmailMessagesJob');
             /* get active store jobs*/
+            Log::info('Store ids for FetchEmailMessagesJob: ' . json_encode($store_ids));
 
             /* get shopify stores*/
             $query = Store::with('storeType')->where('store_status','<>',0);
