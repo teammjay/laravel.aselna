@@ -685,6 +685,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
         $proDetail = ManageMarketplaceProduct::where('product_id', $productData->product_id)->where('store_id', $store->id)->where('upload_status', 'success')->first();
         $storeProduct = StoreProduct::where('product_id', $productData->product_id)->where('store_id', $store->id)->first();
 
+        $listingItem = $this->addListingItem($productData, $store);
 
         if (isset($proDetail)) {
             $shopifyAuthService = new ShopifyAuthService($store->secret_key, $store->service_url);
@@ -706,6 +707,11 @@ class SubmitShopifyProductsJob implements ShouldQueue
                 if ($storeProduct) {
                     $storeProduct->update([
                         'last_synch_date_time' => date('Y-m-d H:i:s')
+                    ]);
+                }
+                if ($listingItem) {
+                    $listingItem->update([
+                        'status' => ListingStatus::Suspended
                     ]);
                 }
             }
