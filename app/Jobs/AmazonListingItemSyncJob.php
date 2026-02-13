@@ -150,10 +150,11 @@ class AmazonListingItemSyncJob implements ShouldQueue
                     Log::info("Result Items :: " . json_encode($resultItems));
 
                     $itemFetch = [];
-                    if($resultItems){
+                    if(!empty($resultItems)){
                         foreach($resultItems as $item){
                             if(isset($item['sku']) && $item['sku'] != ''){
                                 $itemFetch[] = $item['sku'];
+                                Log::info("Listing Item :" . json_encode($item));
                                 $itemDetail = ListingItem::where('sku',$item['sku'])->first();
                                 if($itemDetail){
                                     if(isset($item['summaries'])) {
@@ -182,7 +183,7 @@ class AmazonListingItemSyncJob implements ShouldQueue
                         }
                     }
 
-                    if($itemFetch) {
+                    if(!empty($itemFetch)) {
                         foreach ($items as $item) {
                             if (!in_array($item, $itemFetch)) {
                                 $itemDetail = ListingItem::where('sku', $item)->first();
