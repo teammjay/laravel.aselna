@@ -124,8 +124,9 @@ class ListingUtility
             return match (strtolower($product->storeProduct->store->storeType->name)) {
                 "ebay" => "https://www.ebay.com/itm/" . $product->store_sku . "/" . $product->store_sku,
                 "amazon" => "https://www.amazon.com/dp/" . $product->store_sku,
-                "shopify" => "https://" . $product->store_sku . "/products/" . $product->store_sku,
-                "magento" => "https://" . $product->store_sku . "/product/" . $product->store_sku,
+                //"shopify" => "https://" . $product->store_sku . "/products/" . $product->store_sku,
+                "shopify" => $product->storeProduct->store->store_url . "/products/" . ($product->store_url ?? ""),
+                //"magento" => "https://" . $product->store_sku . "/product/" . $product->store_sku,
                 "walmart" => "https://www.walmart.com/ip/" . $product->store_sku,
                 "newegg" => "https://www.newegg.com/p/" . $product->store_sku,
                 "temu" => "https://www.temu.com/goods.html?goods_id=" . $product->store_sku,
