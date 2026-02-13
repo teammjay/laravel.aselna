@@ -46,16 +46,6 @@ class AmazonListingItemSyncJob implements ShouldQueue
             /* get active store jobs*/
             $store_ids = Common::getActiveStoreJobs('AmazonListingItemSyncJob', 'amazon');
             /* get active store jobs*/
-            $marketPlaceId = [];
-            if($store_ids){
-                foreach($store_ids as $store_id) {
-                    $store = Store::findOrFail($store_id);
-                    $amazonAuthService = new AmazonAuthService($store->seller_id, $store->secret_key, $store->api_key);
-                    $marketPlaceId[$store_id] = $amazonAuthService->getMarketplaceIDs();
-                }
-            }
-
-            Log::info('Amazon marketplace ids: ' . json_encode($marketPlaceId));
 
             $query = Store::where('store_type_id', function ($subquery) {
                 return $subquery->select('id')
@@ -69,6 +59,17 @@ class AmazonListingItemSyncJob implements ShouldQueue
 
             $amazon_store_ids = $query->pluck('id');
             Log::info('Amazon store ids: ' . json_encode($amazon_store_ids));
+
+            $marketPlaceId = [];
+            if($amazon_store_ids){
+                foreach($amazon_store_ids as $store_id) {
+                    $store = Store::findOrFail($store_id);
+                    $amazonAuthService = new AmazonAuthService($store->seller_id, $store->secret_key, $store->api_key);
+                    $marketPlaceId[$store_id] = $amazonAuthService->getMarketplaceIDs();
+                }
+            }
+
+            Log::info('Amazon marketplace ids: ' . json_encode($marketPlaceId));
 
             //join listing_item_link and listing_item and listing
             ListingItemLink::query()
