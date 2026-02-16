@@ -84,6 +84,7 @@ class ProductSyncJob implements ShouldQueue
         $manufacturer = Manufacturer::select('id')->where('code', $product->manufacturer_id)->first();
         $productColor = ProductColor::select('id')->where('name', $product->color)->first();
         $productCategory = ProductType::select('id')->where('code', $product->category_id)->first();
+        $productCondition = ProductCondition::select('id')->where('code', $product->stock_type_id)->first();
         $mainImage = null;
 
         try {
@@ -106,7 +107,7 @@ class ProductSyncJob implements ShouldQueue
                 'product_description' => $product->long_description,
                 'product_type' => $productCategory->id,
                 'manufacturer_id' => $manufacturer->id,
-                'product_condition_id' => ProductCondition::getConditionId($product->stock_type_id),
+                'product_condition_id' => $productCondition->id,
                 'product_price' => $product->website_price,
                 'product_wholesale_price' => $product->wholesale_price,
                 'product_marketplace_price' => $product->marketplace_price,

@@ -3,6 +3,7 @@
 namespace App\Jobs\Fonus;
 
 use App\Jobs\Concerns\TrackableJob;
+use App\Models\Catalog;
 use App\Models\Manufacturer;
 use App\Services\CriticalErrorService;
 use Exception;
@@ -93,9 +94,13 @@ class ManufacturerSyncJob implements ShouldQueue
             ->toArray();
 
         foreach ($manufacturers as $manufacturer) {
-            if ( isset($manufacturer->code) && !in_array($manufacturer->code, $existingCodes)) {
-                Log::info("Deleting Manufacturer ID: " . $manufacturer->code . ' - ' . $manufacturer->name);
-                Manufacturer::where('code', $manufacturer->code)->delete();
+            try {
+                if (isset($manufacturer->code) && !in_array($manufacturer->code, $existingCodes)) {
+                    Log::info("Deleting Manufacturer ID: " . $manufacturer->code . ' - ' . $manufacturer->name);
+                    Manufacturer::where('code', $manufacturer->code)->delete();
+                }
+            } catch (Exception $e) {
+                Log::error('Error in Deletion Sync: ' . $e->getMessage());
             }
         }
     }
