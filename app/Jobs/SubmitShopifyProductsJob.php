@@ -937,20 +937,22 @@ class SubmitShopifyProductsJob implements ShouldQueue
             'type' => 'single_line_text_field'
         ];
 
-        $metafields[] = [
-            'namespace' => 'global',
-            'key' => 'sub_category_name',
-            'value' => $parent_product_type->name,
-            'type' => 'single_line_text_field'
-        ];
+        if (isset($parent_product_type)) {
+            $metafields[] = [
+                'namespace' => 'global',
+                'key' => 'sub_category_name',
+                'value' => $parent_product_type->name,
+                'type' => 'single_line_text_field'
+            ];
 
-        //change the name from Wired Earphones to wired-earphones
-        $metafields[] = [
-            'namespace' => 'global',
-            'key' => 'sub_category',
-            'value' => strtolower(str_replace(' ', '-', $parent_product_type->name)),
-            'type' => 'single_line_text_field'
-        ];
+            //change the name from Wired Earphones to wired-earphones
+            $metafields[] = [
+                'namespace' => 'global',
+                'key' => 'sub_category',
+                'value' => strtolower(str_replace(' ', '-', $parent_product_type->name)),
+                'type' => 'single_line_text_field'
+            ];
+        }
 
         if (isset($productInterface)) {
             $metafields[] = [
