@@ -170,7 +170,7 @@ class DevicesSyncJob implements ShouldQueue
                 'dimensions_length' => $device->depth,
                 'dimensions_height' => $device->height,
                 'notes' => $device->notes1,
-                'order' => $device->order_no,
+                'order' => $device->gadget_id,
                 'status' => $device->status_id == 1 ? 'active' : 'inactive',
                 'brand_id' => $brand ? $brand->id : null,
                 'device_type_id' => $devicetypes ? $devicetypes->id : null,
