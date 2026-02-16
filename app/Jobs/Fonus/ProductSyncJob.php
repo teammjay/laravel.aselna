@@ -7,6 +7,7 @@ use App\Jobs\Concerns\TrackableJob;
 use App\Models\Catalog;
 use App\Models\Manufacturer;
 use App\Models\ProductColor;
+use App\Models\ProductCondition;
 use App\Models\ProductKeyFeatures;
 use App\Models\ProductType;
 use App\Services\CriticalErrorService;
@@ -105,7 +106,7 @@ class ProductSyncJob implements ShouldQueue
                 'product_description' => $product->long_description,
                 'product_type' => $productCategory->id,
                 'manufacturer_id' => $manufacturer->id,
-//                'product_condition_id' => $product->condition_id,
+                'product_condition_id' => ProductCondition::getConditionId($product->stock_type_id),
                 'product_price' => $product->website_price,
                 'product_wholesale_price' => $product->wholesale_price,
                 'product_marketplace_price' => $product->marketplace_price,

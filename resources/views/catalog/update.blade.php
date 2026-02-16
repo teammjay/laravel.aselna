@@ -211,6 +211,7 @@
                                                         <option>-- Product Status --</option>
                                                         <option value="active" {{ "active" == $product->product_status ? 'selected' : '' }}> Active </option>
                                                         <option value="discontinued" {{ "discontinued" == $product->product_status ? 'selected' : '' }}> Discontinued </option>
+                                                        <option value="temporaryDisabled" {{ "temporaryDisabled" == $product->product_status ? 'selected' : '' }}> Temporary Disabled </option>
                                                         <option value="out_of_stock" {{ "out_of_stock" == $product->product_status ? 'selected' : '' }}> Out of stock </option>
                                                     </select>
                                                     <span class="error-message text-danger" id="product_status-error"></span>
