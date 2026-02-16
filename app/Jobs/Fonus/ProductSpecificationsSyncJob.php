@@ -47,8 +47,8 @@ class ProductSpecificationsSyncJob implements ShouldQueue
 
             DB::connection('fonus_db')->table('tbl_product_features')
                 ->orderBy('product_id')
-                ->limit(10000)
-                ->chunk(10000, function ($features) {
+                ->limit(1000)
+                ->chunk(1000, function ($features) {
                     $grouped = [];
                     foreach ($features as $feature) {
                         $grouped[$feature->product_id][] = $feature;
@@ -86,16 +86,17 @@ class ProductSpecificationsSyncJob implements ShouldQueue
             Log::info('Product Specification :: ' . $feature->feature . ' with ' . $value . ' for Product ID: ' . $productId);
 
             $uniqueSpecification = ProductSpecifcationUniqueInfo::where('field_name', $feature->feature)->first();
-            if (isset($uniqueSpecification)) {
-                $specValue = ProductSpecificationValue::where('product_specification_id', $uniqueSpecification->id)
-                    ->where('field_value', $value)
-                    ->first();
-                if ($specValue) {
-                    $value = $specValue->id;
-                }
-            }
 
             foreach ($this->storetypes as $storetype) {
+                if (isset($uniqueSpecification)) {
+                    $specValue = ProductSpecificationValue::select('id')->where('product_specification_id', $uniqueSpecification->id)
+                        ->where('store_type_id', $storetype)
+                        ->where('field_value', $value)
+                        ->first();
+                    if ($specValue) {
+                        $value = $specValue->id;
+                    }
+                }
                 ProductSpecification::updateOrCreate(
                     [
                         'name' => $feature->feature,
