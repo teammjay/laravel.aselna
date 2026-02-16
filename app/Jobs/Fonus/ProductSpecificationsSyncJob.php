@@ -89,21 +89,21 @@ class ProductSpecificationsSyncJob implements ShouldQueue
             $feature = DB::connection('fonus_db')->table('tbl_features')
                 ->where('feature_id', $categoryValue->feature_id)->first();
 
-            $value = $categoryValue->value;
-            Log::info('Product Specification :: ' . $feature->feature . ' with ' . $value . ' for Product ID: ' . $productId);
+            $specValueText = $categoryValue->value;
+            Log::info('Product Specification :: ' . $feature->feature . ' with ' . $specValueText . ' for Product ID: ' . $productId);
 
             $uniqueSpecification = ProductSpecifcationUniqueInfo::where('field_name', $feature->feature)->first();
 
             if (isset($uniqueSpecification)) {
                 $specValue = ProductSpecificationValue::select('id')->where('product_specification_id', $uniqueSpecification->id)
-                    ->where('field_value', $value)
+                    ->where('field_value', $specValueText)
                     ->first();
                 if ($specValue) {
                     $value = $specValue->id;
                 } else {
                     $specValue = ProductSpecificationValue::create([
                         'product_specification_id' => $uniqueSpecification->id,
-                        'field_value' => $value,
+                        'field_value' => $specValueText,
                         'created_at' => now(),
                         'updated_at' => now(),
                     ]);
