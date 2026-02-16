@@ -27,4 +27,9 @@ class ProductCondition extends Model
 
 
     protected $fillable = ['id', 'name', 'code', 'created_by', 'updated_by', 'created_at', 'updated_at'];
+
+    public function getConditionId($code){
+        $condition =  self::where('code',$code)->first();
+        return $condition->id;
+    }
 }
