@@ -256,7 +256,7 @@ class ProductImagesSyncJob implements ShouldQueue
         }
         Log::info('Product Images to delete :: ' . json_encode($idsToDelete));
         if (!empty($idsToDelete)) {
-//            ProductImages::whereIn('id', $idsToDelete)->delete();
+            ProductImages::whereIn('id', $idsToDelete)->delete();
         }
     }
 }
