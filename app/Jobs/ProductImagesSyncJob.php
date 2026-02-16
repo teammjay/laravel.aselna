@@ -59,6 +59,11 @@ class ProductImagesSyncJob implements ShouldQueue
                 }
             });
 
+            ProductImages::orderBy('id')->chunk(1000, function ($productImages) {
+                Log::info('Processing chunk of ' . count($productImages) . ' product images for deletion check.');
+                $this->checkAndDelete($productImages);
+            });
+
             Log::info('ProductImagesSyncJob From : Done');
 
         }catch (\Throwable $e) {
@@ -216,6 +221,42 @@ class ProductImagesSyncJob implements ShouldQueue
                 'product_id' => $product->product_id,
                 'sort_order' => last(str_split($productImage->sort_order ?? ''))
             ], $imageData);
+        }
+    }
+
+    private function checkAndDelete($productImages)
+    {
+        $productImageKeys = [];
+        $productImageMap = [];
+
+        foreach ($productImages as $productImage) {
+            $key = $productImage->product->product_code . '_' . $productImage->sort_order;
+            $productImageKeys[] = $key;
+            $productImageMap[$key] = $productImage->id;
+        }
+
+        Log::info('Checking existing product images for keys: ' . json_encode($productImageKeys));
+
+        $existingRecords = DB::connection('fonus_db')->table('tbl_product_images')
+            ->select(DB::raw("CONCAT(product_id, '_', picture_id) as `key`"))
+            ->whereIn(DB::raw("CONCAT(product_id, '_', picture_id)"), array_unique($productImageKeys))
+            ->where('picture_type_id', '=', '1')
+            ->get();
+
+        $existingSet = [];
+        foreach ($existingRecords as $record) {
+            $existingSet[$record->key] = true;
+        }
+
+        $idsToDelete = [];
+        foreach ($productImageMap as $key => $id) {
+            if (!isset($existingSet[$key])) {
+                $idsToDelete[] = $id;
+            }
+        }
+        Log::info('Product Images to delete :: ' . json_encode($idsToDelete));
+        if (!empty($idsToDelete)) {
+            ProductImages::whereIn('id', $idsToDelete)->delete();
         }
     }
 }

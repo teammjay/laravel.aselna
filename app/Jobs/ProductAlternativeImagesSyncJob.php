@@ -58,6 +58,11 @@ class ProductAlternativeImagesSyncJob implements ShouldQueue
                     $this->createProductImageFonus($productImage);
                 }
             });
+
+            ProductImageAlternative::orderBy('id')->chunk(1000, function ($productImages) {
+                $this->checkAndDeleteImage($productImages);
+            });
+
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('Product Alternative Images Sync Job Failed', [
@@ -198,6 +203,41 @@ class ProductAlternativeImagesSyncJob implements ShouldQueue
             ], array_filter($imageData));
 //        }
 
+    }
+
+    private function checkAndDeleteImage(mixed $productImages)
+    {
+        $productImageKeys = [];
+        $productImageMap = [];
+        foreach ($productImages as $image) {
+            $key = $image->product->product_code . '_' . $image->version_number;
+            $productImageKeys[] = $key;
+            $productImageMap[$key] = $image->id;
+        }
+
+        Log::info('Checking Product Alternate Images to delete :: ' . json_encode($productImageKeys));
+
+        $existingRecords = DB::connection('fonus_db')->table('tbl_product_main_images')
+            ->select(DB::raw("CONCAT(product_id, '_', image_id) as `key`"))
+            ->whereIn(DB::raw("CONCAT(product_id, '_', image_id)"), $productImageKeys)
+            ->get();
+
+        $existingSet = [];
+        foreach ($existingRecords as $record) {
+            $existingSet[$record->key] = true;
+        }
+
+        $idsToDelete = [];
+        foreach ($productImageMap as $key => $id) {
+            if (!isset($existingSet[$key])) {
+                $idsToDelete[] = $id;
+            }
+        }
+
+        Log::info('Product Alternate Images to delete :: ' . json_encode($idsToDelete));
+        if (!empty($idsToDelete)) {
+            ProductImageAlternative::whereIn('id', $idsToDelete)->delete();
+        }
     }
 
 
