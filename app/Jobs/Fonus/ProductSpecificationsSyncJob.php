@@ -77,6 +77,8 @@ class ProductSpecificationsSyncJob implements ShouldQueue
         foreach ($features as $feature) {
             $categoryValue =  DB::connection('fonus_db')->table('tbl_category_feature_values')
                 ->where('category_feature_value_id', $feature->category_feature_value_id)->first();
+            if (!isset($categoryValue) || !isset($categoryValue->feature_id)) continue;
+
             $feature = DB::connection('fonus_db')->table('tbl_features')
                 ->where('feature_id', $categoryValue->feature_id)->first();
 
