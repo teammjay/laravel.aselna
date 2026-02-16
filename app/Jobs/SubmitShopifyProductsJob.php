@@ -648,7 +648,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
             $mediaIdsToDelete = [];
             foreach ($deletedImages as $image) {
                 if (!empty($image->reference_id)) {
-                    $mediaIdsToDelete[] = $image->reference_id;
+                    $mediaIdsToDelete[] = 'gid://shopify/MediaImage/' .$image->reference_id;
                 }
             }
             if (count($mediaIdsToDelete) > 0) {
