@@ -95,6 +95,14 @@ class ProductSpecificationsSyncJob implements ShouldQueue
                         ->first();
                     if ($specValue) {
                         $value = $specValue->id;
+                    } else {
+                        $specValue = ProductSpecificationValue::create([
+                            'product_specification_id' => $uniqueSpecification->id,
+                            'field_value' => $value,
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
+                        $value = $specValue->id;
                     }
                 }
                 ProductSpecification::updateOrCreate(
