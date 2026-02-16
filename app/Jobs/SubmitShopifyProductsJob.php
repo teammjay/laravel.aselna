@@ -639,13 +639,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
                                     ->from('product_images')
                                     ->where('product_id', $productData->product_id);
                             })
-                                ->whereColumn('updated_at', '<', function ($q) use ($productData) {
-                                    $q->select('updated_at')
-                                        ->from('product_images')
-                                        ->whereColumn('listing_item_product_image.product_image_id', 'product_images.id')
-                                        ->where('product_id', $productData->product_id)
-                                        ->limit(1);
-                                })
+                                ->whereRaw('listing_item_product_image.updated_at < (SELECT updated_at FROM product_images WHERE listing_item_product_image.product_image_id = product_images.id AND product_id = ? LIMIT 1)', [$productData->product_id])
                                 ->where('listing_item_id', $listingItem->id);
                         });
                 })
