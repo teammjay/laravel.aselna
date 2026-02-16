@@ -58,6 +58,13 @@ class ProductSpecificationsSyncJob implements ShouldQueue
                     }
                 });
 
+            ProductSpecification::orderBy('id')
+                ->whereIn('store_type_id', $this->storetypes)
+                ->OrWhereNull('store_type_id')
+                ->chunk(1000, function ($specifications) {
+                $this->checkAndDeleteSpecifications($specifications);
+            });
+
         } catch (\Throwable $e) {
 
             CriticalErrorService::report('Fonus Product Specifications Job Failed', [
@@ -87,24 +94,24 @@ class ProductSpecificationsSyncJob implements ShouldQueue
 
             $uniqueSpecification = ProductSpecifcationUniqueInfo::where('field_name', $feature->feature)->first();
 
-            foreach ($this->storetypes as $storetype) {
-                if (isset($uniqueSpecification)) {
-                    $specValue = ProductSpecificationValue::select('id')->where('product_specification_id', $uniqueSpecification->id)
-                        ->where('store_type_id', $storetype)
-                        ->where('field_value', $value)
-                        ->first();
-                    if ($specValue) {
-                        $value = $specValue->id;
-                    } else {
-                        $specValue = ProductSpecificationValue::create([
-                            'product_specification_id' => $uniqueSpecification->id,
-                            'field_value' => $value,
-                            'created_at' => now(),
-                            'updated_at' => now(),
-                        ]);
-                        $value = $specValue->id;
-                    }
+            if (isset($uniqueSpecification)) {
+                $specValue = ProductSpecificationValue::select('id')->where('product_specification_id', $uniqueSpecification->id)
+                    ->where('field_value', $value)
+                    ->first();
+                if ($specValue) {
+                    $value = $specValue->id;
+                } else {
+                    $specValue = ProductSpecificationValue::create([
+                        'product_specification_id' => $uniqueSpecification->id,
+                        'field_value' => $value,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                    $value = $specValue->id;
                 }
+            }
+
+            foreach ($this->storetypes as $storetype) {
                 ProductSpecification::updateOrCreate(
                     [
                         'name' => $feature->feature,
@@ -119,6 +126,13 @@ class ProductSpecificationsSyncJob implements ShouldQueue
                     ]
                 );
             }
+        }
+    }
+
+    private function checkAndDeleteSpecifications($specifications)
+    {
+        foreach ($specifications as $specification) {
+
         }
     }
 }
