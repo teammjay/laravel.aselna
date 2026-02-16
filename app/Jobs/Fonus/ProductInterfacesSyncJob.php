@@ -58,13 +58,9 @@ class ProductInterfacesSyncJob implements ShouldQueue
 
     private function createProductInterfaces(mixed $productAttribute)
     {
-        $product = Catalog::select('updated_at','product_id')->where('product_code', $productAttribute->product_id)->first();
+        $product = Catalog::select('product_id')->where('product_code', $productAttribute->product_id)->first();
         $attribute = Interfaces::where('code', $productAttribute->attribute_id)->first();
         if (!isset($product) || !isset($attribute)) {
-            return;
-        }
-        if (isset($product) && $product->updated_at >= $productAttribute->date_updated) {
-//            Log::info("Product Skipped :: " . $product->custom_label);
             return;
         }
         $alreadyExists = ProductInterface::where('product_id', $product->id)

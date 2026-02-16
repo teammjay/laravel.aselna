@@ -6,7 +6,9 @@ use App\Constants\CatalogStatus;
 use App\Jobs\Concerns\TrackableJob;
 use App\Models\Catalog;
 use App\Models\Manufacturer;
+use App\Models\ProductColor;
 use App\Models\ProductKeyFeatures;
+use App\Models\ProductType;
 use App\Services\CriticalErrorService;
 use App\Utils\FileUtility;
 use Exception;
@@ -78,7 +80,9 @@ class ProductSyncJob implements ShouldQueue
         $alreadyExists = Catalog::select('updated_at','product_id','product_sku')->where('product_code', $product->product_id)->first();
 
 
-        $manufacturer = Manufacturer::where('code', $product->manufacturer_id)->first();
+        $manufacturer = Manufacturer::select('id')->where('code', $product->manufacturer_id)->first();
+        $productColor = ProductColor::select('id')->where('name', $product->color)->first();
+        $productCategory = ProductType::select('id')->where('code', $product->category_id)->first();
         $mainImage = null;
 
         try {
@@ -99,7 +103,7 @@ class ProductSyncJob implements ShouldQueue
                 'product_code' => $product->product_id,
                 'product_title' => $product->product_name,
                 'product_description' => $product->long_description,
-//                'product_type' => $product->product_type_id,
+                'product_type' => $productCategory->id,
                 'manufacturer_id' => $manufacturer->id,
 //                'product_condition_id' => $product->condition_id,
                 'product_price' => $product->website_price,
@@ -126,7 +130,7 @@ class ProductSyncJob implements ShouldQueue
 //                'oem_generic' => $product->oem_generic,
                 //            'product_tags'=> $product->weight_weight_unit,
                 //            'target_aud'=> $product->weight_weight_unit,
-//                'product_color' => $product->color_id,
+                'product_color' => $productColor->id,
                 'product_qty' => $product->total_stock,
                 //            'product_reorder_qty',
                 //            'product_pick_location' => ,
