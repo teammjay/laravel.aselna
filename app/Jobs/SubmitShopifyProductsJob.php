@@ -650,6 +650,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
                 if (!empty($image->reference_id)) {
                     $mediaIdsToDelete[] = 'gid://shopify/MediaImage/' .$image->reference_id;
                 }
+                $image->delete();
             }
             if (count($mediaIdsToDelete) > 0) {
                 $shopifyAuthService->deleteMediaImages($proDetail->marketplace_product_id, $mediaIdsToDelete);
@@ -657,6 +658,13 @@ class SubmitShopifyProductsJob implements ShouldQueue
 
             $this->handleMediaImages($response['data']['productUpdate']['product'], $listingItem);
             $firstImage = ListingItemProductImage::where('listing_item_id', $listingItem->id)->where('main_image', 1)->first();
+            if (!isset($firstImage)) {
+                $productImage = ProductImages::select('id')->where('product_id', $productData->product_id)->where('main_image', 1)->first();
+                $firstImage = ListingItemProductImage::where('listing_item_id', $listingItem->id)->where('product_image_id', $productImage->id)->first();
+                $firstImage->update([
+                    'main_image' => 1
+                ]);
+            }
 
             if (isset($firstImage) && isset($firstImage->reference_id) && !empty($firstImage->reference_id)) {
                 if (isset($featuredImageId)) {
