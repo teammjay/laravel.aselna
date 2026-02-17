@@ -403,7 +403,7 @@ class StoreBrandPageSyncJob implements ShouldQueue
 
                             if($this->store_id){
                                 $storeCategoryImage = StoreCategoryImage::with('imageObj')->where('store_id',$this->store_id)->where('category_id',$productType->id)->first();
-                                if($storeCategoryImage->isNotEmpty()){
+                                if(!empty($storeCategoryImage)){
                                     if(isset($storeCategoryImage->imageObj) && !empty($storeCategoryImage->imageObj)){
                                         //$imagePath = asset('storage/store_category_images/'. $storeCategoryImage->imageObj->name);
                                         $imagePath = $storeCategoryImage->imageObj->getFileUrl();
