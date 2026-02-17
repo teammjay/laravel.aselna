@@ -449,7 +449,8 @@ class StoreController extends Controller
             $catimage->update(['image_id' => $imageFile->id]);
 
             return response()->json([
-                'success' => 'Image uploaded successfully!',
+                'success' => true,
+                'message' => 'Image uploaded successfully!',
                 'image_name' => $imageName
             ]);
         }

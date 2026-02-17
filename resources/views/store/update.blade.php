@@ -1991,7 +1991,8 @@
                 },
                 success: function (response) {
                     if (response.success) {
-                        //location.reload();
+                        alert(response.message);
+                        location.reload();
                     }
                 },
                 error: function (xhr) {
