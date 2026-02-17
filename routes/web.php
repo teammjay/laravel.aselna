@@ -144,6 +144,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/store/handleCallback/', 'handleCallback')->name('store.handleCallback');
         Route::post('/store/getstorepage/', 'getStorePage')->name('store.getstorepage');
         Route::post('/store/getstoremessageaccount/', 'getStoreMessageAccount')->name('store.getstoremessageaccount');
+        Route::post('/store/uploadstorecatimg/', 'uploadStoreCatImg')->name('store.uploadstorecatimg');
+        Route::post('/stores/copyimgcategories', 'copyImgCategories')->name('store.copyimgcategories');
     });
 
     Route::controller(ListingController::class)->group(function () {
