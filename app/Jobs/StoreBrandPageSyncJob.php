@@ -10,6 +10,7 @@ use App\Models\Images;
 use App\Models\Interfaces;
 use App\Models\ProductType;
 use App\Models\Store;
+use App\Models\StoreCategoryImage;
 use App\Models\StoreDeviceType;
 use App\Models\StoreNavigationPage;
 use App\Models\StorePageTemplate;
@@ -398,8 +399,20 @@ class StoreBrandPageSyncJob implements ShouldQueue
                             $path = '/store-images/' . $this->store->id . '/collections/' . $handle . '.jpg';
                             $imagePath = $productType->image->getFileUrl();
                             Log::info('Image :: ' . $imagePath);
-
                             $imagePath = FileUtility::uploadImage($this->store, 'app/public/' . $imagePath, $path);
+
+                            if($this->store_id){
+                                $storeCategoryImage = StoreCategoryImage::with('imageObj')->where('store_id',$this->store_id)->where('category_id',$productType->id)->first();
+                                if($storeCategoryImage->isNotEmpty()){
+                                    if(isset($storeCategoryImage->imageObj) && !empty($storeCategoryImage->imageObj)){
+                                        //$imagePath = asset('storage/store_category_images/'. $storeCategoryImage->imageObj->name);
+                                        $imagePath = $storeCategoryImage->imageObj->getFileUrl();
+                                        $imagePath = FileUtility::uploadImage($this->store, 'app/public/' . $imagePath, $path);
+                                    }
+                                }
+                            }
+
+                            Log::info('Final Image :: ' . $imagePath);
                         } catch (\Exception $e) {
                             $imagePath = '';
                         }
