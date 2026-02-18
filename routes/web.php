@@ -349,6 +349,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/messages/assignlabel', 'assignLabel')->name('message.assignlabel');
         Route::post('/messages/removeticketlabel', 'removeTicketLabel')->name('message.removeticketlabel');
         Route::get('/messages/label/{id}', 'label_list')->name('message.label');
+        Route::post('/messages/regeneratelabel', 'regenerateReplacementLabel')->name('message.regeneratelabel');
     });
 
     Route::controller(PageTypesController::class)->group(function () {
