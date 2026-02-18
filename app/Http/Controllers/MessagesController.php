@@ -1934,6 +1934,48 @@ class MessagesController extends Controller
         }
     }
 
+    public function regenerateReplacementLabel(Request $request){
+
+        $order_operation_id = $request->input('operation_id');
+        $request['label_generation'] = 1;
+        $request['replacement'] = 1;
+        $orderOperations = OrderOperation::with('order', 'order.customer', 'store', 'store.storeType')->where('id', $order_operation_id)->first();
+        Log::info('Regenerate Replacement Label Orderoperation: ' . json_encode($orderOperations));
+
+        $successRes = OrderOperationUtility::processShipment($orderOperations, $request);
+
+        if($successRes['success']){
+
+            $templateDetail = HdMessageTemplate::getOrderOperationTemplate(OrderOperationType::OrderReplacement, 1, 0);
+            $template_id = $template_code = '';
+            if ($templateDetail) {
+                $data = [
+                    'customer_firstName' => isset($orderOperations->order->customer) ? $orderOperations->order->customer->full_name : '',
+                    'store_name' => isset($orderOperations->store) ? $orderOperations->store->name : '',
+                    'trackingNumber' => isset($orderOperations->tracking_number) ? $orderOperations->tracking_number : '',
+                    'ima_number' => '',
+                    'return_address' => '',
+                    'shipment_date' => isset($orderOperations->ship_date) ? date('d M Y',strtotime($orderOperations->ship_date)) : '',
+                    'order_date' => '',
+                ];
+                $template_id = $templateDetail->id;
+                $template_code = \Blade::render($templateDetail->template_code, $data);
+            }
+
+            return response()->json([
+                'success' => true,
+                'template_id' => $template_id,
+                'template_code' => $template_code,
+                'message' => 'Order Replacement successfuly!'
+            ]);
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Something went wrong with API. Please try again!'
+        ]);
+    }
+
 
     public function refundOrder(Request $request){
 
