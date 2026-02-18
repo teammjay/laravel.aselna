@@ -45,7 +45,8 @@ class Navigationutility
                     ->where('page_type', WebStorePageType::BRAND)
                     ->get();
                 foreach ($links as $link) {
-                    if (isset($link->brand) && $link->brand->sort_order <= 10) {
+                    if (!isset($link->brand)) continue;
+                    if ($link->brand->sort_order <= 10) {
                         $finalLinkArray['popular_link'][] = [
                             'id' => $link->id,
                             'title' => $link->brand->name,
