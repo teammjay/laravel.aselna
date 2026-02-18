@@ -144,6 +144,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/store/handleCallback/', 'handleCallback')->name('store.handleCallback');
         Route::post('/store/getstorepage/', 'getStorePage')->name('store.getstorepage');
         Route::post('/store/getstoremessageaccount/', 'getStoreMessageAccount')->name('store.getstoremessageaccount');
+        Route::post('/store/uploadstorecatimg/', 'uploadStoreCatImg')->name('store.uploadstorecatimg');
+        Route::post('/stores/copyimgcategories', 'copyImgCategories')->name('store.copyimgcategories');
     });
 
     Route::controller(ListingController::class)->group(function () {
@@ -347,6 +349,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/messages/assignlabel', 'assignLabel')->name('message.assignlabel');
         Route::post('/messages/removeticketlabel', 'removeTicketLabel')->name('message.removeticketlabel');
         Route::get('/messages/label/{id}', 'label_list')->name('message.label');
+        Route::post('/messages/regeneratelabel', 'regenerateReplacementLabel')->name('message.regeneratelabel');
     });
 
     Route::controller(PageTypesController::class)->group(function () {

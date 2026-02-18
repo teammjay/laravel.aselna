@@ -962,6 +962,50 @@
                 }
             });
 
+            $(document).on('click','#regenerate_label',function () {
+                var operationID = $(this).data('opid');
+                $.ajax({
+                    type: "POST",
+                    url: "{{ route('message.regeneratelabel') }}",
+                    data: {
+                        operation_id: operationID
+                    },
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+
+                    success: function(data) {
+                        if(data.success){
+
+                            if($('#message_to_send').val() !== '' && data.templateCode !== ''){
+                                if (confirm("Are you sure, you want to overwrite the template?") == true) {
+                                    $('#template_id').val(data.template_id);
+                                    $('#message_to_send').html(data.templateCode);
+                                } else {
+
+                                }
+                            }else if(data.templateCode !== ''){
+                                $('#template_id').val(data.template_id);
+                                $('#message_to_send').html(data.templateCode);
+                            }
+
+                            if(data.image_url){
+                                $('.lableImageGroup').removeClass('hide');
+                                $('#image_url').val(data.image_url);
+                                $('#image_storage_path').val(data.imagesPath);
+                                $('.uploaded-lable-image').html(data.image_name);
+                            }
+
+                            //$('#message_to_send').html(data.templateCode);
+                        }
+                    },
+                    error: function (xhr) {
+                    },
+                    complete: function () {
+                        $("#ajax-preloader").hide();
+                    }
+                });
+            });
 
 
             $(document).on('click','#regenerate_rma_message',function () {

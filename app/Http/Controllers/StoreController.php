@@ -11,8 +11,10 @@ use App\Models\ListingTemplate;
 use App\Models\LogisticCenter;
 use App\Models\Manufacturer;
 use App\Models\MessagingAccount;
+use App\Models\ProductType;
 use App\Models\ShippingCarrierService;
 use App\Models\StoreCategory;
+use App\Models\StoreCategoryImage;
 use App\Models\StoreDeviceType;
 use App\Models\StoreLogisticCenter;
 use App\Models\StoreManufactureLink;
@@ -23,6 +25,7 @@ use App\Models\StorePropertyInfo;
 use App\Models\StorePropertyValues;
 use App\Models\StoreShippingService;
 use App\Models\StoreType;
+use App\Models\SysFile;
 use App\Services\Auth\EbayAuthService;
 use Illuminate\Http\Request;
 use App\Models\Store;
@@ -89,13 +92,17 @@ class StoreController extends Controller
         $propertyInfo = StorePropertyInfo::all();
         $manufacturers = Manufacturer::orderBy('name','asc')->get();
         $storeManufacturers = [];
+        $storeCategoryImage = StoreCategoryImage::with('store','category','imageObj')->where('store_id',$store_id)->orderBy(
+            ProductType::select('name')
+                ->whereColumn('product_type.id', 'store_category_image.category_id')
+        )->get();
         /*$messagerecord = $storeMessageAccount->toArray();
         $incomingAccount = MessagingAccount::where('id', $messagerecord[0]['incoming_account_id'])->get();
         $outgoingAccount = MessagingAccount::where('id', $messagerecord[0]['outgoing_account_id'])->get();*/
         //echo '<pre>';
         //print_r($storeDevices);die;
 
-        return view('store.update', compact('store','devices','storeDevices','shipping_services','storeShippingService','pageTypes','storePages','storeCategories','storeMessageAccount','logisticCenters','storeLogisticCenters','store_types','action','listing_templates','fileSystems','propertyInfo','manufacturers','storeManufacturers'));
+        return view('store.update', compact('store','devices','storeDevices','shipping_services','storeShippingService','pageTypes','storePages','storeCategories','storeMessageAccount','logisticCenters','storeLogisticCenters','store_types','action','listing_templates','fileSystems','propertyInfo','manufacturers','storeManufacturers','storeCategoryImage'));
     }
 
     /**
@@ -389,6 +396,14 @@ class StoreController extends Controller
         $manufacturers = Manufacturer::orderBy('name','asc')->get();
         $storeManufacturers = StoreManufactureLink::where('store_id',$id)->get();
         $storeManufacturers = $storeManufacturers->pluck('manufacturer_id')->values()->all();
+        $storeCategoryImage = StoreCategoryImage::with('store','category','imageObj')->where('store_id',$id)->orderBy(
+            ProductType::select('name')
+                ->whereColumn('product_type.id', 'store_category_image.category_id')
+        )->get();
+
+        /*echo '<pre>';
+        print_r($storeCategoryImage);
+        echo '</pre>';die;*/
         //$storemanufacturers = Manufacturer::all();
         /*$messagerecord = $storeMessageAccount->toArray();
         $incomingAccount = MessagingAccount::where('id', $messagerecord[0]['incoming_account_id'])->get();
@@ -396,7 +411,51 @@ class StoreController extends Controller
         //echo '<pre>';
         //print_r($outgoingAccount);die;
 
-        return view('store.update', compact('store','devices','storeDevices','shipping_services','storeShippingService','pageTypes','storePages','storeCategories','storeMessageAccount','logisticCenters','storeLogisticCenters','store_types','action','listing_templates','fileSystems','propertyInfo','propertyValues','manufacturers','storeManufacturers'));
+        return view('store.update', compact('store','devices','storeDevices','shipping_services','storeShippingService','pageTypes','storePages','storeCategories','storeMessageAccount','logisticCenters','storeLogisticCenters','store_types','action','listing_templates','fileSystems','propertyInfo','propertyValues','manufacturers','storeManufacturers','storeCategoryImage'));
+    }
+
+    public function uploadStoreCatImg(Request $request){
+        $Id = $request->input('category_image_id');
+        // Validate the request
+        $validator = Validator::make($request->all(), [
+            'images.*' => 'required|image|mimes:jpeg,png,jpg,gif,JPG,PNG,JPEG|max:2048'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['error' => $validator->errors()], 422);
+        }
+
+        if ($request->file('category_image')) {
+
+            $image = $request->file('category_image');
+
+            $extension = $image->getClientOriginalExtension();
+            $imageName = time() . '_' . uniqid() . '.' . $extension;
+            $storagePath = public_path('storage/store_category_images/' . $imageName);
+            $image->move(public_path('storage/store_category_images/'), $imageName);
+
+            $fileSize = filesize($storagePath);
+            $filedata = [
+                'name' => $imageName,
+                'ext' => $extension ?: 'jpg', // Default to 'jpg' if missing
+                'file_size' => $fileSize ?: 'Unknown', // Use 'Unknown' if not determined
+                'location' => 'store_category_images/',
+                'created_by' => 'admin',
+            ];
+
+            $imageFile = SysFile::create($filedata);
+
+            $catimage = StoreCategoryImage::findOrFail($Id);
+            $catimage->update(['image_id' => $imageFile->id]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Image uploaded successfully!',
+                'image_name' => $imageName
+            ]);
+        }
+
+        return response()->json(['error' => 'Image upload failed.'], 500);
     }
 
     public function saveShippingService(Request $request){
@@ -838,5 +897,30 @@ class StoreController extends Controller
         $record = StoreMessageAccount::with('incomingAccount','outgoingAccount')->where('id',$account_id)->first();
 
         return response()->json(['success' => true, 'data'=>$record, 'incomingAccount' => $record->incomingAccount, 'outgoingAccount' => $record->outgoingAccount]);exit;
+    }
+
+    public function copyImgCategories(Request $request) {
+        $store_id = $request->get('store_id');
+        if($store_id) {
+            $productTypes = ProductType::with('children')->whereIn('parent_id', function ($subquery) {
+                $subquery->select('id')->from('product_type')->where('code', 'cea');
+            })->where('code','!=','ceabundle')->orderBy('name', 'asc')->pluck('id');
+
+            if(!empty($productTypes)){
+                foreach($productTypes as $ptype){
+                    StoreCategoryImage::updateOrCreate(
+                        [
+                            'store_id' => $store_id,
+                            'category_id' => $ptype,
+                        ],
+                        [
+                            'store_id' => $store_id,
+                            'category_id' => $ptype
+                        ]
+                    );
+                }
+            }
+        }
+        return response()->json(['success' => true, 'message' => 'Categories are copied.']);
     }
 }

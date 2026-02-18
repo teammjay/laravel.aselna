@@ -102,8 +102,8 @@ class OrderOperationUtility
         }
 
         if (isset($replacement) && $replacement > 0) {
-            self::returnReplaceOrder($orderOperation);
-            return ['success' => true, 'message' => ''];
+            $response = self::returnReplaceOrder($orderOperation);
+            return ['success' => $response, 'message' => ''];
         }
 
         if (OrderOperationType::isRefund($operationType)) {

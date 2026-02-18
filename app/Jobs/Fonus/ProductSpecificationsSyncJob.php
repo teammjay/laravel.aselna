@@ -24,6 +24,17 @@ class ProductSpecificationsSyncJob implements ShouldQueue
     public $timeout = 30000;
 
     private $storetypes;
+    /**
+     * @var mixed[]
+     */
+    private array $features;
+    /**
+     * @var mixed[]
+     */
+    private array $categoryFeatures;
+    private array $featureMap;
+    private $catalogMap;
+    private $uniqueSpecifications;
 
     /**
      * Create a new job instance.
@@ -42,20 +53,49 @@ class ProductSpecificationsSyncJob implements ShouldQueue
 
         try {
 
+            $this->features =  DB::connection('fonus_db')->table('tbl_features')->pluck('feature','feature_id')->toArray();
+            $this->categoryFeatures = DB::connection('fonus_db')->table('tbl_category_feature_values')
+                ->pluck('feature_id','category_feature_value_id')->toArray();
+
             $this->storetypes = StoreType::whereNotIn('code',['amazon','temu'])->pluck('id')->toArray();
             Log::info('StoreTypes to sync specifications: ' . implode(', ', $this->storetypes));
 
+            $this->catalogMap = Catalog::pluck('product_id', 'product_code')->toArray();
+            $this->uniqueSpecifications = ProductSpecifcationUniqueInfo::pluck('id', 'field_name')->toArray();
+
+            $this->featureMap = [];
+
             DB::connection('fonus_db')->table('tbl_product_features')
                 ->orderBy('product_id')
-                ->limit(10000)
-                ->chunk(10000, function ($features) {
+                ->chunk(1000, function ($features) {
                     $grouped = [];
                     foreach ($features as $feature) {
                         $grouped[$feature->product_id][] = $feature;
+                        if (
+                            isset($feature->product_id) &&
+                            isset($feature->category_feature_value_id) &&
+                            isset($this->categoryFeatures[$feature->category_feature_value_id]) &&
+                            isset($this->features[$this->categoryFeatures[$feature->category_feature_value_id]])
+                        ) {
+                            $this->featureMap[$feature->product_id][] = $this->features[$this->categoryFeatures[$feature->category_feature_value_id]];
+                        }
                     }
                     foreach ($grouped as $productId => $productFeatures) {
                         $this->syncProductFeatures($productId, $productFeatures);
                     }
+                });
+
+
+            ProductSpecification::orderBy('product_id')
+                ->where(function ($query) {
+                    $query->whereIn('store_type_id', $this->storetypes)
+                        ->orWhereNull('store_type_id');
+                })
+                ->groupBy('product_id', 'name')
+                ->select('name', 'product_id')
+                ->with('product')
+                ->chunk(1000, function ($specifications) {
+                    $this->checkAndDeleteSpecifications($specifications);
                 });
 
         } catch (\Throwable $e) {
@@ -70,25 +110,35 @@ class ProductSpecificationsSyncJob implements ShouldQueue
 
     private function syncProductFeatures(mixed $productId, array $features)
     {
-        $aselnaProduct = Catalog::where('product_code', $productId)->first();
-        if (!$aselnaProduct) {
+        $aselnaProductId = $this->catalogMap[$productId] ?? null;
+        if (!$aselnaProductId) {
             return;
         }
         foreach ($features as $feature) {
             $categoryValue =  DB::connection('fonus_db')->table('tbl_category_feature_values')
                 ->where('category_feature_value_id', $feature->category_feature_value_id)->first();
-            $feature = DB::connection('fonus_db')->table('tbl_features')
-                ->where('feature_id', $categoryValue->feature_id)->first();
+            if (!isset($categoryValue) || !isset($categoryValue->feature_id)) continue;
 
-            $value = $categoryValue->value;
-            Log::info('Product Specification :: ' . $feature->feature . ' with ' . $value . ' for Product ID: ' . $productId);
+            $featureValue = $this->features[$categoryValue->feature_id] ?? null;
+            if (!isset($feature)) continue;
 
-            $uniqueSpecification = ProductSpecifcationUniqueInfo::where('field_name', $feature->feature)->first();
-            if (isset($uniqueSpecification)) {
-                $specValue = ProductSpecificationValue::where('product_specification_id', $uniqueSpecification->id)
-                    ->where('field_value', $value)
+            $value = $specValueText = $categoryValue->value;
+
+            $uniqueSpecificationId = $this->uniqueSpecifications[$featureValue] ?? null;
+
+            if (isset($uniqueSpecificationId)) {
+                $specValue = ProductSpecificationValue::select('id')->where('product_specification_id', $uniqueSpecificationId)
+                    ->where('field_value', $specValueText)
                     ->first();
                 if ($specValue) {
+                    $value = $specValue->id;
+                } else {
+                    $specValue = ProductSpecificationValue::create([
+                        'product_specification_id' => $uniqueSpecificationId,
+                        'field_value' => $specValueText,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
                     $value = $specValue->id;
                 }
             }
@@ -96,18 +146,40 @@ class ProductSpecificationsSyncJob implements ShouldQueue
             foreach ($this->storetypes as $storetype) {
                 ProductSpecification::updateOrCreate(
                     [
-                        'name' => $feature->feature,
-                        'product_id' => $aselnaProduct->product_id,
+                        'name' => $featureValue,
+                        'product_id' => $aselnaProductId,
                         'store_type_id' => $storetype
                     ],
                     [
-                        'name' => $feature->feature,
-                        'product_id' => $aselnaProduct->product_id,
+                        'name' => $featureValue,
+                        'product_id' => $aselnaProductId,
                         'store_type_id' => $storetype,
                         'value' => $value,
                     ]
                 );
             }
+        }
+    }
+
+    private function checkAndDeleteSpecifications($specifications)
+    {
+        $deletionIds = [];
+        foreach ($specifications as $specification) {
+            $productId = $specification->product->product_code;
+            $featureName = $specification->name;
+
+            if (isset($this->featureMap[$productId]) && in_array($featureName, $this->featureMap[$productId])) {
+                continue; // This specification is still valid, skip deletion
+            }
+            $deletionIds[$specification->product_id][] = $featureName; // Mark for deletion
+        }
+
+        foreach ($deletionIds as $productId => $features) {
+            Log::info("Deleting specifications for Product ID: $productId, Features: " . implode(', ', $features));
+            ProductSpecification::where('product_id', $productId)
+                ->whereIn('name', $features)
+                ->whereIn('store_type_id', $this->storetypes)
+                ->delete();
         }
     }
 }

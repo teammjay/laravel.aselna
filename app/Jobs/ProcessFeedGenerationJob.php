@@ -706,6 +706,12 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                 $itemGroupId = $listitem->sku . '-' . $device->code;
                                 $finalMainImage = $mainImage . '?device=' . $listitem->id;
 
+                                $upcCode = (isset($item_detail->upc)) ? $item_detail->upc : '';
+
+                                if (!in_array($this->storeDetail->name,['UZID','NevaWireless','AccessoryWiz','OdeMobile','AccessoryChoice','GetAccessory'])) {
+                                    $upcCode = $listitem->sku;
+                                }
+
                                 fputcsv($this->fileHandle, [
                                     $item_detail->sku,
                                     $productTitle,
@@ -717,7 +723,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                     (isset($itemDetail->product->condition)) ? strtolower($itemDetail->product->condition->name) : '',
                                     'in stock',
                                     $product_price . ' USD',
-                                    (isset($item_detail->upc)) ? $item_detail->upc : '',
+                                    $upcCode,
                                     $manufacturer_name,
                                     $item_detail->sku,
                                     (isset($device) ? $itemGroupId : ''),

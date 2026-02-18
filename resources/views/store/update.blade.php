@@ -12,7 +12,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.4/css/lightbox.min.css" rel="stylesheet">
     <style>
         .nav-link {
-            padding: 0.5rem 0.9rem !important;
+            padding: 0.5rem 0.8rem !important;
         }
         ul.manufacturer-list{list-style: none;}
         ul.manufacturer-list li{display: inline-block; width:12%; margin-bottom: 10px;}
@@ -156,6 +156,11 @@
                 <li class="nav-item">
                     <a class="nav-link" id="manufacturer-tab" data-toggle="pill" href="#tab14" role="tab" aria-controls="tab14" aria-selected="false">
                         Manufacturer
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="categoryimage-tab" data-toggle="pill" href="#tab15" role="tab" aria-controls="tab15" aria-selected="false">
+                        Category Image
                     </a>
                 </li>
             </ul>
@@ -1169,7 +1174,6 @@
                     </form>
 
                 </div>
-
                 <div class="tab-pane fade" id="tab14" role="tabpanel" aria-labelledby="manufacturer-tab">
                     <form method="POST" id="frmtab14">
                         <div class="row">
@@ -1204,6 +1208,40 @@
                             <a href="{{ route('store.list') }}" class="btn btn-secondary">Cancel</a>
                         </div>
                     </form>
+                </div>
+                <div class="tab-pane fade" id="tab15" role="tabpanel" aria-labelledby="categoryimage-tab">
+
+                    <button type="button" class="btn btn-secondary" id="copy_image_categories" data-toggle="modal" ><i class="fa fa-plus-square"></i> Copy Categories </button>
+
+                    <table class="table table-bordered mt-2">
+                        <thead>
+                        <tr>
+                            <th>Category</th>
+                            <th>Image</th>
+                            <th></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        @if(count($storeCategoryImage ?? []) > 0)
+                            @foreach($storeCategoryImage as $simage)
+                                <tr class="field-group">
+                                    <td>{{ $simage->category->name }}</td>
+                                    <td>
+                                        @if(!empty($simage->imageObj))
+                                            <img class="mainImage" src="{{ asset('storage/store_category_images/'. $simage->imageObj->name) }}" alt="{{ $simage->imageObj->name }}" width="70" height="70">
+                                        @else
+                                            N/A
+                                        @endif
+                                    </td>
+                                    <td>
+                                        <button type="button" class="btn btn-primary edit-category-image" data-id="{{ $simage->id }}" title="Edit"> <i class="fas fa-fw fa-pencil-alt"></i></button>
+                                        {{--<button type="button" class="btn btn-danger remove-logistic-center" data-id="{{ $simage->id }}" title="Remove"> <i class="fas fa-fw fa-trash"></i></button>--}}
+                                    </td>
+                                </tr>
+                            @endforeach
+                        @endif
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -1295,6 +1333,8 @@
             });
 
         }
+
+
 
         function saveStoreShippingService() {
             const form = document.querySelector("#frmStoreShippingService");
@@ -1899,7 +1939,69 @@
                     }
                 }
             });
+
+            $(document).on('click','.edit-category-image',function () {
+                let id = $(this).data('id');
+                $('#category_image_id').val(id);
+                $('#addCategoryImageModal').modal('show');
+            });
+
+            $('#copy_image_categories').click(function() {
+                $.ajax({
+                    type: 'POST',
+                    url: "{{ route('store.copyimgcategories') }}",
+                    data: {
+                        store_id: store_id
+                    },
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    dataType: 'json',
+                    success: function(response) {
+                        alert(response.message);
+                        location.reload();
+                    },
+                    error: function(xhr) {
+                        if (xhr.status === 422) {
+                            var errors = xhr.responseJSON.errors;
+                            alert(errors[Object.keys(errors)[0]][0]);
+                        } else {
+                            alert('An error occurred while copying categories');
+                        }
+                    }
+                });
+            });
+
+
         });
+
+        function saveStoreCategoryImage(){
+
+            const form = document.querySelector("#frmStoreCategoryImage");
+            let formData = new FormData(form);
+
+            $.ajax({
+                url: "{{ route('store.uploadstorecatimg') }}",
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function (response) {
+                    if (response.success) {
+                        alert(response.message);
+                        location.reload();
+                    }
+                },
+                error: function (xhr) {
+                    if (xhr.responseJSON?.error) {
+                        $('#responseMessage').html('<p style="color:red;">' + xhr.responseJSON.error.image[0] + '</p>');
+                    }
+                }
+            });
+        }
 
         const allHashtags = ["#title_keyword1", "#title_keyword2", "#title_keyword3", "#title_keyword4", "#title_keyword5", "#title_keyword6", "#title_keyword7", "#title_keyword8", "#title_keyword9", "#store_short_code", "#product_code"];
         let usedHashtags = [];
