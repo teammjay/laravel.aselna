@@ -12,7 +12,7 @@
                                 <button id="btnGroupDrop2" type="button" class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fa fa-ellipsis-v"></i></button>
                                 <div class="dropdown-menu" aria-labelledby="btnGroupDrop2">
                                     <a class="dropdown-item" href="javascript:void(0)" id="regenerate_rma_message" data-opid="{{ $order_operation->id }}">Regenerate</a>
-                                    @if((isset($order_operation->relatedOperation) && !empty($order_operation->relatedOperation)) && $order_operation->relatedOperation->tracking_number != '')
+                                    @if((isset($order_operation->relatedOperation) && !empty($order_operation->relatedOperation)) && $order_operation->relatedOperation->tracking_number == '')
                                         <a class="dropdown-item" href="javascript:void(0)" id="regenerate_label" data-opid="{{ $order_operation->relatedOperation->id }}">Regenerate Label</a>
                                     @endif
                                 </div>
