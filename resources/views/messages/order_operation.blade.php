@@ -13,7 +13,7 @@
                                 <div class="dropdown-menu" aria-labelledby="btnGroupDrop2">
                                     <a class="dropdown-item" href="javascript:void(0)" id="regenerate_rma_message" data-opid="{{ $order_operation->id }}">Regenerate</a>
                                     @if((isset($order_operation->relatedOperation) && !empty($order_operation->relatedOperation)) && $order_operation->relatedOperation->tracking_number == '')
-                                        <a class="dropdown-item" href="javascript:void(0)" id="regenerate_label" data-opid="{{ $order_operation->relatedOperation->id }}">Regenerate Label</a>
+                                        <a class="dropdown-item" href="javascript:void(0)" id="regenerate_label" data-opid="{{ $order_operation->relatedOperation->id }}" data-orderid="{{ (isset($order_operation->relatedOperation->order) && !empty($order_operation->relatedOperation->order)) ? $order_operation->relatedOperation->order->order_id : '' }}">Regenerate Label</a>
                                     @endif
                                 </div>
                             </div>
@@ -26,7 +26,7 @@
                                 <div class="row">
                                     <div class="col-md-12">
                                         @if(isset($order_operation->relatedOperation->order))
-                                        Order ID <a class="text-blue" href="{{ route('order.edit',$order_operation->relatedOperation->order->id) }}"> {{ $order_operation->relatedOperation->order->order_id }}</a>   ON  {{ date('D, d M Y',strtotime($order_operation->relatedOperation->created_at)) }}
+                                        Order ID <a class="text-blue replace-orderId" href="{{ route('order.edit',$order_operation->relatedOperation->order->id) }}"> {{ $order_operation->relatedOperation->order->order_id }}</a>   ON  {{ date('D, d M Y',strtotime($order_operation->relatedOperation->created_at)) }}
                                         @endif
                                     </div>
                                 </div>

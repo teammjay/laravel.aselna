@@ -278,4 +278,5 @@
             </div>
         </div>
     </div>
+    <input type="hidden" id="is_regenerate">
 </form>
