@@ -65,6 +65,7 @@ class DevicesInterfacesSyncJob implements ShouldQueue
     {
         $deviceKeys = [];
         $interfaceMap = [];
+        $interfaceDeviceID = [];
 
         foreach ($deviceInterfaces as $deviceInterface) {
             $deviceId = $deviceInterface->device->code;
@@ -72,6 +73,7 @@ class DevicesInterfacesSyncJob implements ShouldQueue
             $key = $deviceId . '_' . $interfaceId;
             $deviceKeys[] = $key;
             $interfaceMap[$key] = $deviceInterface->id;
+            $interfaceDeviceID[$key] = $deviceInterface->device_id;
         }
 
 //        Log::info('Device :: ' . json_encode($deviceKeys));
@@ -100,6 +102,7 @@ class DevicesInterfacesSyncJob implements ShouldQueue
         foreach ($interfaceMap as $key => $id) {
             if (!isset($existingSet[$key])) {
                 $idsToDelete[] = $id;
+                Device::where('id', $interfaceDeviceID[$key])->update(['updated_at' => now()]);
             }
         }
         Log::info('Device Interfaces to delete: ' . implode(',', $idsToDelete));
