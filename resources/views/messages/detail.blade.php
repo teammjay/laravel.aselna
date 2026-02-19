@@ -963,6 +963,11 @@
             });
 
             $(document).on('click','#regenerate_label',function () {
+                var order_id = $(this).data('orderid');
+                openReplacementModal(1, order_id);
+            });
+
+            /*$(document).on('click','#regenerate_label',function () {
                 var operationID = $(this).data('opid');
                 $.ajax({
                     type: "POST",
@@ -1005,7 +1010,7 @@
                         $("#ajax-preloader").hide();
                     }
                 });
-            });
+            });*/
 
 
             $(document).on('click','#regenerate_rma_message',function () {
@@ -1332,6 +1337,10 @@
 
             $(document).on('click','#replacement',function () {
                 var order_id = $('#order_id').val();
+                openReplacementModal(0, order_id);
+            });
+
+            function openReplacementModal(is_regenerate, order_id){
                 if(order_id != '' && order_id != null){
                     $.ajax({
                         url: "{{ route('message.getshippingdetail') }}",
@@ -1355,8 +1364,12 @@
                                     }
                                 });
                                 $('#replaceOrderModal').modal('show');
-
                                 getShippingCarrierService($('#carrier_name_ms'));
+                                if(is_regenerate){
+                                    $('#is_regenerate').val(1);
+                                }else{
+                                    $('#is_regenerate').val(0);
+                                }
                             }
                         },
                         error: function (xhr) {
@@ -1365,7 +1378,7 @@
                         }
                     });
                 }
-            });
+            }
 
 
             $(document).on('click','#submit_replace_order',function () {
@@ -1374,8 +1387,14 @@
                 let formData = new FormData(form);
                 formData.append('ticket_id', ticket_id);
 
+                if($('#is_regenerate').val() == 1){
+                    var url = '{{ route('message.regeneratelabel') }}';
+                }else{
+                    var url = '{{ route('message.replaceorder') }}';
+                }
+
                 $.ajax({
-                    url: "{{ route('message.replaceorder') }}",
+                    url: url,
                     type: 'POST',
                     data: formData,
                     processData: false,

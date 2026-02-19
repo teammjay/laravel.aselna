@@ -1176,8 +1176,6 @@ class MessagesController extends Controller
                         }*/
                     }
 
-
-
                     $shipping_carrier_id = $shipmentDetail->shipping_carrier_id;
                     $shippingCarrierService = ShippingCarrierService::where('shipping_carrier_id', $shipping_carrier_id)->orderBy('name', 'asc')->get();
 
@@ -1218,7 +1216,7 @@ class MessagesController extends Controller
             DB::commit();
             return response()->json([
                 'success' => false,
-                'message' => $exception->getMessage()
+                'message' => $exception->getMessage() . ' in file: ' . $exception->getFile() . ' on line: ' . $exception->getLine() ?? 'Unknown',
             ]);
         }
     }
@@ -1865,6 +1863,7 @@ class MessagesController extends Controller
                                     'order_item_id' => $order_item->id,
                                     'order_operation_id' => $order_operation_detail->id,
                                     'quantity' => $item->quantity,
+                                    'sync_status' => $oitem->sync_status,
                                     'sku' => $order_item->sku,
                                     //'client_id' => '',
                                 ];
@@ -1936,7 +1935,24 @@ class MessagesController extends Controller
 
     public function regenerateReplacementLabel(Request $request){
 
-        $order_operation_id = $request->input('operation_id');
+        $validator = Validator::make($request->all(), [
+            'id' => 'required',
+            'carrier_name' => 'required',
+            'carrier_package' => 'required',
+            'shipping_carrier_service' => 'required',
+            'shipment_from' => 'required',
+            'weight' => 'required|numeric|gt:0',
+            'weight_type' => 'required'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $order_operation_id = $request->input('id');
         $request['label_generation'] = 1;
         $request['replacement'] = 1;
         $orderOperations = OrderOperation::with('order', 'order.customer', 'store', 'store.storeType')->where('id', $order_operation_id)->first();

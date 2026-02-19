@@ -279,7 +279,7 @@ class OrderOperationUtility
                 }
             }
 
-            $orderOperation->tracking_number = $response['trackingNumber'];
+            //$orderOperation->tracking_number = $response['trackingNumber'];
             $orderOperation->status = OrderOperationStatus::LabelPrinted;
             $orderOperation->save();
 
