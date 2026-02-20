@@ -33,7 +33,12 @@ class DeviceCarrierSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'Device Carrier']);
+        // Mark as processing when job starts
+        $this->updateTrackingRecord([
+            'status' => 'processing',
+            'started_at' => now(),
+            'tags' => 'Device Carrier'
+        ]);
 
         try {
             DB::connection('fonus_db')->table('tbl_device_carriers')->orderBy('device_id')->orderBy('carrier_id')
@@ -46,13 +51,27 @@ class DeviceCarrierSyncJob implements ShouldQueue
             DeviceCarrier::orderBy('id')->chunk(1000, function ($deviceCarriers) {
                 $this->checkAndDelete($deviceCarriers);
             });
+
+            // Mark as completed when job finishes successfully
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
+            // Mark as failed when job fails
+            $this->updateTrackingRecord([
+                'status' => 'failed',
+                'output' => $e->getMessage(),
+                'finished_at' => now()
+            ]);
 
             CriticalErrorService::report('Device Carrier Sync Job Failed', [
                 'marketplace' => 'N/A',
                 'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ]);
+
+            throw $e; // Re-throw to trigger chain failure handling
         }
     }
 

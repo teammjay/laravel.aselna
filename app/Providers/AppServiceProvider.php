@@ -106,6 +106,8 @@ class AppServiceProvider extends ServiceProvider
 
                 Log::info('Extra Detail:'.json_encode($extra));
 
+                if ($payload['data']['c']['parentJobId'])
+
                 $job->createTrackingRecord($payload['uuid'], $extra);
             }
             return [];
@@ -123,10 +125,10 @@ class AppServiceProvider extends ServiceProvider
         // When a job has completed successfully
         Queue::after(function (JobProcessed $event) {
             $uuid = $event->job->uuid ?? $event->job->payload()['uuid'] ?? null;
-            JobStatus::where('job_id', $uuid)->update([
-                'status' => 'completed',
-                'finished_at' => now(),
-            ]);
+//            JobStatus::where('job_id', $uuid)->update([
+//                'status' => 'completed',
+//                'finished_at' => now(),
+//            ]);
         });
 
         // When a job has failed
@@ -137,11 +139,11 @@ class AppServiceProvider extends ServiceProvider
             $errorFile = $event->exception->getFile();
             $errorLine = $event->exception->getLine();
 
-            JobStatus::where('job_id', $uuid)->update([
-                'status' => 'failed',
-                'output' => $errorMessage .' in '. $errorFile .' at line '. $errorLine,
-                'finished_at' => now(),
-            ]);
+//            JobStatus::where('job_id', $uuid)->update([
+//                'status' => 'failed',
+//                'output' => $errorMessage .' in '. $errorFile .' at line '. $errorLine,
+//                'finished_at' => now(),
+//            ]);
         });
     }
 }
