@@ -439,6 +439,14 @@
                                         <input type="checkbox" id="re_submit_listing" name="re_submit_listing" {{ ($store->re_submit_listing == 1) ? 'checked' : '' }}>
                                     </div>
                                 </div>
+                                <div class="row mt-3 g-3 align-items-center">
+                                    <div class="col-md-5">
+                                        <label for="re_submit_listing">Include UPC in Feed</label>
+                                    </div>
+                                    <div class="col-md-7">
+                                        <input type="checkbox" id="include_upc_in_feed" name="include_upc_in_feed" {{ ($store->include_upc_in_feed == 1) ? 'checked' : '' }}>
+                                    </div>
+                                </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="row mt-3 g-3 align-items-center">

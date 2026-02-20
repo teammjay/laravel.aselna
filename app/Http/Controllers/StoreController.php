@@ -212,6 +212,7 @@ class StoreController extends Controller
             $request['auto_submit_listing'] = $request->has('auto_submit_listing') ? 1 : 0;
             $request['re_submit_listing'] = $request->has('re_submit_listing') ? 1 : 0;
             $request['auto_resubmit_shipment'] = $request->has('auto_resubmit_shipment') ? 1 : 0;
+            $request['include_upc_in_feed'] = $request->has('include_upc_in_feed') ? 1 : 0;
 
             $validator = Validator::make(request()->all(), [
                 'name' => 'required',
