@@ -40,7 +40,9 @@ trait TrackableJob
         Log::info('Tags:'.$tags);
 
         JobStatus::updateOrCreate(
-            ['job_id' => $jobId],
+            [
+                'job_id' => $jobId
+            ],
             [
                 'type' => static::class,
                 'queue' => $this->queue ?? 'default',

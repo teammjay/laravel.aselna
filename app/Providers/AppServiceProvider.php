@@ -106,7 +106,9 @@ class AppServiceProvider extends ServiceProvider
 
                 Log::info('Extra Detail:'.json_encode($extra));
 
-                if ($payload['data']['c']['parentJobId'])
+                /*if (!isset($job->parentJobId)){
+                    $job->createTrackingRecord($payload['uuid'], $extra);
+                }*/
 
                 $job->createTrackingRecord($payload['uuid'], $extra);
             }
@@ -125,6 +127,7 @@ class AppServiceProvider extends ServiceProvider
         // When a job has completed successfully
         Queue::after(function (JobProcessed $event) {
             $uuid = $event->job->uuid ?? $event->job->payload()['uuid'] ?? null;
+            Log::info('Complete Job Payload:'.json_encode($event->job->payload()));
 //            JobStatus::where('job_id', $uuid)->update([
 //                'status' => 'completed',
 //                'finished_at' => now(),

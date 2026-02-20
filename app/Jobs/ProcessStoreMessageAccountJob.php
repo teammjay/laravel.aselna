@@ -53,6 +53,13 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
     public function handle()
     {
         try {
+
+            $this->updateTrackingRecord([
+                'status' => 'processing',
+                'started_at' => now(),
+                'tags' => $this->store_name
+            ]);
+
             Log::info('Store Name: ' . $this->store->name);
             Log::info('Store Type Name : ' . $this->store->storeType->name);
             $maccount = $this->storeMessageAccount;
@@ -432,6 +439,11 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
                             $last_filter_datef = \Carbon\Carbon::parse($last_filter_date)->setTimezone('America/New_York');
                             $account->update(['filter_from_date' => $last_filter_datef]);
                         }
+
+                        $this->updateTrackingRecord([
+                            'status' => 'completed',
+                            'finished_at' => now()
+                        ]);
                     } else {
                         $filterDateObj = \Carbon\Carbon::parse($filter_date, 'America/New_York');
                         $maxDate = $filterDateObj->copy()->addDays(1);
@@ -449,6 +461,12 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
             ];
 
             \App\Helpers\ErrorLogger::log($e, __METHOD__, $extraInfo);
+
+            $this->updateTrackingRecord([
+                'status' => 'failed',
+                'output' => $e->getMessage(),
+                'finished_at' => now()
+            ]);
 
             CriticalErrorService::report('Store message account job failed:'.$this->store_name.'-'.$this->store_type, [
                 'marketplace' => ucfirst($this->store_type),
