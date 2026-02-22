@@ -7,6 +7,7 @@ use App\Jobs\Concerns\TrackableJob;
 use App\Jobs\Fonus\BrandSyncJob;
 use App\Jobs\Fonus\CarrierSyncJob;
 use App\Jobs\Fonus\CategorySyncJob;
+use App\Jobs\Fonus\ChainCompletionJob;
 use App\Jobs\Fonus\DeviceCarrierSyncJob;
 use App\Jobs\Fonus\DeviceChannelSyncJob;
 use App\Jobs\Fonus\DevicesInterfacesSyncJob;
@@ -18,13 +19,12 @@ use App\Jobs\Fonus\PopularDevicesSyncJob;
 use App\Jobs\Fonus\ProductChannelSyncJob;
 use App\Jobs\Fonus\ProductcolorSyncJob;
 use App\Jobs\Fonus\ProductInterfacesSyncJob;
-use App\Jobs\Fonus\ProductKeyFeaturesSyncJob;
 use App\Jobs\Fonus\ProductSpecificationsSyncJob;
 use App\Jobs\Fonus\ProductSyncJob;
 use App\Jobs\Fonus\ProductTitleKeyword;
 use App\Jobs\ProductAlternativeImagesSyncJob;
 use App\Jobs\ProductImagesSyncJob;
-use App\Models\Carrier;
+use App\Models\JobStatus;
 use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -51,7 +51,12 @@ class FonusCombinedSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'Fonus Combined DB Sync']);
+        // Keep parent job as "processing" - NOT completed yet
+        $this->updateTrackingRecord([
+            'status' => 'processing',
+            'started_at' => now(),
+            'tags' => 'Fonus Combined DB Sync'
+        ]);
 
         try {
             $chain = [
@@ -73,18 +78,42 @@ class FonusCombinedSyncJob implements ShouldQueue
                 new PopularDevicesSyncJob(), // DONE
                 new ProductImagesSyncJob(), // DONE
                 new ProductAlternativeImagesSyncJob(), // DONE
-                new ProductSpecificationsSyncJob()
+                new ProductSpecificationsSyncJob(),
             ];
 
-            foreach ($chain as $job) {
-                if (method_exists($job, 'setChainId')) {
-                    $job->setChainId($this->chainId);
-                }
-            }
+            // Add the completion job at the end of the chain to mark parent as completed
+            $chain[] = new ChainCompletionJob($this->jobId);
 
-            Bus::chain($chain)->dispatch();
+            // Create pending record for the completion job
+            $this->createPendingRecordsForChain($chain, $this->jobId);
+
+            // Store parent job ID for the catch callback
+            $parentJobId = $this->jobId;
+
+            // Dispatch chain with catch callback to handle failures
+            Bus::chain($chain)
+                ->catch(function (\Throwable $e) use ($parentJobId) {
+                    // Mark parent as failed if chain fails
+                    JobStatus::where('job_id', $parentJobId)
+                        ->update(['status' => 'failed', 'output' => $e->getMessage(), 'finished_at' => now()]);
+
+                    Log::error('Fonus Combined Sync Chain Failed: ' . $e->getMessage());
+
+                    CriticalErrorService::report('Fonus Combined DB Sync Chain Failed', [
+                        'marketplace' => 'Shopify',
+                        'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
+                        'method' => __METHOD__
+                    ]);
+                })
+                ->dispatch();
         } catch (\Throwable $e) {
             Log::error('Error: ' . $e->getMessage());
+
+            $this->updateTrackingRecord([
+                'status' => 'failed',
+                'output' => $e->getMessage(),
+                'finished_at' => now()
+            ]);
 
             CriticalErrorService::report('Fonus Combined DB Sync Failed', [
                 'marketplace' => 'Shopify',

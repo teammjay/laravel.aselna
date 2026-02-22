@@ -64,10 +64,20 @@ class QueueJobsController extends Controller
             $query->whereDate('finished_at', date('Y-m-d',strtotime($request->finished_at)));
         }
 
-        $totalRecords = (clone $query)->toBase()->getCountForPagination();
-        $query->orderBy('created_at', 'desc');
+        //$totalRecords = (clone $query)->toBase()->getCountForPagination();
+        //$query->orderBy('created_at', 'desc');
 
-        $jobs = $query->distinct()->select('chain_id', 'created_at')->paginate($perPage, ['*'], 'page', floor($start/$perPage)+1);
+        $totalRecords = (clone $query)
+            ->select(DB::raw('COUNT(DISTINCT chain_id) as total'))
+            ->value('total');
+
+        //$jobs = $query->distinct()->select('chain_id', 'created_at')->paginate($perPage, ['*'], 'page', floor($start/$perPage)+1);
+        $jobs = $query
+            ->select('chain_id', DB::raw('MAX(created_at) as latest_created_at'))
+            ->groupBy('chain_id')
+            ->orderByDesc('latest_created_at')
+            ->paginate($perPage, ['chain_id'], 'page', floor($start/$perPage)+1);
+
         $totalRecordwithFilter = $totalRecords;
 
         $data = [];

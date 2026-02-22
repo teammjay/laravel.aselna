@@ -49,7 +49,12 @@ class ProductSpecificationsSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'Fonus Product Specifications']);
+        // Mark as processing when job starts
+        $this->updateTrackingRecord([
+            'status' => 'processing',
+            'started_at' => now(),
+            'tags' => 'Fonus Product Specifications'
+        ]);
 
         try {
 
@@ -98,13 +103,26 @@ class ProductSpecificationsSyncJob implements ShouldQueue
                     $this->checkAndDeleteSpecifications($specifications);
                 });
 
+            // Mark as completed when job finishes successfully
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         } catch (\Throwable $e) {
+            // Mark as failed when job fails
+            $this->updateTrackingRecord([
+                'status' => 'failed',
+                'output' => $e->getMessage(),
+                'finished_at' => now()
+            ]);
 
             CriticalErrorService::report('Fonus Product Specifications Job Failed', [
                 'marketplace' => 'N/A',
                 'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ]);
+
+            throw $e; // Re-throw to trigger chain failure handling
         }
     }
 

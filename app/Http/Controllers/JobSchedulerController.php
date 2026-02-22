@@ -44,7 +44,7 @@ class JobSchedulerController extends Controller
 
             return back()->with('success', 'Job queued successfully');
         } catch (\Exception $e) {
-            return back()->with('error', 'Job start failed: ' . $e->getMessage());
+            return back()->with('error', 'Job start failed: ' . $e->getMessage(). ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine());
         }
     }
 

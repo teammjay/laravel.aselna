@@ -191,7 +191,7 @@ class SyncAllTables extends Command
 //        InterfaceSyncJob::dispatch();
 
 //        FetchEbayOrders::dispatch();
-//        FetchEmailMessagesJob::dispatch();
+        FetchEmailMessagesJob::dispatch();
 //        SubmitShopifyProductsJob::dispatch();
 //        FetchShopifyProductsJob::dispatch();
 //        FetchMagentoProductsJob::dispatch();
@@ -233,7 +233,7 @@ class SyncAllTables extends Command
 //        SyncShopifyItems::dispatch();
 //        ExistingListingItemSyncJob::dispatch();
 //        FetchShopifyOrders::dispatch();
-        FonusCombinedSyncJob::dispatch();
+//        FonusCombinedSyncJob::dispatch();
 
         $transactionIds = [
 ////            '9400150105798006163885',

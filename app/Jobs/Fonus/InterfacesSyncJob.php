@@ -33,7 +33,12 @@ class InterfacesSyncJob implements ShouldQueue
     public function handle(): void
     {
         Log::info('Interface Sync Job Start');
-        $this->updateTrackingRecord(['tags' => 'Fonus Interface']);
+        // Mark as processing when job starts
+        $this->updateTrackingRecord([
+            'status' => 'processing',
+            'started_at' => now(),
+            'tags' => 'Fonus Interface'
+        ]);
 
         try {
             $attributes = DB::connection('fonus_db')->table('tbl_attributes')->get();
@@ -46,12 +51,26 @@ class InterfacesSyncJob implements ShouldQueue
                 $this->checkAndDelete($attributes);
             });
 
+            // Mark as completed when job finishes successfully
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         } catch (\Throwable $e) {
+            // Mark as failed when job fails
+            $this->updateTrackingRecord([
+                'status' => 'failed',
+                'output' => $e->getMessage(),
+                'finished_at' => now()
+            ]);
+
             CriticalErrorService::report('Fonus Interface Sync Job Failed', [
                 'marketplace' => 'N/A',
                 'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ]);
+
+            throw $e; // Re-throw to trigger chain failure handling
         }
     }
 

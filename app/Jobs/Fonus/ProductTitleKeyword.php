@@ -31,7 +31,12 @@ class ProductTitleKeyword implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'Fonus Title Keyword Sync job']);
+        // Mark as processing when job starts
+        $this->updateTrackingRecord([
+            'status' => 'processing',
+            'started_at' => now(),
+            'tags' => 'Fonus Title Keyword Sync job'
+        ]);
 
         try {
             DB::connection('fonus_db')->table('tbl_title_keywords')
@@ -45,13 +50,27 @@ class ProductTitleKeyword implements ShouldQueue
                 ->chunk(1000, function ($titleKeywords) {
                     $this->deleteMissingTitleKeywords($titleKeywords);
                 });
+
+            // Mark as completed when job finishes successfully
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         } catch (\Throwable $e) {
+            // Mark as failed when job fails
+            $this->updateTrackingRecord([
+                'status' => 'failed',
+                'output' => $e->getMessage(),
+                'finished_at' => now()
+            ]);
 
             CriticalErrorService::report('Fonus Title Keyword Job Failed', [
                 'marketplace' => 'N/A',
                 'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ]);
+
+            throw $e; // Re-throw to trigger chain failure handling
         }
     }
 
