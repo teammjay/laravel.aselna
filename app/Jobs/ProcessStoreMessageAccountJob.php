@@ -117,29 +117,16 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
                                 }
                             }
                             $username = NULL;
+                            $orderDetail = $this->findRelatedOrder($email, $store_type);
+                            if ($orderDetail) {
+                                $order_id = $orderDetail->order_id;
+                                $related_order_id = $orderDetail->id;
+                                $store_id = $orderDetail->store_id;
+                                $customer_id = $orderDetail->customer_id ?? (isset($orderDetail->customer) ? $orderDetail->customer->id : NULL);
+                                $order_operation_id = isset($orderDetail->orderOperation) ? $orderDetail->orderOperation->id : NULL;
+                            }
+
                             if (isset($email['parsedData']) && !empty($email['parsedData'])) {
-                                if (isset($email['parsedData']['order_id'])) {
-                                    $order_id = html_entity_decode($email['parsedData']['order_id']);
-                                    $orderDetail = Order::with('customer', 'orderOperation')->where('order_id', trim($order_id))->first();
-                                    if ($orderDetail) {
-                                        $related_order_id = $orderDetail->id;
-                                        $store_id = $orderDetail->store_id;
-                                        $customer_id = isset($orderDetail->customer) ? $orderDetail->customer->id : NULL;
-                                        $order_operation_id = isset($orderDetail->orderOperation) ? $orderDetail->orderOperation->id : NULL;
-                                    }
-                                }
-
-                                if(isset($email['from']) && $email['from'] != ''){
-                                    $orderDetail = Order::with('customer', 'orderOperation')->where('buyer_email', trim($email['from']))->first();
-                                    if ($orderDetail) {
-                                        $order_id = $orderDetail->order_id;
-                                        $related_order_id = $orderDetail->id;
-                                        $store_id = $orderDetail->store_id;
-                                        $customer_id = isset($orderDetail->customer) ? $orderDetail->customer->id : NULL;
-                                        $order_operation_id = isset($orderDetail->orderOperation) ? $orderDetail->orderOperation->id : NULL;
-                                    }
-                                }
-
                                 if (isset($email['parsedData']['purchase_order_number'])) {
                                     $po_no = html_entity_decode($email['parsedData']['purchase_order_number']);
                                 }
@@ -160,6 +147,7 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
                                     $reference_code = html_entity_decode($email['parsedData']['reference_id']);
                                 }
                             }
+
 
                             if ($customer_id == NULL) {
                                 $firstname = $lastname = '';
@@ -510,5 +498,68 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
 
             return $sequence->number;
         });
+    }
+
+    /**
+     * Find a related order using a multi-layered matching strategy.
+     *
+     * @param array $email
+     * @param string $store_type
+     * @return Order|null
+     */
+    private function findRelatedOrder(array $email, string $store_type): ?Order
+    {
+        // 1. Match by parsed Order ID (High-Confidence)
+        if (!empty($email['parsedData']['order_id'])) {
+            $order_id = html_entity_decode($email['parsedData']['order_id']);
+            $order = Order::with('customer', 'orderOperation')->where('order_id', trim($order_id))->first();
+            if ($order) {
+                return $order;
+            }
+        }
+
+        // 2. For Walmart, try regex on body/subject for order ID (High-Confidence)
+        if (strtolower($store_type) === 'walmart') {
+            $text_to_search = $email['subject'] . ' ' . $email['body'];
+            if (preg_match('/\b(\d{13})\b/', $text_to_search, $matches)) {
+                $order = Order::with('customer', 'orderOperation')->where('order_id', $matches[0])->first();
+                if ($order) {
+                    return $order;
+                }
+            }
+        }
+
+        // 3. Match by sender's email address (Medium-Confidence)
+        if (!empty($email['from'])) {
+            $order = Order::with('customer', 'orderOperation')
+                ->where('buyer_email', trim($email['from']))
+                ->orderBy('order_date', 'desc')
+                ->first();
+            if ($order) {
+                return $order;
+            }
+        }
+
+        // 4. Match by sender's name (Low-Confidence)
+        if (!empty($email['name'])) {
+            $nameParts = explode(' ', trim($email['name']));
+            $firstName = $nameParts[0];
+            $lastName = count($nameParts) > 1 ? end($nameParts) : null;
+
+            $query = Order::with('customer', 'orderOperation')
+                ->where('buyer_first_name', 'like', '%' . $firstName . '%')
+                ->where('order_date', '>=', now()->subDays(90));
+
+            if ($lastName) {
+                $query->where('buyer_last_name', 'like', '%' . $lastName . '%');
+            }
+
+            $order = $query->orderBy('order_date', 'desc')->first();
+            if ($order) {
+                return $order;
+            }
+        }
+
+        return null;
     }
 }
