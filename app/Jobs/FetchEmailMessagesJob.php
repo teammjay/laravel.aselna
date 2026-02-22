@@ -51,7 +51,11 @@ class   FetchEmailMessagesJob implements ShouldQueue
     {
         try {
 
-            $this->updateTrackingRecord(['tags' => 'Email Messages']);
+            $this->updateTrackingRecord([
+                'status' => 'processing',
+                'started_at' => now(),
+                'tags' => 'Email Messages'
+            ]);
 
             /* get active store jobs*/
             $store_ids = Common::getActiveStoreJobs('FetchEmailMessagesJob');
@@ -99,18 +103,12 @@ class   FetchEmailMessagesJob implements ShouldQueue
                         }
                     }
                     if (count($chain) > 0) {
-                        // Set chainId for all initial jobs
-                        foreach ($chain as $job) {
-                            if (method_exists($job, 'setChainId')) {
-                                $job->setChainId($this->chainId);
-                            }
-                        }
 
                         // Add the completion job at the end of the chain to mark parent as completed
                         $chain[] = new ChainCompletionJob($this->jobId);
 
                         // Create pending record for the completion job
-                        //$this->createPendingRecordsForChain($chain, $this->jobId);
+                        $this->createPendingRecordsForChain($chain, $this->jobId);
 
                         // Store parent job ID for the catch callback
                         $parentJobId = $this->jobId;

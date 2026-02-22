@@ -76,9 +76,9 @@ class FonusCombinedSyncJob implements ShouldQueue
                 new ProductChannelSyncJob(), // DONE
 //                new DeviceChannelSyncJob(),// DONE
                 new PopularDevicesSyncJob(), // DONE
-//                new ProductImagesSyncJob(), // DONE
-//                new ProductAlternativeImagesSyncJob(), // DONE
-//                new ProductSpecificationsSyncJob(),
+                new ProductImagesSyncJob(), // DONE
+                new ProductAlternativeImagesSyncJob(), // DONE
+                new ProductSpecificationsSyncJob(),
             ];
 
             // Add the completion job at the end of the chain to mark parent as completed

@@ -21,9 +21,9 @@ trait TrackableJob
     {
 
         // Generate a chain ID if one doesn't exist
-//        if (empty($this->chainId)) {
-//            $this->chainId = (string) Str::uuid();
-//        }
+        if (empty($this->chainId)) {
+            $this->chainId = (string) Str::uuid();
+        }
 
         if (empty($this->jobId)) {
             $this->jobId = $jobId;
