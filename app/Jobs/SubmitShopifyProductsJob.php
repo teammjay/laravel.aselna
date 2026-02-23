@@ -581,7 +581,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
             'variant' => [$variantData],
         ];
 
-        $this->handleOldImages($shopifyAuthService, $proDetail->marketplace_product_id, $listingItem);
+        //$this->handleOldImages($shopifyAuthService, $proDetail->marketplace_product_id, $listingItem);
 
         $this->generateProductImages($productData, $store);
 
