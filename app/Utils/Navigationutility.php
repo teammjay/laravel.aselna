@@ -30,7 +30,7 @@ class Navigationutility
         $skipDevicePages = false;
         if ($store_id) {
             $store = Store::where('id', $store_id)->first();
-            if ($store && $store->store_type_id == 1) {
+            if ($store && $store->skip_device_pages == 1) {
                 $skipDevicePages = true;
             }
         }
