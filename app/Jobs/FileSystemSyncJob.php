@@ -29,7 +29,7 @@ class FileSystemSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'Filesystem']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Filesystem']);
 
         try {
             $listingItemLinksQ = DB::connection('easyesale_db')->table('file_system')
@@ -40,6 +40,11 @@ class FileSystemSyncJob implements ShouldQueue
                     $this->createListingItemLink($listingItemLink);
                 }
             });
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('File System Sync Job Failed', [

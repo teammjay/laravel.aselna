@@ -38,7 +38,7 @@ class DeviceTypesSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'Device Type']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Device Type']);
 
         try {
             $deviceTypes = DB::connection('easyesale_db')->table('cea_device_type')->cursor();
@@ -50,6 +50,11 @@ class DeviceTypesSyncJob implements ShouldQueue
             foreach ($deviceSubTypes as $deviceSubType) {
                 $this->createSyncDeviceSubType($deviceSubType);
             }
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('Device Types Sync Job Failed', [

@@ -39,7 +39,7 @@ class EbayListingItemSyncJob implements ShouldQueue
     public function handle(): void
     {
         Log::info('EbayListingItemSyncJob started');
-        $this->updateTrackingRecord(['tags' => 'eBay Listing Item']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'eBay Listing Item']);
 
         try {
             /* get active store jobs*/
@@ -98,6 +98,11 @@ class EbayListingItemSyncJob implements ShouldQueue
 
                 $this->syncListingItem($listingItemLinks, $store);
             }
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('Ebay Listing Item Sync Job Failed', [

@@ -29,7 +29,7 @@ class SyncTicketLabelJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'Ticket Labels']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Ticket Labels']);
 
         try {
             DB::connection('easyesale_db')->table('hd_ticket_label')->orderBy('id')
@@ -38,6 +38,11 @@ class SyncTicketLabelJob implements ShouldQueue
                         $this->createSyncTicketLabel($ticketLabel);
                     }
                 });
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('Ticket Labels Sync Job Failed', [

@@ -53,7 +53,7 @@ class MagentoProductsSyncJob implements ShouldQueue
                 $this->limit = 10;
             }
 
-            $this->updateTrackingRecord(['tags' => 'Magento Products']);
+            $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Magento Products']);
 
             /* get active store jobs*/
             $store_ids = Common::getActiveStoreJobs('MagentoProductsSyncJob', 'magento');
@@ -90,6 +90,11 @@ class MagentoProductsSyncJob implements ShouldQueue
                     }
                 }
             }
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('Magento Products Sync Job Failed', [

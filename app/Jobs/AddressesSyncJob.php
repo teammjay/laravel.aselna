@@ -32,13 +32,18 @@ class AddressesSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'Address']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Address']);
 
         DB::connection('easyesale_db')->table('postal_address')->orderBy('create_ts', 'desc')->chunk(100, function ($addresses) {
             foreach ($addresses as $address) {
                 $this->createSyncAddress($address);
             }
         });
+
+        $this->updateTrackingRecord([
+            'status' => 'completed',
+            'finished_at' => now()
+        ]);
     }
 
     private function createSyncAddress(mixed $address)

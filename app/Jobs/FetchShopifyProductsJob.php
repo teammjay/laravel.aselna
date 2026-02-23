@@ -40,7 +40,7 @@ class FetchShopifyProductsJob implements ShouldQueue
     public function handle(): void
     {
 
-        $this->updateTrackingRecord(['tags' => 'Shopify Products']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Shopify Products']);
 
         /* get active store jobs*/
         $store_ids = Common::getActiveStoreJobs('FetchShopifyProductsJob','shopify');
@@ -119,6 +119,11 @@ class FetchShopifyProductsJob implements ShouldQueue
                 }
             }
         }
+
+        $this->updateTrackingRecord([
+            'status' => 'completed',
+            'finished_at' => now()
+        ]);
     }
 
     private function manageProducts($products, $store, $shopifyAuthService)

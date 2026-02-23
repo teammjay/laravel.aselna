@@ -34,7 +34,7 @@ class ShippingSolutionSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'Shipping Solutions']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Shipping Solutions']);
 
         try {
             DB::connection('easyesale_db')->table('shipping_solution')
@@ -68,6 +68,11 @@ class ShippingSolutionSyncJob implements ShouldQueue
                         $this->createSyncShippingSettingCarrierAccount($shippingSettingCarrierAccount);
                     }
                 });
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('Shipping Solution Sync Job Failed', [

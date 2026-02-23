@@ -37,7 +37,7 @@ class BrandSyncJob implements ShouldQueue
     public function handle(): void
     {
         try {
-            $this->updateTrackingRecord(['tags' => 'Brand']);
+            $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Brand']);
 
             $esaleBrands = DB::connection('easyesale_db')->table('cea_brand')->cursor();
             foreach ($esaleBrands as $brand) {
@@ -48,6 +48,10 @@ class BrandSyncJob implements ShouldQueue
 //        foreach ($brands as $brand) {
 //            $this->createBrand($brand);
 //        }
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e){
 
             CriticalErrorService::report('Brand Sync Job Failed', [

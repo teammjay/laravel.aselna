@@ -29,7 +29,7 @@ class OperationReasonSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'Operation Reason']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Operation Reason']);
 
         try {
             DB::connection('easyesale_db')->table('order_operation_reason')->orderBy('id')
@@ -38,6 +38,11 @@ class OperationReasonSyncJob implements ShouldQueue
                         $this->createSyncOperationReason($operationReason);
                     }
                 });
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('Operation Reason Sync Job Failed', [

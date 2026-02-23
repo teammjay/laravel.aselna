@@ -59,7 +59,7 @@ class StoreBrandPageSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'Store Brand Pages ']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Store Brand Pages ']);
 
         try {
             $this->setVariables();
@@ -525,6 +525,11 @@ class StoreBrandPageSyncJob implements ShouldQueue
                     ], $request->all());
                     break;
             }
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('Store Brand Pages Sync Job Failed', [

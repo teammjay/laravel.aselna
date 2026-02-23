@@ -86,7 +86,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
     {
         try {
 
-            $this->updateTrackingRecord(['tags' => 'Google/Microsoft Feed Generation']);
+            $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Google/Microsoft Feed Generation']);
             $feed_type = $this->data['feed_type'];
             $this->store_id = $store_id = $this->data['store_id'];
             $fileType = $this->data['fileType'];
@@ -214,6 +214,11 @@ class ProcessFeedGenerationJob implements ShouldQueue
 
             $feedDetail->update([
                 'status' => 1,
+            ]);
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
             ]);
 
         } catch (\Throwable $e) {

@@ -32,7 +32,7 @@ class FetchGoogleShoppingOrdersjob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'Google Shopping Orders']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Google Shopping Orders']);
 
         // get google shopping order
         $googleService = new GoogleShoppingService();
@@ -96,5 +96,10 @@ class FetchGoogleShoppingOrdersjob implements ShouldQueue
                 return;
             }
         }
+
+        $this->updateTrackingRecord([
+            'status' => 'completed',
+            'finished_at' => now()
+        ]);
     }
 }

@@ -33,7 +33,7 @@ class PopularDevicesSyncJob implements ShouldQueue
     public function handle(): void
     {
         try {
-            $this->updateTrackingRecord(['tags' => 'Popular Devices']);
+            $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Popular Devices']);
 
             DB::connection('easyesale_db')->table('cea_popular_device')->orderBy('id')
             ->chunk(1000, function ($popularDevices) {;
@@ -42,6 +42,10 @@ class PopularDevicesSyncJob implements ShouldQueue
                     }
                 });
 
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         } catch (Exception $e) {
             Log::error('Popular Devices Sync Job Failed: ' . $e->getMessage());
         }

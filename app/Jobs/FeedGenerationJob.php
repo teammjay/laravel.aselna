@@ -49,7 +49,7 @@ class FeedGenerationJob implements ShouldQueue
             $storeName = $listingInfo->store->name;
             Log::info('Store Type: ' . $storeType);
 
-            $this->updateTrackingRecord(['tags' => $storeName . ' ' . $storeType . ' Feed Generation']);
+            $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => $storeName . ' ' . $storeType . ' Feed Generation']);
 
             $marketplaceService = MarketplaceServiceFactory::create($storeType);
             Log::info('Marketplace Service Created');
@@ -83,6 +83,11 @@ class FeedGenerationJob implements ShouldQueue
             } else {
                 Log::info('Auto Submit Listing is Disabled. Skipping Feed Submission.');
             }
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('Feed Generation Failed', [

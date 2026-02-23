@@ -32,7 +32,7 @@ class ListingFeedSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'Listing Feed']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Listing Feed']);
 
         try {
             $allFeedsQ = DB::connection('easyesale_db')
@@ -48,6 +48,11 @@ class ListingFeedSyncJob implements ShouldQueue
                     $this->createListingFeed($feed);
                 }
             });
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('Listing Feed Sync Job Failed', [

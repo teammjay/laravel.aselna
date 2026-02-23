@@ -33,7 +33,7 @@ class DeviceCarrierSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'Device Carrier']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Device Carrier']);
 
         try {
             DB::connection('easyesale_db')->table('cea_device_carrier')->orderBy('id')
@@ -42,6 +42,11 @@ class DeviceCarrierSyncJob implements ShouldQueue
                         $this->createDeviceCarrier($deviceCarrier);
                     }
                 });
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('Device Carrier Sync Job Failed', [

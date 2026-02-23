@@ -8,6 +8,7 @@ use App\Jobs\Concerns\TrackableJob;
 use App\Jobs\DeviceCarrierSyncJob;
 use App\Jobs\DeviceInterfaces;
 use App\Jobs\DevicesSyncJob;
+use App\Jobs\Fonus\ChainCompletionJob;
 use App\Jobs\InterfaceSyncJob;
 use App\Jobs\ProductImagesSyncJob;
 use App\Jobs\ProductInterfaces;
@@ -15,6 +16,7 @@ use App\Jobs\ProductKeyFeaturesSyncJob;
 use App\Jobs\ProductSpecificationSyncJob;
 use App\Jobs\ProductSyncJob;
 use App\Jobs\SubmitShopifyProductsJob;
+use App\Models\JobStatus;
 use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -42,7 +44,7 @@ class CombinedSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'Combined DB Sync']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Combined DB Sync']);
 
         try {
             $chain = [
@@ -63,14 +65,29 @@ class CombinedSyncJob implements ShouldQueue
                 new SubmitShopifyProductsJob()
             ];
 
-            foreach ($chain as $job) {
-                if (method_exists($job, 'setChainId')) {
-                    $job->setChainId($this->chainId);
-                }
-            }
+            $chain[] = new ChainCompletionJob($this->jobId);
 
-            Bus::chain($chain)->dispatch();
+            // Create pending record for the completion job
+            $this->createPendingRecordsForChain($chain, $this->jobId);
+
+            // Store parent job ID for the catch callback
+            $parentJobId = $this->jobId;
+
+            Bus::chain($chain)
+                ->catch(function (\Throwable $e) use ($parentJobId) {
+                    // Mark parent as failed if chain fails
+                    JobStatus::where('job_id', $parentJobId)
+                        ->update(['status' => 'failed', 'output' => $e->getMessage(), 'finished_at' => now()]);
+                })
+                ->dispatch();
         } catch (\Throwable $e) {
+
+            $this->updateTrackingRecord([
+                'status' => 'failed',
+                'output' => $e->getMessage(),
+                'finished_at' => now()
+            ]);
+
             Log::error('Error: ' . $e->getMessage());
 
             CriticalErrorService::report('Combined DB Sync Failed', [

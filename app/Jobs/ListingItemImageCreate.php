@@ -41,7 +41,7 @@ class ListingItemImageCreate implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'Listing Item Image Create']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Listing Item Image Create']);
 
         try {
             $listingInfo = Listing::find($this->listigId);
@@ -51,6 +51,11 @@ class ListingItemImageCreate implements ShouldQueue
                     $this->createListingItemImage($listingItemLink, $listingInfo);
                 }
             });
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('Listing Item Image Create Job Failed', [
