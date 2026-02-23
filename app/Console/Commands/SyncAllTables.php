@@ -233,6 +233,7 @@ class SyncAllTables extends Command
 //        SyncShopifyItems::dispatch();
 //        ExistingListingItemSyncJob::dispatch();
 //        FetchShopifyOrders::dispatch();
+//        StorePagesJobSync::dispatch();
 //        FonusCombinedSyncJob::dispatch();
 
         $transactionIds = [
