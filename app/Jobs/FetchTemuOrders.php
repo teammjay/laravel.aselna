@@ -33,7 +33,7 @@ class FetchTemuOrders implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'Temu Orders']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Temu Orders']);
 
         /* get active store jobs*/
         $store_ids = Common::getActiveStoreJobs('FetchTemuOrders','temu');

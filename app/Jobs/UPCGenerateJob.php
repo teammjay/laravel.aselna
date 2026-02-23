@@ -34,7 +34,7 @@ class UPCGenerateJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'UPC Generate']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'UPC Generate']);
 
         try {
             $upcData = $this->upcData;

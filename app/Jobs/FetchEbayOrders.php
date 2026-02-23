@@ -33,7 +33,7 @@ class FetchEbayOrders implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'eBay Orders']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'eBay Orders']);
 
         try {
             /* get active store jobs*/

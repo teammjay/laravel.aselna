@@ -32,7 +32,7 @@ class ListingItemSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'Listing Item']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Listing Item']);
 
         try {
             $listingItemsQ = DB::connection('easyesale_db')

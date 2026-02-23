@@ -30,7 +30,7 @@ class StoreTypeSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'Store Type']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Store Type']);
 
         try {
             $storeTypes = DB::connection('easyesale_db')->table('store_type')->cursor();

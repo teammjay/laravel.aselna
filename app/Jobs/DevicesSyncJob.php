@@ -39,7 +39,7 @@ class DevicesSyncJob implements ShouldQueue
     public function handle(): void
     {
         Log::info('Devices Sync Job Start');
-        $this->updateTrackingRecord(['tags' => 'Devices']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Devices']);
 
         try {
             DB::connection('easyesale_db')->table('cea_device')

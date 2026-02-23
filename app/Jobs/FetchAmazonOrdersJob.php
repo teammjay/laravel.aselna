@@ -39,7 +39,7 @@ class FetchAmazonOrdersJob implements ShouldQueue
     public function handle(): void
     {
 
-        $this->updateTrackingRecord(['tags' => 'Amazon Orders']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Amazon Orders']);
 
         try {
             /* get active store jobs*/

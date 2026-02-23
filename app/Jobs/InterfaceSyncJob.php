@@ -39,7 +39,7 @@ class InterfaceSyncJob implements ShouldQueue
     public function handle(): void
     {
         Log::info('Interface Sync Job Start');
-        $this->updateTrackingRecord(['tags' => 'Interface']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Interface']);
 
         try {
             $attributes = DB::connection('easyesale_db')->table('cea_interface')->cursor();

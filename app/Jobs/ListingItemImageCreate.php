@@ -41,7 +41,7 @@ class ListingItemImageCreate implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'Listing Item Image Create']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Listing Item Image Create']);
 
         try {
             $listingInfo = Listing::find($this->listigId);

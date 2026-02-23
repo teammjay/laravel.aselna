@@ -40,7 +40,7 @@ class FetchWalmartOrdersJob implements ShouldQueue
     public function handle(): void
     {
         Log::info("Testing");
-        $this->updateTrackingRecord(['tags' => 'Walmart Orders']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Walmart Orders']);
 
         try {
             /* get active store jobs*/

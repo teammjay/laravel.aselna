@@ -29,7 +29,7 @@ class ProductColorSync implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'Product Color']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Product Color']);
 
         try {
             DB::connection('easyesale_db')->table('product_color')

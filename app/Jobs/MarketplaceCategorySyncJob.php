@@ -41,7 +41,7 @@ class MarketplaceCategorySyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'MarketplaceCategory']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'MarketplaceCategory']);
 
         try {
             Log::info("Store Category Sync Job Started");

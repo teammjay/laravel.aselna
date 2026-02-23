@@ -36,7 +36,7 @@ class StoreCategorySyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'Store Category']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Store Category']);
 
         Log::info("Store Category Sync Job Started");
 

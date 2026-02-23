@@ -42,7 +42,7 @@ class ShopifyDuplicateStoreProductsJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'Shopify Duplicate Store Products']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Shopify Duplicate Store Products']);
 
         try {
             $this->setVariables();

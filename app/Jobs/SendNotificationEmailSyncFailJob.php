@@ -40,7 +40,7 @@ class SendNotificationEmailSyncFailJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'Send Notification Email']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Send Notification Email']);
 
         Log::info('Starting SendNotificationEmailSyncFailJob Job');
         $storeMessageAccounts = StoreMessageAccount::with('store','store.storeType','incomingAccount')

@@ -33,7 +33,7 @@ class ShippingAccountsSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'Shipping Accounts']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Shipping Accounts']);
 
         try {
             DB::connection('easyesale_db')->table('shipping_account')

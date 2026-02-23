@@ -44,7 +44,7 @@ class ShopifyCollectionDeviceSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'Shopify Collection Device']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Shopify Collection Device']);
 
         try {
             $this->setVariables();

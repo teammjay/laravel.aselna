@@ -34,7 +34,7 @@ class ListingItemDetailStatusCheckJob implements ShouldQueue
 
         try {
 
-            $this->updateTrackingRecord(['tags' => 'Listing Item Status Check']);
+            $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Listing Item Status Check']);
 
             ListingItemDetail::whereHas('listingItem', function ($query) {
                 $query->where('status', ListingStatus::Deleted);

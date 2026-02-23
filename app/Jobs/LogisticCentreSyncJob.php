@@ -30,7 +30,7 @@ class LogisticCentreSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'Logistic Centers']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Logistic Centers']);
 
         try {
             $logisticCentre = DB::connection('easyesale_db')->table('logistic_center')->cursor();

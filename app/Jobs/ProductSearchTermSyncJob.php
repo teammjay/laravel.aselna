@@ -30,7 +30,7 @@ class ProductSearchTermSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'Product Search Terms']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Product Search Terms']);
 
         try {
             $productSearchTermQ = DB::connection('easyesale_db')->table('product_search_term')

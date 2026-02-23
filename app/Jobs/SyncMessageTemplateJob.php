@@ -29,7 +29,7 @@ class SyncMessageTemplateJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'Message Templates']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Message Templates']);
 
         try {
             DB::connection('easyesale_db')->table('hd_message_template')->orderBy('id')

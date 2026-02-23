@@ -29,7 +29,7 @@ class PrinterSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'Printers']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Printers']);
 
         try {
             DB::connection('easyesale_db')->table('printer')->orderBy('id')

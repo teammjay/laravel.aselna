@@ -29,7 +29,7 @@ class UPCSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'UPC']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'UPC']);
 
         try {
             $upcSequence = DB::connection('easyesale_db')->table('upc_creation')->cursor();

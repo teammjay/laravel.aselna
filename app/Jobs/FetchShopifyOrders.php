@@ -55,7 +55,7 @@ class FetchShopifyOrders implements ShouldQueue
 
         try {
             /* get shopify stores*/
-            $this->updateTrackingRecord(['tags' => 'Shopify Orders']);
+            $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Shopify Orders']);
 
             /* get active store jobs*/
             $store_ids = Common::getActiveStoreJobs('FetchShopifyOrders','shopify');

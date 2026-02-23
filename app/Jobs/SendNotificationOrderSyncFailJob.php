@@ -40,7 +40,7 @@ class SendNotificationOrderSyncFailJob implements ShouldQueue
     public function handle(): void
     {
 
-        $this->updateTrackingRecord(['tags' => 'Send Notification Order Sync Fail']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Send Notification Order Sync Fail']);
 
         try {
 

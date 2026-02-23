@@ -36,7 +36,7 @@ class ShopifyIndvPagesSyncJob implements ShouldQueue
 
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'Shopify Individual Pages']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Shopify Individual Pages']);
 
         try {
             $this->setVariables();

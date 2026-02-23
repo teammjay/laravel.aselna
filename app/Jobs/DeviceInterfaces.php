@@ -35,7 +35,7 @@ class DeviceInterfaces implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'Device Interface']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Device Interface']);
 
         try {
             DB::connection('easyesale_db')->table('cea_device_interface')->orderBy('id')

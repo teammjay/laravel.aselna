@@ -29,7 +29,7 @@ class MessagingAccountSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'Messaging Account']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Messaging Account']);
 
         try {
             DB::connection('easyesale_db')->table('messaging_account')->orderBy('id')

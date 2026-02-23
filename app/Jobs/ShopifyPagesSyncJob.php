@@ -31,7 +31,7 @@ class ShopifyPagesSyncJob implements ShouldQueue
     {
         try {
 
-            $this->updateTrackingRecord(['tags' => 'Shopify Pages']);
+            $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Shopify Pages']);
 
             $stores = Store::select('store.*')->with('fileSystem', 'storeType')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'shopify')->get();
 

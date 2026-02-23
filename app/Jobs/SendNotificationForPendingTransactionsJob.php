@@ -40,7 +40,7 @@ class SendNotificationForPendingTransactionsJob implements ShouldQueue
     {
         try {
 
-            $this->updateTrackingRecord(['tags' => 'Send Notification Pending Transaction']);
+            $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Send Notification Pending Transaction']);
 
             $tracking_numbers = AccountTransaction::select('tracking_number')->with('shippingAccount')->where('status', 'pending')
                 ->where('transaction_date', '<=', Carbon::now()->subDays(10))

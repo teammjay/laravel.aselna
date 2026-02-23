@@ -29,7 +29,7 @@ class ProductSizeSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'Product Size']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Product Size']);
 
         try {
             DB::connection('easyesale_db')->table('product_size')->orderBy('id')

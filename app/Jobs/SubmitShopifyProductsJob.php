@@ -52,6 +52,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
     public function handle(): void
     {
         try {
+            $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now()]);
             /* shopify stores*/
             $stores = Store::select('store.*')->with('fileSystem', 'storeType')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'shopify')->where('store.store_status', '<>', 0)->get();
 
@@ -175,7 +176,6 @@ class SubmitShopifyProductsJob implements ShouldQueue
                         }
                     }
                 }
-
                 $this->updateTrackingRecord(['tags' => implode(' ', $tags) . ' Submit Shopify Products']);
             }
 

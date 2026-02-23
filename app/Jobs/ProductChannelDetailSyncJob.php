@@ -30,7 +30,7 @@ class ProductChannelDetailSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'Product Channel Detail']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Product Channel Detail']);
 
         try {
             DB::connection('easyesale_db')

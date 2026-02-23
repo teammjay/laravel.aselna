@@ -29,7 +29,7 @@ class ProductConditionJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'Product Conditions']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Product Conditions']);
 
         try {
             $productCondition = DB::connection('easyesale_db')->table('product_condition')->cursor();

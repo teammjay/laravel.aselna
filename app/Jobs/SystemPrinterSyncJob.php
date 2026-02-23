@@ -30,7 +30,7 @@ class SystemPrinterSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'System Printers']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'System Printers']);
 
         try {
             DB::connection('aselna_printer_db')->table('Printers')

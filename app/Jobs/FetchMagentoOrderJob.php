@@ -39,7 +39,7 @@ class FetchMagentoOrderJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'Magento Orders']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Magento Orders']);
 
         try {
             /* get amazon stores*/

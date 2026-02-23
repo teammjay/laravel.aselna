@@ -29,7 +29,7 @@ class ListingTemplateSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'Listing Template']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Listing Template']);
 
         try {
             DB::connection('easyesale_db')->table('listing_template')->orderBy('id')

@@ -29,7 +29,7 @@ class ClientSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'Client']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Client']);
 
         try {
             DB::connection('easyesale_db')->table('client')

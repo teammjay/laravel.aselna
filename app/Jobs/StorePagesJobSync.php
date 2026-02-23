@@ -35,7 +35,7 @@ class StorePagesJobSync implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'Store Pages']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Store Pages']);
 
         try {
 

@@ -32,7 +32,7 @@ class CarrierSyncJob implements ShouldQueue
     public function handle(): void
     {
         try{
-            $this->updateTrackingRecord(['tags' => 'Carrier']);
+            $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Carrier']);
 
             $carriers = DB::connection('easyesale_db')->table('cea_carrier')->cursor();
 

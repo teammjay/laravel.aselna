@@ -30,7 +30,7 @@ class HtTicketStaticDataSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'HD Ticket']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'HD Ticket']);
 
         try {
             $ticketTypes = DB::connection('easyesale_db')->table('hd_ticket_type')->get();

@@ -32,7 +32,7 @@ class ManufacturerSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'Manufaturer']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Manufaturer']);
 
         try {
             $manufaturer = DB::connection('easyesale_db')->table('manufacturer')->cursor();
