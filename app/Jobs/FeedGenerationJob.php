@@ -83,6 +83,11 @@ class FeedGenerationJob implements ShouldQueue
             } else {
                 Log::info('Auto Submit Listing is Disabled. Skipping Feed Submission.');
             }
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('Feed Generation Failed', [

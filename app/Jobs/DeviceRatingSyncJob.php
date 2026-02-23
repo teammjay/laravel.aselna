@@ -42,6 +42,12 @@ class DeviceRatingSyncJob implements ShouldQueue
                         $this->syncDeviceRating($deviceRating);
                     }
                 });
+
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('Device Rating Sync Job Failed', [

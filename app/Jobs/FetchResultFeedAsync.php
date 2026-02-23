@@ -58,6 +58,11 @@ class FetchResultFeedAsync implements ShouldQueue
         foreach ($listingFeed as $feed) {
             $this->fetchFeed($feed);
         }
+
+        $this->updateTrackingRecord([
+            'status' => 'completed',
+            'finished_at' => now()
+        ]);
     }
 
     private function fetchFeed(mixed $feed)

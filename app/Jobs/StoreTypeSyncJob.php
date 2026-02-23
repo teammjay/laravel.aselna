@@ -37,6 +37,11 @@ class StoreTypeSyncJob implements ShouldQueue
             foreach ($storeTypes as $storeType) {
                 $this->createStoreType($storeType);
             }
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('Store Type Sync Job Failed', [

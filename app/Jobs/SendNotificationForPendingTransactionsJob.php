@@ -102,6 +102,10 @@ class SendNotificationForPendingTransactionsJob implements ShouldQueue
                 }
             }
 
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         } catch (\Throwable $e) {
 
             \App\Helpers\ErrorLogger::log($e, __METHOD__);

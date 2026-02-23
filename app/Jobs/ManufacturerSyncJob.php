@@ -40,6 +40,11 @@ class ManufacturerSyncJob implements ShouldQueue
             foreach ($manufaturer as $manufacture) {
                 $this->createManufacturer($manufacture);
             }
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('Manufacturer Sync Job Failed', [

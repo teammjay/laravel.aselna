@@ -201,6 +201,11 @@ class FetchEbayOrders implements ShouldQueue
 //                }
                 }
             }
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('Fetch eBay Order Job Failed', [

@@ -42,6 +42,11 @@ class DeviceCarrierSyncJob implements ShouldQueue
                         $this->createDeviceCarrier($deviceCarrier);
                     }
                 });
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('Device Carrier Sync Job Failed', [

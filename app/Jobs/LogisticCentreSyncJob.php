@@ -42,6 +42,11 @@ class LogisticCentreSyncJob implements ShouldQueue
             foreach ($storeLogisticCentre as $centre) {
                 $this->createStoreLogisticCentre($centre);
             }
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('Logistic Center Sync Job Failed', [

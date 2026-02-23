@@ -88,6 +88,11 @@ class ProductSyncJob implements ShouldQueue
         } catch (Exception $e) {
             Log::error($e->getMessage());
         }
+
+        $this->updateTrackingRecord([
+            'status' => 'completed',
+            'finished_at' => now()
+        ]);
     }
 
     private function createProduct($product)

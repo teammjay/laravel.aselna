@@ -54,6 +54,11 @@ class StoreSyncJob implements ShouldQueue
                     $this->createStoreLogistics($storeLogistic);
                 }
             }
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('Stores Sync Job Failed', [

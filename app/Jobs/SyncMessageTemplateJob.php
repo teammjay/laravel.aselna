@@ -38,6 +38,11 @@ class SyncMessageTemplateJob implements ShouldQueue
                         $this->createSyncMessageTemplate($messageTemplate);
                     }
                 });
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('Message Templates Sync Job Failed', [

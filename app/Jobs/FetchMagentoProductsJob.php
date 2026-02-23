@@ -59,6 +59,10 @@ class FetchMagentoProductsJob implements ShouldQueue
         }
 
         Log::info('Magento Products Fetch Job Completed');
+        $this->updateTrackingRecord([
+            'status' => 'completed',
+            'finished_at' => now()
+        ]);
     }
 
     /**

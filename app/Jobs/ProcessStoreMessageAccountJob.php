@@ -428,10 +428,6 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
                             $account->update(['filter_from_date' => $last_filter_datef]);
                         }
 
-                        $this->updateTrackingRecord([
-                            'status' => 'completed',
-                            'finished_at' => now()
-                        ]);
                     } else {
                         $filterDateObj = \Carbon\Carbon::parse($filter_date, 'America/New_York');
                         $maxDate = $filterDateObj->copy()->addDays(1);
@@ -442,6 +438,10 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
                     }
                 }
             }
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         } catch (\Throwable $e) {
 
             $extraInfo = [

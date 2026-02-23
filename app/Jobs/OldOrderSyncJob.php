@@ -44,6 +44,11 @@ class OldOrderSyncJob implements ShouldQueue
                         $this->syncOldOrder($order);
                     }
                 });
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('Old Orders Sync Job Failed', [

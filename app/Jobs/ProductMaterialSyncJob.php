@@ -38,6 +38,11 @@ class ProductMaterialSyncJob implements ShouldQueue
                         $this->createProductMaterial($productMaterial);
                     }
                 });
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('Product Materials Sync Job Failed', [

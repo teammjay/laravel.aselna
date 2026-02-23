@@ -121,6 +121,11 @@ class SendNotificationOrderSyncFailJob implements ShouldQueue
                     }
                 }
             }
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('Send Notification Order Sync Job Failed', [

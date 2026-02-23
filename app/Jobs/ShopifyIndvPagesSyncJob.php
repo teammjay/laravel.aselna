@@ -62,6 +62,11 @@ class ShopifyIndvPagesSyncJob implements ShouldQueue
                     Log::error('Error in ShopifyIndvPagesSyncJob: ' . $e->getMessage());
                 }
             }
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('Shopify Indevidual Pages Sync Job Failed', [

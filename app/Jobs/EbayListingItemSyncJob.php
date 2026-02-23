@@ -98,6 +98,11 @@ class EbayListingItemSyncJob implements ShouldQueue
 
                 $this->syncListingItem($listingItemLinks, $store);
             }
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('Ebay Listing Item Sync Job Failed', [

@@ -39,6 +39,11 @@ class CarrierSyncJob implements ShouldQueue
             foreach ($carriers as $carrier) {
                 $this->createCarrier($carrier);
             }
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('Carrier Sync Job Failed', [

@@ -450,6 +450,11 @@ class FetchShopifyOrders implements ShouldQueue
 
                 $this->updateTrackingRecord(['tags' => implode(' ',$tags).' Shopify Orders']);
             }
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         } catch (\Throwable $e) {
 
             \App\Helpers\ErrorLogger::log($e, __METHOD__);

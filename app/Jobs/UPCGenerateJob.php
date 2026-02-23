@@ -97,6 +97,11 @@ class UPCGenerateJob implements ShouldQueue
                     UPCCodes::insert($chunk);
                 }
             });
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('UPC Generate Job Failed', [

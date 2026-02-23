@@ -119,6 +119,11 @@ class FetchShopifyProductsJob implements ShouldQueue
                 }
             }
         }
+
+        $this->updateTrackingRecord([
+            'status' => 'completed',
+            'finished_at' => now()
+        ]);
     }
 
     private function manageProducts($products, $store, $shopifyAuthService)

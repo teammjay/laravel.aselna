@@ -43,6 +43,11 @@ class GenerationTypeAndTemplateSync implements ShouldQueue
             foreach ($listingGenerationTypeTemplate as $generationTypeTemplate) {
                 $this->createGenerationTypeTemplate($generationTypeTemplate);
             }
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('Generation Type Template Sync Job Failed', [

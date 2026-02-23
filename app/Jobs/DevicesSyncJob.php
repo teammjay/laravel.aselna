@@ -60,6 +60,10 @@ class DevicesSyncJob implements ShouldQueue
             });
             Log::info('Devices Delete Job End');
 
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('Device Sync Job Failed', [

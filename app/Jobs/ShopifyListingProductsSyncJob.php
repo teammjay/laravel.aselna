@@ -55,6 +55,11 @@ class ShopifyListingProductsSyncJob implements ShouldQueue
                         $this->syncListingItem($item);
                     }
                 });
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('Shopify Listing Products Sync Job Failed', [

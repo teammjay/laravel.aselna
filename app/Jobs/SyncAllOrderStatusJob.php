@@ -74,6 +74,11 @@ class SyncAllOrderStatusJob implements ShouldQueue
                     }
                 }
             }
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
             Log::info('Error syncing order status for OrderOperation ID ' . $operation->id . ': ' . $e->getMessage());
 

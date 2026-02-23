@@ -68,6 +68,11 @@ class ShippingCarrierJob implements ShouldQueue
             foreach ($shippingPackageLinks as $shippingPackageLink) {
                 $this->createShippingPackageShippingCarrierPackageLink($shippingPackageLink);
             }
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('Shipping Carrier Sync Job Failed', [

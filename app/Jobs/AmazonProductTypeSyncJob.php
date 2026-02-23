@@ -49,6 +49,11 @@ class AmazonProductTypeSyncJob implements ShouldQueue
                         sleep(1);
                     }
                 });
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('Amazon Product Type Sync Job Failed', [

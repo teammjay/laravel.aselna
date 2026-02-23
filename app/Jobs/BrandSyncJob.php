@@ -48,6 +48,10 @@ class BrandSyncJob implements ShouldQueue
 //        foreach ($brands as $brand) {
 //            $this->createBrand($brand);
 //        }
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e){
 
             CriticalErrorService::report('Brand Sync Job Failed', [

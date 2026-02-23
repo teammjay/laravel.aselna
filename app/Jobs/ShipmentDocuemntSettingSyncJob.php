@@ -36,6 +36,11 @@ class ShipmentDocuemntSettingSyncJob implements ShouldQueue
             foreach ($shippingDocuments as $shippingdocument) {
                 $this->createShippingDocuments($shippingdocument);
             }
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('Shipment Document Setting Sync Job Failed', [

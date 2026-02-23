@@ -36,6 +36,11 @@ class UPCSyncJob implements ShouldQueue
             foreach ($upcSequence as $upc) {
                 $this->createUPCSequence($upc);
             }
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('UPC Sync Job Failed', [

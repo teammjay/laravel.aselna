@@ -96,5 +96,10 @@ class FetchGoogleShoppingOrdersjob implements ShouldQueue
                 return;
             }
         }
+
+        $this->updateTrackingRecord([
+            'status' => 'completed',
+            'finished_at' => now()
+        ]);
     }
 }

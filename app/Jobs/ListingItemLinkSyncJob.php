@@ -48,6 +48,11 @@ class ListingItemLinkSyncJob implements ShouldQueue
                     $this->createListingItemLink($listingItemLink);
                 }
             });
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('Listing Item Link Sync Job Failed', [

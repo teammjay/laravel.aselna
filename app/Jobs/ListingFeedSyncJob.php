@@ -48,6 +48,11 @@ class ListingFeedSyncJob implements ShouldQueue
                     $this->createListingFeed($feed);
                 }
             });
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('Listing Feed Sync Job Failed', [

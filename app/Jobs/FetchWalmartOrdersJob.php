@@ -72,6 +72,11 @@ class FetchWalmartOrdersJob implements ShouldQueue
 
                 $this->updateTrackingRecord(['tags' => implode(' ', $tags) . ' Walmart Orders']);
             }
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('Fetch Walmart Orders Job Failed', [

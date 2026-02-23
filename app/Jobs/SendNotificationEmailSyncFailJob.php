@@ -146,6 +146,11 @@ class SendNotificationEmailSyncFailJob implements ShouldQueue
                 Log::error('Error processing store account ID ' . $maccount->id . ': ' . $e->getMessage());
             }
         }
+
+        $this->updateTrackingRecord([
+            'status' => 'completed',
+            'finished_at' => now()
+        ]);
     }
 
     private function sendMail($store, $content){

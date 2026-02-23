@@ -50,6 +50,11 @@ class DeviceTypesSyncJob implements ShouldQueue
             foreach ($deviceSubTypes as $deviceSubType) {
                 $this->createSyncDeviceSubType($deviceSubType);
             }
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('Device Types Sync Job Failed', [

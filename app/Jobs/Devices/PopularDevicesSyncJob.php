@@ -42,6 +42,10 @@ class PopularDevicesSyncJob implements ShouldQueue
                     }
                 });
 
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         } catch (Exception $e) {
             Log::error('Popular Devices Sync Job Failed: ' . $e->getMessage());
         }

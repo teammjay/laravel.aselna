@@ -39,6 +39,11 @@ class ClientSyncJob implements ShouldQueue
                         $this->createSyncClient($client);
                     }
                 });
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('Client Sync Job Failed', [

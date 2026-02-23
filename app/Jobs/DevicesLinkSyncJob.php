@@ -39,6 +39,11 @@ class DevicesLinkSyncJob implements ShouldQueue
             foreach ($syncDevices as $device) {
                 $this->createSyncDevice($device);
             }
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('Device Link Sync Job Failed', [

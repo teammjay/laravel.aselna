@@ -38,6 +38,11 @@ class OperationReasonSyncJob implements ShouldQueue
                         $this->createSyncOperationReason($operationReason);
                     }
                 });
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('Operation Reason Sync Job Failed', [

@@ -38,6 +38,11 @@ class ListingTemplateSyncJob implements ShouldQueue
                         $this->createListingTemplate($listingTemplate);
                     }
                 });
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('Listing Template Sync Job Failed', [

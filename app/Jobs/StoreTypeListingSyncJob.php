@@ -43,6 +43,11 @@ class StoreTypeListingSyncJob implements ShouldQueue
                     $this->createStoreListing($storeListing);
                 }
             });
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('Store Type Listing Sync Job Failed', [

@@ -51,6 +51,11 @@ class ShippingAccountsSyncJob implements ShouldQueue
                         $this->createSyncShippingAccountPurchase($shippingAccountPurchase);
                     }
                 });
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('Shipping Account Sync Job Failed', [

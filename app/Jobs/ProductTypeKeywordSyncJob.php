@@ -41,6 +41,11 @@ class ProductTypeKeywordSyncJob implements ShouldQueue
                     $this->createProductKeyword($productKeyword);
                 }
             });
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('Product Type Keywords Sync Job Failed', [

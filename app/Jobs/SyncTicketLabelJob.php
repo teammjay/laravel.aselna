@@ -38,6 +38,11 @@ class SyncTicketLabelJob implements ShouldQueue
                         $this->createSyncTicketLabel($ticketLabel);
                     }
                 });
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('Ticket Labels Sync Job Failed', [

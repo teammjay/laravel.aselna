@@ -36,6 +36,11 @@ class ProductConditionJob implements ShouldQueue
             foreach ($productCondition as $condition) {
                 $this->createProductCondition($condition);
             }
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('Product Condition Sync Job Failed', [

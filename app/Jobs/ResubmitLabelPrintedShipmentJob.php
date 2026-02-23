@@ -98,6 +98,11 @@ class ResubmitLabelPrintedShipmentJob implements ShouldQueue
 
             Log::info('Resubmit Operation: No operation found');
 
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
+
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('Resubmit Label Printed Shipment Job Failed', [

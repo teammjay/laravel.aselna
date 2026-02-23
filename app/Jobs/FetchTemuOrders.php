@@ -81,5 +81,9 @@ class FetchTemuOrders implements ShouldQueue
 
             $this->updateTrackingRecord(['tags' => implode(' ',$tags) .' Temu Orders']);
         }
+        $this->updateTrackingRecord([
+            'status' => 'completed',
+            'finished_at' => now()
+        ]);
     }
 }

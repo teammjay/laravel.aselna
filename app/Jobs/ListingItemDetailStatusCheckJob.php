@@ -44,6 +44,11 @@ class ListingItemDetailStatusCheckJob implements ShouldQueue
                     $detail->update(['kicked' => 1]);
                 }
             });
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
 
             \App\Helpers\ErrorLogger::log($e, __METHOD__);

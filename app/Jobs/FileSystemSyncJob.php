@@ -40,6 +40,11 @@ class FileSystemSyncJob implements ShouldQueue
                     $this->createListingItemLink($listingItemLink);
                 }
             });
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('File System Sync Job Failed', [

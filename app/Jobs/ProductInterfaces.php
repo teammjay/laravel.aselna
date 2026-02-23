@@ -45,6 +45,11 @@ class ProductInterfaces implements ShouldQueue
             ProductInterface::orderBy('id')->chunk(1000, function ($productInterfaces) {
                 $this->checkAndDeleteProductInterfaces($productInterfaces);
             });
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
             Log::error('Product Interface Sync Job Failed: ' . $e->getTraceAsString());
 

@@ -38,6 +38,11 @@ class ProductSizeSyncJob implements ShouldQueue
                         $this->createProductSize($productSize);
                     }
                 });
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('Product Size Sync Job Failed', [

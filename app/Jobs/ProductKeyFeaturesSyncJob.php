@@ -46,6 +46,11 @@ class ProductKeyFeaturesSyncJob implements ShouldQueue
                     ]);
                 }
             });
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('Product Key Features Sync Job Failed', [

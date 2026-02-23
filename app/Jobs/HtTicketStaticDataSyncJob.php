@@ -37,6 +37,11 @@ class HtTicketStaticDataSyncJob implements ShouldQueue
             foreach ($ticketTypes as $ticketType) {
                 $this->createTicketType($ticketType);
             }
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('Hd Ticlet Static Data Sync Job Failed', [

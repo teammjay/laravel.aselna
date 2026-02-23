@@ -53,6 +53,10 @@ class StorePagesJobSync implements ShouldQueue
                     }
                 });
 
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('Store Pages Sync Job Failed', [

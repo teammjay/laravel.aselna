@@ -178,6 +178,11 @@ class SubmitShopifyProductsJob implements ShouldQueue
 
                 $this->updateTrackingRecord(['tags' => implode(' ', $tags) . ' Submit Shopify Products']);
             }
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('Submit Shopify Products Sync Job Failed', [

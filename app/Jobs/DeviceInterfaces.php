@@ -48,6 +48,11 @@ class DeviceInterfaces implements ShouldQueue
             DeviceInterface::orderBy('id')->chunk(1000, function ($deviceInterfaces) {
                 $this->checkAndDelete($deviceInterfaces);
             });
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('Device Interface Sync Job Failed', [

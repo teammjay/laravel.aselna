@@ -525,6 +525,11 @@ class StoreBrandPageSyncJob implements ShouldQueue
                     ], $request->all());
                     break;
             }
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('Store Brand Pages Sync Job Failed', [

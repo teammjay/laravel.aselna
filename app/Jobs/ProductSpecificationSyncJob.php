@@ -49,6 +49,10 @@ class ProductSpecificationSyncJob implements ShouldQueue
                     }
                 });
             Log::info('Product Specification Sync Job completed.');
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('Product Specification Sync Job Failed', [

@@ -54,6 +54,11 @@ class ShopifyCollectionDeviceSyncJob implements ShouldQueue
                     $this->syncShopifyCollection($device);
                 }
             });
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('Shopify Collection Device Sync Job Failed', [

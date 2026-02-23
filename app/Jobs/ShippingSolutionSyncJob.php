@@ -68,6 +68,11 @@ class ShippingSolutionSyncJob implements ShouldQueue
                         $this->createSyncShippingSettingCarrierAccount($shippingSettingCarrierAccount);
                     }
                 });
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('Shipping Solution Sync Job Failed', [

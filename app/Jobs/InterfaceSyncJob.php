@@ -55,6 +55,10 @@ class InterfaceSyncJob implements ShouldQueue
             });
             Log::info('Interface Delete Job End');
 
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('Interface Sync Job Failed', [

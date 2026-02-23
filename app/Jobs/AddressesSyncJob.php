@@ -39,6 +39,11 @@ class AddressesSyncJob implements ShouldQueue
                 $this->createSyncAddress($address);
             }
         });
+
+        $this->updateTrackingRecord([
+            'status' => 'completed',
+            'finished_at' => now()
+        ]);
     }
 
     private function createSyncAddress(mixed $address)

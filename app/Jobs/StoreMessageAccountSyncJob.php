@@ -38,6 +38,11 @@ class StoreMessageAccountSyncJob implements ShouldQueue
                         $this->createSyncStoreMessageAccount($storeMessageAccount);
                     }
                 });
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('Store Message Accounts Sync Job Failed', [

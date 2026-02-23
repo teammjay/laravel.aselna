@@ -64,6 +64,11 @@ class ShopifyDuplicateStoreProductsJob implements ShouldQueue
         $this->duplicateListingDetails();
 
 //        $this->dublicateStoreNavigationPages();
+
+        $this->updateTrackingRecord([
+            'status' => 'completed',
+            'finished_at' => now()
+        ]);
     }
 
     private function setVariables()

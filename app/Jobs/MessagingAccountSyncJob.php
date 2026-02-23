@@ -38,6 +38,11 @@ class MessagingAccountSyncJob implements ShouldQueue
                         $this->createSyncMessagingAccount($messagingAccount);
                     }
                 });
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('Messaging Account Sync Job Failed', [

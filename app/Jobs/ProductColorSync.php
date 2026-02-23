@@ -39,6 +39,11 @@ class ProductColorSync implements ShouldQueue
                         $this->createSyncProductColor($productColor);
                     }
                 });
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('Product Color Sync Job Failed', [

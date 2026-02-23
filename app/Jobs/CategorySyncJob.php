@@ -86,6 +86,11 @@ class CategorySyncJob implements ShouldQueue
                     $this->createStoreTypeCategories($storeTypeCategory);
                 }
             }
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('Category Sync Job Failed', [

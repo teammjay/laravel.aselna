@@ -41,6 +41,11 @@ class ProductTagSyncJob implements ShouldQueue
                     $this->createProductTag($productTag);
                 }
             });
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('Product Tags Sync Job Failed', [

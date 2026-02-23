@@ -37,6 +37,11 @@ class ListingItemProductImageSyncJob implements ShouldQueue
 //        $this->ListingItemImagesAll();
 
             $this->listingItemImagesByStore('6c7009ce-eac1-a995-a986-27d5df0103ac');
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('Listing Item Product Images Sync Job Failed', [

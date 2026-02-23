@@ -42,6 +42,10 @@ class ProductChannelDetailSyncJob implements ShouldQueue
                     }
                 });
 
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('Product Channel Detail Sync Job Failed', [

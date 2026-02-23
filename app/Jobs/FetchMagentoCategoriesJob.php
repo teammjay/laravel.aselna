@@ -50,6 +50,10 @@ class FetchMagentoCategoriesJob implements ShouldQueue
                     $this->syncCategories($categoryResponse['children_data'], $store);
                 }
             }
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('Fetch Magento Categories Job Failed', [

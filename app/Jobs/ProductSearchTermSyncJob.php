@@ -41,6 +41,11 @@ class ProductSearchTermSyncJob implements ShouldQueue
                     $this->createProductSearchTerm($productSearchTerm);
                 }
             });
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('Product Search Terms Sync Job Failed', [

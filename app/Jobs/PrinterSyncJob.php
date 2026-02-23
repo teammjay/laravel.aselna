@@ -38,6 +38,11 @@ class PrinterSyncJob implements ShouldQueue
                         $this->createSyncPrinters($printer);
                     }
                 });
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('Printer Sync Job Failed', [
