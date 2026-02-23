@@ -102,35 +102,35 @@ class   FetchEmailMessagesJob implements ShouldQueue
                             $chain[] = new ProcessStoreMessageAccountJob($maccount, $store, $store->storeType->name);
                         }
                     }
-                    if (count($chain) > 0) {
+                }
 
-                        // Add the completion job at the end of the chain to mark parent as completed
-                        $chain[] = new ChainCompletionJob($this->jobId);
+                if (count($chain) > 0) {
+                    // Add the completion job at the end of the chain to mark parent as completed
+                    $chain[] = new ChainCompletionJob($this->jobId);
 
-                        // Create pending record for the completion job
-                        $this->createPendingRecordsForChain($chain, $this->jobId);
+                    // Create pending record for the completion job
+                    $this->createPendingRecordsForChain($chain, $this->jobId);
 
-                        // Store parent job ID for the catch callback
-                        $parentJobId = $this->jobId;
+                    // Store parent job ID for the catch callback
+                    $parentJobId = $this->jobId;
 
-                        Bus::chain($chain)
-                            ->catch(function (\Throwable $e) use ($parentJobId,$store) {
-                                // Mark parent as failed if chain fails
-                                JobStatus::where('job_id', $parentJobId)
-                                    ->update(['status' => 'failed', 'output' => $e->getMessage(), 'finished_at' => now()]);
+                    Bus::chain($chain)
+                        ->catch(function (\Throwable $e) use ($parentJobId,$store) {
+                            // Mark parent as failed if chain fails
+                            JobStatus::where('job_id', $parentJobId)
+                                ->update(['status' => 'failed', 'output' => $e->getMessage(), 'finished_at' => now()]);
 
-                                Log::error('Fetch Email Message Chain Failed: ' . $e->getMessage());
+                            Log::error('Fetch Email Message Chain Failed: ' . $e->getMessage());
 
-                                CriticalErrorService::report('Fetch Email Message Chain Failed', [
-                                    'marketplace' => $store->name,
-                                    'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
-                                    'method' => __METHOD__
-                                ]);
-                            })
-                            ->dispatch();
+                            CriticalErrorService::report('Fetch Email Message Chain Failed', [
+                                'marketplace' => $store->name,
+                                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
+                                'method' => __METHOD__
+                            ]);
+                        })
+                        ->dispatch();
 
-                        //Bus::chain($chain)->dispatch();
-                    }
+                    //Bus::chain($chain)->dispatch();
                 }
             }
 
