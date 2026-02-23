@@ -276,6 +276,7 @@
                 <th>Transaction Date</th>
                 <th>Transaction ID</th>
                 <th>Store</th>
+                <th>Order ID</th>
                 <th>Amount</th>
                 <th>Address</th>
                 <th>Status</th>
@@ -420,6 +421,7 @@
                     {data: 'transaction_date', name: 'transaction_date'},
                     {data: 'transaction_id', name: 'transaction_id'},
                     {data: 'store', name: 'store',orderable: false},
+                    {data: 'order_id', name: 'order_id',orderable: false},
                     {data: 'amount', name: 'amount'},
                     {data: 'address', name: 'address'},
                     {data: 'status', name: 'status'},

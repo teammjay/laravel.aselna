@@ -36,7 +36,13 @@ class CategorySyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'Fonus Category']);
+        // Mark as processing when job starts
+        $this->updateTrackingRecord([
+            'status' => 'processing',
+            'started_at' => now(),
+            'tags' => 'Fonus Category'
+        ]);
+
         try {
             $ctagories = DB::connection('fonus_db')->table('tbl_category')->get();
             foreach ($ctagories as $category) {
@@ -48,7 +54,19 @@ class CategorySyncJob implements ShouldQueue
             foreach ($subCategories as $subCategory) {
                 $this->createSubCategory($subCategory);
             }
+
+            // Mark as completed when job finishes successfully
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         } catch (\Throwable $e) {
+            // Mark as failed when job fails
+            $this->updateTrackingRecord([
+                'status' => 'failed',
+                'output' => $e->getMessage(),
+                'finished_at' => now()
+            ]);
 
             CriticalErrorService::report('Fonus Category Sync Job Failed', [
                 'marketplace' => 'N/A',
@@ -58,6 +76,7 @@ class CategorySyncJob implements ShouldQueue
 
             Log::error('Error: ' . $e->getMessage());
 
+            throw $e; // Re-throw to trigger chain failure handling
         }
     }
 

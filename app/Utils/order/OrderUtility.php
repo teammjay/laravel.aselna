@@ -701,6 +701,8 @@ class OrderUtility
                 $operationstatus = OrderOperationStatus::Canceled;
                 break;
             case 1:
+                $operationstatus = OrderOperationStatus::PENDING;
+                break;
             case 2:
             default:
                 $operationstatus = OrderOperationStatus::Created;

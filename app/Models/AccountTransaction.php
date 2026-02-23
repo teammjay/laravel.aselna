@@ -32,6 +32,10 @@ class AccountTransaction extends Model
         return $this->belongsTo(ShippingAccount::class,'shipping_account_id');
     }
 
+    public function orderOperation(){
+        return $this->belongsTo(OrderOperation::class,'tracking_number','tracking_number');
+    }
+
     public function store(){
         return $this->belongsTo(Store::class,'store_id');
     }

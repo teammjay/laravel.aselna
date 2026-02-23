@@ -265,6 +265,12 @@ class WalmartEmailParser extends ReceivedMessageParser
             }
         }
 
+        if (!isset($this->entities['order_id'])) {
+            if (preg_match('/\b\d{13}\b/', $text, $matches)) {
+                $this->addEntity($matches[0], 'order_id');
+            }
+        }
+
         /*echo '<pre>';
         echo 'message';
         print_r($message);
