@@ -33,7 +33,7 @@ class TransactionStatusCheckJob implements ShouldQueue
 
     public function handle():void
     {
-        $this->updateTrackingRecord(['tags' => 'Endicia Transaction Status Check']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Endicia Transaction Status Check']);
 
         AccountTransaction::with('shippingAccount')
             ->where(function ($q) {

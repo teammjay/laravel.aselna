@@ -37,7 +37,7 @@ class FetchResultFeedAsync implements ShouldQueue
     {
         Log::info('ResultFeedSync command started');
         Log::info("get_current_user() : " . get_current_user());
-        $this->updateTrackingRecord(['tags' => 'Result Feed']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Result Feed']);
 
         ScheduledJob::where('class_name', __CLASS__)
             ->update(['last_run' => now()]);
@@ -58,6 +58,11 @@ class FetchResultFeedAsync implements ShouldQueue
         foreach ($listingFeed as $feed) {
             $this->fetchFeed($feed);
         }
+
+        $this->updateTrackingRecord([
+            'status' => 'completed',
+            'finished_at' => now()
+        ]);
     }
 
     private function fetchFeed(mixed $feed)

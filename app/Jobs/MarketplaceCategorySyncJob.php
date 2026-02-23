@@ -41,7 +41,7 @@ class MarketplaceCategorySyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'MarketplaceCategory']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'MarketplaceCategory']);
 
         try {
             Log::info("Store Category Sync Job Started");
@@ -56,6 +56,11 @@ class MarketplaceCategorySyncJob implements ShouldQueue
                 default:
                     Log::info("Store Type not found");
             }
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('Marketplace Category Sync Job Failed', [

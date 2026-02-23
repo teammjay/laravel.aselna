@@ -44,7 +44,7 @@ class ShopifyCollectionDeviceSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'Shopify Collection Device']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Shopify Collection Device']);
 
         try {
             $this->setVariables();
@@ -54,6 +54,11 @@ class ShopifyCollectionDeviceSyncJob implements ShouldQueue
                     $this->syncShopifyCollection($device);
                 }
             });
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('Shopify Collection Device Sync Job Failed', [

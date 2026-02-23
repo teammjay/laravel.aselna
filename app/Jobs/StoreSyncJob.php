@@ -33,7 +33,7 @@ class StoreSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'Stores']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Stores']);
 
         try {
             $stores = DB::connection('fonus_db')->table('tbl_seller')->get();
@@ -54,6 +54,11 @@ class StoreSyncJob implements ShouldQueue
                     $this->createStoreLogistics($storeLogistic);
                 }
             }
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('Stores Sync Job Failed', [

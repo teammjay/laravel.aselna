@@ -36,7 +36,7 @@ class FetchMagentoProductsJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'Magento Products']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Magento Products']);
 
         Log::info('Magento Products Fetch Job Started');
 
@@ -59,6 +59,10 @@ class FetchMagentoProductsJob implements ShouldQueue
         }
 
         Log::info('Magento Products Fetch Job Completed');
+        $this->updateTrackingRecord([
+            'status' => 'completed',
+            'finished_at' => now()
+        ]);
     }
 
     /**

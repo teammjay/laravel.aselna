@@ -41,7 +41,7 @@ class AmazonListingItemSyncJob implements ShouldQueue
     {
         try {
             Log::info('AmazonListingItemSyncJob started');
-            $this->updateTrackingRecord(['tags' => 'Amazon ListingItem']);
+            $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Amazon ListingItem']);
 
             /* get active store jobs*/
             $store_ids = Common::getActiveStoreJobs('AmazonListingItemSyncJob', 'amazon');
@@ -119,6 +119,10 @@ class AmazonListingItemSyncJob implements ShouldQueue
                     }
                 });
 
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
 
         }catch (\Throwable $e) {
 

@@ -35,7 +35,7 @@ class MagnetoAttributesSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'Magento Attributes']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Magento Attributes']);
 
         try {
             /* get active store jobs*/
@@ -54,6 +54,11 @@ class MagnetoAttributesSyncJob implements ShouldQueue
             foreach ($stores as $store) {
                 $this->SyncAttributesIfNeeded($store);
             }
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('Magento Attributes Sync Job Failed', [

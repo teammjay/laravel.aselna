@@ -31,7 +31,7 @@ class ListingSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'Listings']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Listings']);
 
         try {
             $listings = DB::connection('easyesale_db')
@@ -43,6 +43,11 @@ class ListingSyncJob implements ShouldQueue
                         $this->createListing($listing);
                     }
                 });
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
 
             CriticalErrorService::report('Listing Sync Job Failed', [
