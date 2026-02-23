@@ -88,12 +88,12 @@ class OrdersController extends Controller
 
         // Filter by first name
         if ($request->has('buyer_first_name') && $request->buyer_first_name != '') {
-            $query->where('buyer_first_name', $request->buyer_first_name);
+            $query->whereLike('buyer_first_name', '%' . $request->buyer_first_name . '%');
         }
 
         // Filter by last name
         if ($request->has('buyer_last_name') && $request->buyer_last_name != '') {
-            $query->where('buyer_last_name', $request->buyer_last_name);
+            $query->whereLike('buyer_last_name', '%' . $request->buyer_last_name . '%');
         }
 
         // Filter by purchase order id

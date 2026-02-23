@@ -38,7 +38,7 @@ class AccountTransactionController extends Controller
     {
         $totalRecords = AccountTransaction::count();
 
-        $query = AccountTransaction::with('shippingAccount','store','store.storeType')->select('*');
+        $query = AccountTransaction::with('shippingAccount','store','store.storeType','orderOperation.order')->select('*');
 
 
 
@@ -105,6 +105,7 @@ class AccountTransactionController extends Controller
                 'transaction_date' => $transaction->transaction_date,
                 'transaction_id' => $transaction->transaction_id,
                 'store' => (isset($transaction->store) && isset($transaction->store->storeType)) ? $transaction->store->name . ' - ' . $transaction->store->storeType->name : '',
+                'order_id' => (isset($transaction->orderOperation) && isset($transaction->orderOperation->Order)) ? $transaction->orderOperation->Order->order_id : '',
                 'amount' => $transaction->amount,
                 'address' => $transaction->address,
                 'status' => $transaction->status,
