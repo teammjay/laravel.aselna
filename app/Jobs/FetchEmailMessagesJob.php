@@ -56,6 +56,7 @@ class   FetchEmailMessagesJob implements ShouldQueue
                 'started_at' => now(),
                 'tags' => 'Email Messages'
             ]);
+            $chain = [];
 
             /* get active store jobs*/
             $store_ids = Common::getActiveStoreJobs('FetchEmailMessagesJob');
@@ -90,8 +91,6 @@ class   FetchEmailMessagesJob implements ShouldQueue
                         ->where('active', 1)
                         ->where('api_account', 0)
                         ->get();
-
-                    $chain = [];
 
                     if (count($storeMessageAccounts ?? []) > 0) {
                         foreach ($storeMessageAccounts as $maccount) {
