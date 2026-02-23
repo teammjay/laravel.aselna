@@ -438,6 +438,7 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
                     }
                 }
             }
+
             $this->updateTrackingRecord([
                 'status' => 'completed',
                 'finished_at' => now()
