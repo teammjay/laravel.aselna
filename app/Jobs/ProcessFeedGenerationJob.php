@@ -223,6 +223,12 @@ class ProcessFeedGenerationJob implements ShouldQueue
 
         } catch (\Throwable $e) {
 
+            $this->updateTrackingRecord([
+                'status' => 'failed',
+                'output' => $e->getMessage(),
+                'finished_at' => now()
+            ]);
+
             \App\Helpers\ErrorLogger::log($e, __METHOD__);
 
             CriticalErrorService::report('Error processing feed generation', [

@@ -90,6 +90,12 @@ class FeedGenerationJob implements ShouldQueue
             ]);
         }catch (\Throwable $e) {
 
+            $this->updateTrackingRecord([
+                'status' => 'failed',
+                'output' => $e->getMessage(),
+                'finished_at' => now()
+            ]);
+
             CriticalErrorService::report('Feed Generation Failed', [
                 'marketplace' => $listingInfo->store->storeType->name.' - '.$listingInfo->store->name,
                 'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
