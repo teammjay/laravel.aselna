@@ -2,10 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Constants\StorePageType;
 use App\Constants\WebStorePageType;
+use App\Jobs\Shopify\ShopifyBrandPageSyncJob;
 use App\Jobs\ShopifyIndvPagesSyncJob;
-use App\Jobs\ShopifyBrandPageSyncJob;
 use App\Models\Brand;
 use App\Models\Device;
 use App\Models\ProductType;
@@ -14,7 +13,6 @@ use App\Models\StoreNavigationPage;
 use App\Models\StorePageTemplate;
 use App\Utils\Navigationutility;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Log;
 
 class StoreNavigationPagesController extends Controller

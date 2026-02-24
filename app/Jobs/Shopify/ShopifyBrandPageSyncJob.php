@@ -1,13 +1,12 @@
 <?php
 
-namespace App\Jobs;
+namespace App\Jobs\Shopify;
 
 use App\Constants\WebStorePageType;
+use App\Jobs\Concerns\TrackableJob;
 use App\Models\Brand;
 use App\Models\Device;
 use App\Models\DeviceInterface;
-use App\Models\Images;
-use App\Models\Interfaces;
 use App\Models\ProductType;
 use App\Models\Store;
 use App\Models\StoreCategoryImage;
@@ -21,9 +20,7 @@ use App\Utils\Navigationutility;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Log;
-use App\Jobs\Concerns\TrackableJob;
 
 class ShopifyBrandPageSyncJob implements ShouldQueue
 {
