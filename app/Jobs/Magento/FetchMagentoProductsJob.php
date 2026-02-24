@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Jobs;
+namespace App\Jobs\Magento;
 
+use App\Jobs\Concerns\TrackableJob;
 use App\Models\Catalog;
 use App\Models\ManageMarketplaceProduct;
 use App\Models\MarketplaceAttributeMapping;
@@ -11,8 +12,6 @@ use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Schema;
-use App\Jobs\Concerns\TrackableJob;
 
 class FetchMagentoProductsJob implements ShouldQueue
 {

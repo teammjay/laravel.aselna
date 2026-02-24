@@ -25,7 +25,7 @@ use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Log;
 use App\Jobs\Concerns\TrackableJob;
 
-class StoreBrandPageSyncJob implements ShouldQueue
+class ShopifyBrandPageSyncJob implements ShouldQueue
 {
     use Queueable, TrackableJob {
         TrackableJob::withChain insteadof Queueable;

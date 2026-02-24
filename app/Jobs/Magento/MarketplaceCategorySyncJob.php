@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Jobs;
+namespace App\Jobs\Magento;
 
+use App\Jobs\Concerns\TrackableJob;
 use App\Models\Store;
 use App\Models\StoreCategory;
 use App\Services\Auth\MagentoAuthService;
@@ -11,7 +12,6 @@ use App\Utils\Queue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
-use App\Jobs\Concerns\TrackableJob;
 
 class MarketplaceCategorySyncJob implements ShouldQueue
 {

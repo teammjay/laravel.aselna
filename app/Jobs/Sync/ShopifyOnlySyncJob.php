@@ -16,7 +16,7 @@ use App\Jobs\ProductKeyFeaturesSyncJob;
 use App\Jobs\ProductSpecificationSyncJob;
 use App\Jobs\ProductSyncJob;
 use App\Jobs\ShopifyIndvPagesSyncJob;
-use App\Jobs\StoreBrandPageSyncJob;
+use App\Jobs\ShopifyBrandPageSyncJob;
 use App\Jobs\SubmitShopifyProductsJob;
 use App\Models\Store;
 use App\Models\StorePageTemplate;
@@ -67,7 +67,7 @@ class ShopifyOnlySyncJob implements ShouldQueue
                     $productTypeBrands = StorePageTemplate::where('name', 'Product types brands')->first();
                     $brandDevicesTemplate = StorePageTemplate::where('name', 'Brand Devices')->first();
 
-                    $storeBrandJob1 = new StoreBrandPageSyncJob(
+                    $storeBrandJob1 = new ShopifyBrandPageSyncJob(
                         $store->id,
                         WebStorePageType::BRAND,
                         $brandTemplate->id
@@ -75,7 +75,7 @@ class ShopifyOnlySyncJob implements ShouldQueue
                     $storeBrandJob1->setChainId($this->chainId);
                     $chain[] = $storeBrandJob1;
 
-                    $storeBrandJob2 = new StoreBrandPageSyncJob(
+                    $storeBrandJob2 = new ShopifyBrandPageSyncJob(
                         $store->id,
                         WebStorePageType::PRODUCT_TYPE,
                         $brandTemplate->id
@@ -83,7 +83,7 @@ class ShopifyOnlySyncJob implements ShouldQueue
                     $storeBrandJob2->setChainId($this->chainId);
                     $chain[] = $storeBrandJob2;
 
-                    $storeBrandJob3 = new StoreBrandPageSyncJob(
+                    $storeBrandJob3 = new ShopifyBrandPageSyncJob(
                         $store->id,
                         WebStorePageType::DEVICE,
                         $brandTemplate->id
@@ -91,7 +91,7 @@ class ShopifyOnlySyncJob implements ShouldQueue
                     $storeBrandJob3->setChainId($this->chainId);
                     $chain[] = $storeBrandJob3;
 
-                    $storeBrandJob4 = new StoreBrandPageSyncJob(
+                    $storeBrandJob4 = new ShopifyBrandPageSyncJob(
                         $store->id,
                         WebStorePageType::BRAND_DEVICE_PRODUCT_TYPES,
                         $brandDeviceProductTemplate->id
@@ -106,7 +106,7 @@ class ShopifyOnlySyncJob implements ShouldQueue
                     $shopifyIndvJob1->setChainId($this->chainId);
                     $chain[] = $shopifyIndvJob1;
 
-                    $storeBrandJob5 = new StoreBrandPageSyncJob(
+                    $storeBrandJob5 = new ShopifyBrandPageSyncJob(
                         $store->id,
                         WebStorePageType::PRODUCT_TYPE_BRANDS,
                         $productTypeBrands->id
@@ -121,7 +121,7 @@ class ShopifyOnlySyncJob implements ShouldQueue
                     $shopifyIndvJob2->setChainId($this->chainId);
                     $chain[] = $shopifyIndvJob2;
 
-                    $storeBrandJob6 = new StoreBrandPageSyncJob(
+                    $storeBrandJob6 = new ShopifyBrandPageSyncJob(
                         $store->id,
                         WebStorePageType::BRAND_DEVICES,
                         $brandDevicesTemplate->id
@@ -136,7 +136,7 @@ class ShopifyOnlySyncJob implements ShouldQueue
                     $shopifyIndvJob3->setChainId($this->chainId);
                     $chain[] = $shopifyIndvJob3;
 
-                    $chain[] = new StoreBrandPageSyncJob(
+                    $chain[] = new ShopifyBrandPageSyncJob(
                         $store->id,
                         WebStorePageType::ALL_BRANDS,
                         $allBrandTemplate->id

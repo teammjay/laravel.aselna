@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Jobs;
+namespace App\Jobs\Magento;
 
 use App\Constants\MarketPlaceUploadStatus;
 use App\Helpers\Common;
+use App\Jobs\Concerns\TrackableJob;
 use App\Models\Catalog;
 use App\Models\Device;
-use App\Models\GenerateProductImage;
 use App\Models\ManageMarketplaceProduct;
 use App\Models\MarketplaceAttributeMapping;
 use App\Models\MarketPlaceCategoryMappings;
@@ -14,7 +14,6 @@ use App\Models\ProductImages;
 use App\Models\ProductTitleKeyword;
 use App\Models\ProductType;
 use App\Models\Store;
-use App\Models\StoreCategory;
 use App\Models\StoreTypeListing;
 use App\Services\Auth\MagentoAuthService;
 use App\Services\CriticalErrorService;
@@ -22,7 +21,6 @@ use App\Services\Marketplace\Service\MagentoService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
-use App\Jobs\Concerns\TrackableJob;
 
 class MagentoProductsSyncJob implements ShouldQueue
 {

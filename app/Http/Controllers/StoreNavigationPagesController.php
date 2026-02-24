@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Constants\StorePageType;
 use App\Constants\WebStorePageType;
 use App\Jobs\ShopifyIndvPagesSyncJob;
-use App\Jobs\StoreBrandPageSyncJob;
+use App\Jobs\ShopifyBrandPageSyncJob;
 use App\Models\Brand;
 use App\Models\Device;
 use App\Models\ProductType;
@@ -204,7 +204,7 @@ class StoreNavigationPagesController extends Controller
             'template_id' => 'required',
         ]);
 
-        StoreBrandPageSyncJob::dispatch(
+        ShopifyBrandPageSyncJob::dispatch(
             $request->store_id,
             $request->page_type,
             $request->template_id
@@ -226,19 +226,19 @@ class StoreNavigationPagesController extends Controller
         $productTypeBrands = StorePageTemplate::where('name', 'Product types brands')->first();
         $brandDevicesTemplate = StorePageTemplate::where('name', 'Brand Devices')->first();
 
-        StoreBrandPageSyncJob::
+        ShopifyBrandPageSyncJob::
         withChain([
-            new StoreBrandPageSyncJob(
+            new ShopifyBrandPageSyncJob(
                 $request->store_id,
                 WebStorePageType::PRODUCT_TYPE,
                 $brandTemplate->id
             ),
-            new StoreBrandPageSyncJob(
+            new ShopifyBrandPageSyncJob(
                 $request->store_id,
                 WebStorePageType::DEVICE,
                 $brandTemplate->id
             ),
-            new StoreBrandPageSyncJob(
+            new ShopifyBrandPageSyncJob(
                 $request->store_id,
                 WebStorePageType::BRAND_DEVICE_PRODUCT_TYPES,
                 $brandDeviceProductTemplate->id
@@ -247,7 +247,7 @@ class StoreNavigationPagesController extends Controller
                 $request->store_id,
                 WebStorePageType::BRAND_DEVICE_PRODUCT_TYPES
             ),
-            new StoreBrandPageSyncJob(
+            new ShopifyBrandPageSyncJob(
                 $request->store_id,
                 WebStorePageType::PRODUCT_TYPE_BRANDS,
                 $productTypeBrands->id
@@ -256,7 +256,7 @@ class StoreNavigationPagesController extends Controller
                 $request->store_id,
                 WebStorePageType::PRODUCT_TYPE_BRANDS
             ),
-            new StoreBrandPageSyncJob(
+            new ShopifyBrandPageSyncJob(
                 $request->store_id,
                 WebStorePageType::BRAND_DEVICES,
                 $brandDevicesTemplate->id
