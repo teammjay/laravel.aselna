@@ -208,6 +208,12 @@ class FetchEbayOrders implements ShouldQueue
             ]);
         }catch (\Throwable $e) {
 
+            $this->updateTrackingRecord([
+                'status' => 'failed',
+                'output' => $e->getMessage(),
+                'finished_at' => now()
+            ]);
+
             CriticalErrorService::report('Fetch eBay Order Job Failed', [
                 'marketplace' => 'eBay',
                 'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',

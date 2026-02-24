@@ -231,6 +231,19 @@
                 </div>
 
                 <div class="row pt-3">
+                    <div class="col-md-4">
+                        <div class="row">
+                            <div class="col-4 text-right">
+                                Order ID
+                            </div>
+                            <div class="col-8">
+                                <input type="text" name="order_id" id="order_id" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row pt-3">
                     <div class="col-md-2">
                         <div class="form-group">
                             <label>&nbsp;</label>

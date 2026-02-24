@@ -60,6 +60,11 @@ class StoreProductSyncJob implements ShouldQueue
                 'finished_at' => now()
             ]);
         } catch (Exception $e) {
+            $this->updateTrackingRecord([
+                'status' => 'failed',
+                'output' => $e->getMessage(),
+                'finished_at' => now()
+            ]);
 
             CriticalErrorService::report('Store Products Sync Job Failed', [
                 'marketplace' => 'N/A',

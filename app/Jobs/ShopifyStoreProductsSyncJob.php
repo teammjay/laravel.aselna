@@ -56,6 +56,12 @@ class ShopifyStoreProductsSyncJob implements ShouldQueue
             ]);
         }catch (\Throwable $e) {
 
+            $this->updateTrackingRecord([
+                'status' => 'failed',
+                'output' => $e->getMessage(),
+                'finished_at' => now()
+            ]);
+
             CriticalErrorService::report('Shopify Store Products Sync Job Failed', [
                 'marketplace' => 'Shopify',
                 'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',

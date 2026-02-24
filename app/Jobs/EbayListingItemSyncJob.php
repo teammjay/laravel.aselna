@@ -105,6 +105,12 @@ class EbayListingItemSyncJob implements ShouldQueue
             ]);
         }catch (\Throwable $e) {
 
+            $this->updateTrackingRecord([
+                'status' => 'failed',
+                'output' => $e->getMessage(),
+                'finished_at' => now()
+            ]);
+
             CriticalErrorService::report('Ebay Listing Item Sync Job Failed', [
                 'marketplace' => 'eBay',
                 'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',

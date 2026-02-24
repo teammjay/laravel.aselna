@@ -51,6 +51,11 @@ class ProductInterfaces implements ShouldQueue
                 'finished_at' => now()
             ]);
         }catch (\Throwable $e) {
+            $this->updateTrackingRecord([
+                'status' => 'failed',
+                'output' => $e->getMessage(),
+                'finished_at' => now()
+            ]);
             Log::error('Product Interface Sync Job Failed: ' . $e->getTraceAsString());
 
             CriticalErrorService::report('Product Interface Sync Job Failed', [
