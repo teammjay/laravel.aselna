@@ -239,6 +239,74 @@ class MagentoAuthService
         return json_decode($response->getBody(), true);
     }
 
+    public function createBrand($brandData)
+    {
+        $accessToken = $this->authenticate();
+        Log::info('Access Token Created ' . $accessToken);
+
+        $headers = [
+            'Content-Type' => 'application/json',
+            'Accept' => 'application/json',
+            'Authorization' => 'Bearer ' . $accessToken,
+        ];
+
+        $body = ['brand' => $brandData];
+
+        Log::info('Request: ' . json_encode($body));
+
+        $request = new Request('POST', $this->endpoint . '/rest/V1/brands', $headers);
+        $response = $this->client->sendAsync($request, ['json' => $body])->wait();
+
+        return json_decode($response->getBody(), true);
+    }
+
+    public function createDevice($deviceData)
+    {
+        $accessToken = $this->authenticate();
+        Log::info('Access Token Created ' . $accessToken);
+
+        $headers = [
+            'Content-Type' => 'application/json',
+            'Accept' => 'application/json',
+            'Authorization' => 'Bearer ' . $accessToken,
+        ];
+
+        $body = ['device' => $deviceData];
+
+        Log::info('Request: ' . json_encode($body));
+
+        $request = new Request('POST', $this->endpoint . '/rest/V1/devices', $headers);
+        $response = $this->client->sendAsync($request, ['json' => $body])->wait();
+
+        return json_decode($response->getBody(), true);
+    }
+
+    public function createBrandDeviceRelation($brandId, $deviceId)
+    {
+        $accessToken = $this->authenticate();
+        Log::info('Access Token Created ' . $accessToken);
+
+        $headers = [
+            'Content-Type' => 'application/json',
+            'Accept' => 'application/json',
+            'Authorization' => 'Bearer ' . $accessToken,
+        ];
+
+        $body = [
+            'relation' => [
+                'brand_id' => $brandId,
+                'device_id' => $deviceId
+            ]
+        ];
+
+        Log::info('Request: ' . json_encode($body));
+
+        $request = new Request('POST', $this->endpoint . '/rest/V1/brand-devices', $headers);
+        $response = $this->client->sendAsync($request, ['json' => $body])->wait();
+
+        return json_decode($response->getBody(), true);
+    }
+
     public function getAllCategories()
     {
         $accessToken = $this->authenticate();

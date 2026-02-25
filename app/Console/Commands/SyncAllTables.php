@@ -80,6 +80,7 @@ use App\Jobs\StoreTypeListingSyncJob;
 use App\Jobs\StoreTypeSyncJob;
 use App\Jobs\SubmitShopifyProductsJob;
 use App\Jobs\Sync\FonusCombinedSyncJob;
+use App\Jobs\Sync\MagentoSyncJob;
 use App\Jobs\SyncAllOrderStatusJob;
 use App\Jobs\synccategorytospecification;
 use App\Jobs\SyncFailedMarketplaceShipmentJob;
@@ -233,7 +234,8 @@ class SyncAllTables extends Command
 //        SyncShopifyItems::dispatch();
 //        ExistingListingItemSyncJob::dispatch();
 //        FetchShopifyOrders::dispatch();
-        FonusCombinedSyncJob::dispatch();
+//        FonusCombinedSyncJob::dispatch();
+        MagentoSyncJob::dispatch();
 
         $transactionIds = [
 ////            '9400150105798006163885',

@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Jobs\Magento\MarketplaceCategorySyncJob;
 use App\Jobs\StoreCategorySyncJob;
 use App\Models\DeviceTypes;
 use App\Models\FileSystem;
@@ -842,14 +841,6 @@ class StoreController extends Controller
             StoreCategorySyncJob::dispatch($store_id);
         }
         return response()->json(['success' => true, 'message' => 'Categories are being copied in the background']);
-    }
-
-    public function syncCategories(Request $request) {
-        $store_id = $request->get('store_id');
-        if($store_id) {
-            MarketplaceCategorySyncJob::dispatch($store_id);
-        }
-        return response()->json(['success' => true, 'message' => 'Categories are being synced in the background']);
     }
 
     // Handle eBay Callback

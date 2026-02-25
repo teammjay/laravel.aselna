@@ -313,12 +313,6 @@ class JobScheduler extends Seeder
                 'class_name' => 'App\Jobs\Magento\FetchMagentoProductsJob',
             ],
             [
-                //FetchMagentoCategoriesJob
-                'name' => 'Fetch Magento Categories',
-                'description' => 'Fetch Magento categories',
-                'class_name' => 'App\Jobs\Magento\FetchMagentoCategoriesJob',
-            ],
-            [
                 //ShopifyCollectionSyncJob
                 'name' => 'Shopify Collection Sync',
                 'description' => 'Sync Shopify collections',
