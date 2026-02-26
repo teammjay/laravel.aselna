@@ -427,7 +427,7 @@
                         sessionStorage.setItem("account_transaction_filters", JSON.stringify(formData));
                     }
                 },
-                "order": [[ 10, "desc" ]],
+                "order": [[ 11, "desc" ]],
                 columns: [
                     {data: 'shipping_account', name: 'shipping_account',orderable: false, searchable: false},
                     {data: 'tracking_number', name: 'tracking_number'},
