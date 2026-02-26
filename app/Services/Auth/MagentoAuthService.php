@@ -254,7 +254,7 @@ class MagentoAuthService
 
         Log::info('Request: ' . json_encode($body));
 
-        $request = new Request('POST', $this->endpoint . '/rest/V1/brands', $headers);
+        $request = new Request('POST', $this->endpoint . '/rest/V1/mjailabs/brands', $headers);
         $response = $this->client->sendAsync($request, ['json' => $body])->wait();
 
         return json_decode($response->getBody(), true);
@@ -275,7 +275,7 @@ class MagentoAuthService
 
         Log::info('Request: ' . json_encode($body));
 
-        $request = new Request('POST', $this->endpoint . '/rest/V1/devices', $headers);
+        $request = new Request('POST', $this->endpoint . '/rest/V1/mjailabs/devices', $headers);
         $response = $this->client->sendAsync($request, ['json' => $body])->wait();
 
         return json_decode($response->getBody(), true);

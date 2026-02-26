@@ -2,9 +2,11 @@
 
 namespace App\Jobs\Magento;
 
+use App\Constants\WebStorePageType;
 use App\Jobs\Concerns\TrackableJob;
 use App\Models\Device;
 use App\Models\Store;
+use App\Models\StoreNavigationPage;
 use App\Services\Auth\MagentoAuthService;
 use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -35,15 +37,42 @@ class MagentoDeviceSyncJob implements ShouldQueue
 
             $devices = Device::where('status', 'active')->get();
             foreach ($devices as $device) {
+                $storePage = StoreNavigationPage::where('store_id', $this->storeId)
+                    ->where('page_type', WebStorePageType::DEVICE)
+                    ->where('device_id', $device->id)
+                    ->first();
+
+                if (isset($storePage) && $storePage->page_id) {
+                    Log::info("Device already synced: " . $device->name . " Magento ID: " . $storePage->page_id);
+                    continue;
+                }
+
                 Log::info("Syncing Device: " . $device->name);
+                $handle = $this->generateHandle($device->name);
                 $deviceData = [
                     'name' => $device->name,
                     'brand_id' => $device->brand_id,
-                    'code' => $device->code,
-                    'image' => $device->image,
-                    // add more fields as needed based on API documentation
+                    'url_key' => $handle,
                 ];
-                $magentoAuthService->createDevice($deviceData);
+                $response = $magentoAuthService->createDevice($deviceData);
+
+                if (isset($response['id'])) {
+                    $magentoDeviceId = $response['id'];
+
+                    StoreNavigationPage::updateOrCreate(
+                        [
+                            'store_id' => $this->storeId,
+                            'page_type' => WebStorePageType::DEVICE,
+                            'device_id' => $device->id,
+                        ],
+                        [
+                            'page_id' => $magentoDeviceId,
+                            'device_brand_id' => $device->brand_id,
+                            'url_path' => $handle,
+                            'title' => $device->name,
+                        ]
+                    );
+                }
             }
         } catch (\Throwable $e) {
             CriticalErrorService::report('Magento Device Sync Job Failed', [
@@ -52,5 +81,34 @@ class MagentoDeviceSyncJob implements ShouldQueue
                 'method' => __METHOD__
             ]);
         }
+    }
+
+    private function generateHandle($title)
+    {
+        // Convert to lowercase
+        $handle = mb_strtolower($title, 'UTF-8');
+
+        // Normalize accented characters (e.g., é → e)
+        $handle = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $handle);
+
+        // Replace apostrophes
+        $handle = preg_replace("/'/", '', $handle);
+
+        // Replace any non-alphanumeric characters (excluding spaces and dots) with nothing
+        $handle = preg_replace("/[^a-z0-9\s.]/", '', $handle);
+
+        // Replace dots with hyphens (e.g., 12.3 → 12-3)
+        $handle = str_replace('.', '-', $handle);
+
+        // Replace whitespace with hyphens
+        $handle = preg_replace("/[\s]+/", '-', $handle);
+
+        // Remove multiple consecutive hyphens
+        $handle = preg_replace("/-+/", '-', $handle);
+
+        // Trim hyphens from beginning and end
+        $handle = trim($handle, '-');
+
+        return $handle;
     }
 }
