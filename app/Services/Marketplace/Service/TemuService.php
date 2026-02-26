@@ -568,7 +568,7 @@ class TemuService implements MarketplaceServiceInterface
                             'order_date' => date('Y-m-d H:i:s', $parentOrder['parentOrderTime']),
                         ]);
                         // TODO Need To implement status change
-                        $statusChange = true;
+                        $statusChange = false;
                     }
 
                     if ($statusChange) {
