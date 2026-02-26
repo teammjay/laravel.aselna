@@ -81,9 +81,9 @@ class AccountTransactionController extends Controller
         if ($request->has('order_id') && $request->order_id != '') {
 
             $query->where(function ($q) use ($request) {
-                $q->whereRelation('orderOperation.order', 'order_id', $request->order_id);
+                $q->whereRelation('orderOperation.order', 'order_id', $request->order_id)
+                    ->orWhereRelation('orderOperation.order', 'purchase_order_id', $request->order_id);
             });
-
         }
 
 
