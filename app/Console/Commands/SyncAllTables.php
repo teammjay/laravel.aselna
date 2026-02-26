@@ -23,8 +23,6 @@ use App\Jobs\FeedGenerationJob;
 use App\Jobs\FetchAmazonOrdersJob;
 use App\Jobs\FetchEbayOrders;
 use App\Jobs\FetchEmailMessagesJob;
-use App\Jobs\FetchMagentoCategoriesJob;
-use App\Jobs\FetchMagentoProductsJob;
 use App\Jobs\FetchShopifyOrders;
 use App\Jobs\FetchShopifyProductsJob;
 use App\Jobs\FetchTemuOrders;
@@ -41,7 +39,7 @@ use App\Jobs\ListingItemSyncJob;
 use App\Jobs\ListingSyncJob;
 use App\Jobs\ListingTemplateSyncJob;
 use App\Jobs\LogisticCentreSyncJob;
-use App\Jobs\MagentoProductsSyncJob;
+use App\Jobs\Magento\MagentoProductsSyncJob;
 use App\Jobs\MagnetoAttributesSyncJob;
 use App\Jobs\ManufacturerSyncJob;
 use App\Jobs\OldOrderSyncJob;
@@ -66,7 +64,6 @@ use App\Jobs\ShippingCarrierJob;
 use App\Jobs\Shopify\SyncShopifyItems;
 use App\Jobs\ShopifyCollectionDeviceSyncJob;
 use App\Jobs\ShopifyCollectionSyncJob;
-use App\Jobs\ShopifyCombinedSyncing;
 use App\Jobs\ShopifyDuplicateStoreProductsJob;
 use App\Jobs\ShopifyIndvPagesSyncJob;
 use App\Jobs\ShopifyListingProductsSyncJob;
@@ -235,7 +232,8 @@ class SyncAllTables extends Command
 //        ExistingListingItemSyncJob::dispatch();
 //        FetchShopifyOrders::dispatch();
 //        FonusCombinedSyncJob::dispatch();
-        MagentoSyncJob::dispatch();
+//        MagentoSyncJob::dispatch();
+        MagentoProductsSyncJob::dispatch();
 
         $transactionIds = [
 ////            '9400150105798006163885',
