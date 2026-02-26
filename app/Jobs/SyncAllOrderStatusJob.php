@@ -80,6 +80,11 @@ class SyncAllOrderStatusJob implements ShouldQueue
                 'finished_at' => now()
             ]);
         }catch (\Throwable $e) {
+            $this->updateTrackingRecord([
+                'status' => 'failed',
+                'output' => $e->getMessage(),
+                'finished_at' => now()
+            ]);
             Log::info('Error syncing order status for OrderOperation ID ' . $operation->id . ': ' . $e->getMessage());
 
             CriticalErrorService::report('All Orders Status Sync Job Failed', [

@@ -56,6 +56,12 @@ class FetchMagentoCategoriesJob implements ShouldQueue
             ]);
         }catch (\Throwable $e) {
 
+            $this->updateTrackingRecord([
+                'status' => 'failed',
+                'output' => $e->getMessage(),
+                'finished_at' => now()
+            ]);
+
             CriticalErrorService::report('Fetch Magento Categories Job Failed', [
                 'marketplace' => 'Magento',
                 'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',

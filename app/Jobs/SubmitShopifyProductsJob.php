@@ -185,6 +185,11 @@ class SubmitShopifyProductsJob implements ShouldQueue
                 'finished_at' => now()
             ]);
         }catch (\Throwable $e) {
+            $this->updateTrackingRecord([
+                'status' => 'failed',
+                'output' => $e->getMessage(),
+                'finished_at' => now()
+            ]);
 
             CriticalErrorService::report('Submit Shopify Products Sync Job Failed', [
                 'marketplace' => 'Shopify',

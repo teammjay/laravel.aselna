@@ -40,117 +40,125 @@ class SendNotificationEmailSyncFailJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Send Notification Email']);
+        try {
+            $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Send Notification Email']);
 
-        Log::info('Starting SendNotificationEmailSyncFailJob Job');
-        $storeMessageAccounts = StoreMessageAccount::with('store','store.storeType','incomingAccount')
-            ->where('active', 1)
-            ->where('api_account', 0)
-            ->get();
+            Log::info('Starting SendNotificationEmailSyncFailJob Job');
+            $storeMessageAccounts = StoreMessageAccount::with('store','store.storeType','incomingAccount')
+                ->where('active', 1)
+                ->where('api_account', 0)
+                ->get();
 
-        foreach ($storeMessageAccounts as $maccount) {
-            Log::info('Checking store account ID: ' . $maccount->id);
-            try {
-                $smtpConfig = $imapConfig = [];
-                if ($maccount->incoming_account_id != '') {
-                    Log::info('Processing store: ' . $maccount->store->name.' - '.$maccount->store->storeType->name);
-                    if (isset($maccount->incomingAccount)) {
-                        Log::info('Processing incoming account: ' . $maccount->incomingAccount->user_id);
-                        $account = $maccount->incomingAccount;
-                        $folder = $maccount->incomingAccount->folders;
-                        $imapConfig = [
-                            'host' => $maccount->incomingAccount->server,
-                            'port' => $maccount->incomingAccount->port,
-                            'encryption' => 'ssl',
-                            'username' => $maccount->incomingAccount->user_id,
-                            'password' => $maccount->incomingAccount->password,
-                        ];
+            foreach ($storeMessageAccounts as $maccount) {
+                Log::info('Checking store account ID: ' . $maccount->id);
+                try {
+                    $smtpConfig = $imapConfig = [];
+                    if ($maccount->incoming_account_id != '') {
+                        Log::info('Processing store: ' . $maccount->store->name.' - '.$maccount->store->storeType->name);
+                        if (isset($maccount->incomingAccount)) {
+                            Log::info('Processing incoming account: ' . $maccount->incomingAccount->user_id);
+                            $account = $maccount->incomingAccount;
+                            $folder = $maccount->incomingAccount->folders;
+                            $imapConfig = [
+                                'host' => $maccount->incomingAccount->server,
+                                'port' => $maccount->incomingAccount->port,
+                                'encryption' => 'ssl',
+                                'username' => $maccount->incomingAccount->user_id,
+                                'password' => $maccount->incomingAccount->password,
+                            ];
 
-                        Log::info('Imap Config: ' . json_encode($imapConfig));
+                            Log::info('Imap Config: ' . json_encode($imapConfig));
 
-                        $emailUtility = new FastEmailService($smtpConfig, $imapConfig);
+                            $emailUtility = new FastEmailService($smtpConfig, $imapConfig);
 
-                        $messages = $emailUtility->fetchTodaysEmail($folder);
+                            $messages = $emailUtility->fetchTodaysEmail($folder);
 
-                        $notFound = [];
-                        $currentTime = now(new \DateTimeZone('UTC'));
-                        $bufferTimeMinutes = 12;
+                            $notFound = [];
+                            $currentTime = now(new \DateTimeZone('UTC'));
+                            $bufferTimeMinutes = 12;
 
-                        foreach ($messages as $message) {
-                            $messageId = trim(trim($message['message_id']), '<>');
-                            Log::info('Checking message ID: ' . trim(trim($message['message_id']), '<>'));
+                            foreach ($messages as $message) {
+                                $messageId = trim(trim($message['message_id']), '<>');
+                                Log::info('Checking message ID: ' . trim(trim($message['message_id']), '<>'));
 
-                            $messageDate = null;
-                            if (!empty($message['date'])) {
-                                try {
-                                    $messageDate = new \DateTime($message['date']);
-                                } catch (\Throwable $e) {
+                                $messageDate = null;
+                                if (!empty($message['date'])) {
+                                    try {
+                                        $messageDate = new \DateTime($message['date']);
+                                    } catch (\Throwable $e) {
 
-                                    $extraInfo = [
-                                        'messageId' => $messageId
-                                    ];
+                                        $extraInfo = [
+                                            'messageId' => $messageId
+                                        ];
 
-                                    \App\Helpers\ErrorLogger::log($e, __METHOD__, $extraInfo);
+                                        \App\Helpers\ErrorLogger::log($e, __METHOD__, $extraInfo);
 
-                                    Log::warning('Could not parse date for message ID: ' . $messageId);
+                                        Log::warning('Could not parse date for message ID: ' . $messageId);
+                                    }
                                 }
+
+                                // Skip messages received within the buffer time
+                                if ($messageDate !== null) {
+                                    Log::info('Message Date: ' . $messageDate->format('Y-m-d H:i:s'));
+                                    Log::info('Current Time: ' . $currentTime->format('Y-m-d H:i:s'));
+                                    $minutesSinceReceived = abs($currentTime->diffInMinutes($messageDate));
+                                    Log::info("Minutes since received: {$minutesSinceReceived} minutes");
+                                    if ($minutesSinceReceived <= $bufferTimeMinutes) {
+                                        Log::info("Skipping recent message (received {$minutesSinceReceived} minutes ago): {$messageId}");
+                                        continue;
+                                    }
+                                }
+
+                                // check if message id exists in hd_messages table
+                                if (HDMessage::where('message_id' , $messageId)->doesntExist()) {
+                                    $notFound[] = $message;
+                                };
                             }
 
-                            // Skip messages received within the buffer time
-                            if ($messageDate !== null) {
-                                Log::info('Message Date: ' . $messageDate->format('Y-m-d H:i:s'));
-                                Log::info('Current Time: ' . $currentTime->format('Y-m-d H:i:s'));
-                                $minutesSinceReceived = abs($currentTime->diffInMinutes($messageDate));
-                                Log::info("Minutes since received: {$minutesSinceReceived} minutes");
-                                if ($minutesSinceReceived <= $bufferTimeMinutes) {
-                                    Log::info("Skipping recent message (received {$minutesSinceReceived} minutes ago): {$messageId}");
-                                    continue;
-                                }
-                            }
-
-                            // check if message id exists in hd_messages table
-                            if (HDMessage::where('message_id' , $messageId)->doesntExist()) {
-                                $notFound[] = $message;
-                            };
-                        }
-
-                        if (count($notFound) > 0) {
-                            Log::info('Not found messages count: ' . count($notFound));
-                            $content = "Email Sync issue detected for store: {$maccount->store->name} - {$maccount->store->storeType->name}.";
-                            // Attach the list of not found messages
                             if (count($notFound) > 0) {
-                                $content .= "\n\nThe following email messages were not synced:\n";
-                                foreach ($notFound as $msg) {
-                                    $content .= "Subject: {$msg['subject']} | From: <{$msg['from']}> | Date: {$msg['date']} | Message ID: {$msg['message_id']}\n";
+                                Log::info('Not found messages count: ' . count($notFound));
+                                $content = "Email Sync issue detected for store: {$maccount->store->name} - {$maccount->store->storeType->name}.";
+                                // Attach the list of not found messages
+                                if (count($notFound) > 0) {
+                                    $content .= "\n\nThe following email messages were not synced:\n";
+                                    foreach ($notFound as $msg) {
+                                        $content .= "Subject: {$msg['subject']} | From: <{$msg['from']}> | Date: {$msg['date']} | Message ID: {$msg['message_id']}\n";
+                                    }
                                 }
+                                Log::info('Content: '.$content);
+                                $this->sendMail($maccount->store, $content);
                             }
-                            Log::info('Content: '.$content);
-                            $this->sendMail($maccount->store, $content);
                         }
                     }
+                } catch (\Throwable $e) {
+
+                    $extraInfo = [
+                        'maccount_id' => $maccount->id
+                    ];
+
+                    \App\Helpers\ErrorLogger::log($e, __METHOD__, $extraInfo);
+
+                    CriticalErrorService::report('Send Notification Email Sync Failed', [
+                        'marketplace' => 'N/A',
+                        'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
+                        'method' => __METHOD__
+                    ]);
+
+                    Log::error('Error processing store account ID ' . $maccount->id . ': ' . $e->getMessage());
                 }
-            } catch (\Throwable $e) {
-
-                $extraInfo = [
-                    'maccount_id' => $maccount->id
-                ];
-
-                \App\Helpers\ErrorLogger::log($e, __METHOD__, $extraInfo);
-
-                CriticalErrorService::report('Send Notification Email Sync Failed', [
-                    'marketplace' => 'N/A',
-                    'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
-                    'method' => __METHOD__
-                ]);
-
-                Log::error('Error processing store account ID ' . $maccount->id . ': ' . $e->getMessage());
             }
-        }
 
-        $this->updateTrackingRecord([
-            'status' => 'completed',
-            'finished_at' => now()
-        ]);
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
+        } catch (\Throwable $e) {
+            $this->updateTrackingRecord([
+                'status' => 'failed',
+                'output' => $e->getMessage(),
+                'finished_at' => now()
+            ]);
+        }
     }
 
     private function sendMail($store, $content){

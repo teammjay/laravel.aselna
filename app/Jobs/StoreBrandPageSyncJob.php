@@ -98,6 +98,7 @@ class StoreBrandPageSyncJob implements ShouldQueue
                         $request['title'] = $links['final_title'];
                         Log::info('Request Title :: ' . json_encode($request['title']));
                         $request['generated_body'] = Navigationutility::fillTemplateWithData($template->template_code, $data);
+                        Log::info('Brand :: ' . $brand->name . ' Generated Body :: ' . $request['generated_body']);
 
                         StoreNavigationPage::updateOrCreate([
                             'store_id' => $this->store_id,
@@ -531,6 +532,11 @@ class StoreBrandPageSyncJob implements ShouldQueue
                 'finished_at' => now()
             ]);
         }catch (\Throwable $e) {
+            $this->updateTrackingRecord([
+                'status' => 'failed',
+                'output' => $e->getMessage(),
+                'finished_at' => now()
+            ]);
 
             CriticalErrorService::report('Store Brand Pages Sync Job Failed', [
                 'marketplace' => 'N/A',

@@ -41,12 +41,21 @@ class InsertListingItemDetailJob implements ShouldQueue
      */
     public function handle(): void
     {
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => $this->store_name . ' ' . $this->store_type . ' Listing Item Detail']);
         try {
             DB::disableQueryLog(); // reduce memory
             Log::info('Item detail chunk execute');
             DB::table('listing_item_detail')->insert($this->chunk);
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
-
+            $this->updateTrackingRecord([
+                'status' => 'failed',
+                'output' => $e->getMessage(),
+                'finished_at' => now()
+            ]);
             CriticalErrorService::report('Insert Listing Item Detail Job Failed', [
                 'marketplace' => 'N/A',
                 'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',

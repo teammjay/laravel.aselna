@@ -35,34 +35,42 @@ class FetchResultFeedAsync implements ShouldQueue
      */
     public function handle(): void
     {
-        Log::info('ResultFeedSync command started');
-        Log::info("get_current_user() : " . get_current_user());
-        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Result Feed']);
+        try {
+            Log::info('ResultFeedSync command started');
+            Log::info("get_current_user() : " . get_current_user());
+            $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Result Feed']);
 
-        ScheduledJob::where('class_name', __CLASS__)
-            ->update(['last_run' => now()]);
+            ScheduledJob::where('class_name', __CLASS__)
+                ->update(['last_run' => now()]);
 
-        $listingFeed = ListingFeed::whereNotNull('feed_id')
-            ->whereIn('status', [
-                FeedStatus::PROCESSING,
-                FeedStatus::FAILED,
-            ])
-            ->orderBy('submit_ts', 'desc')
-            ->where(function ($query) {
-                $query->whereNull('status_check_count')
-                      ->orWhere('status_check_count', '<', 3);
-            })
-            ->limit(5)
-            ->get();
+            $listingFeed = ListingFeed::whereNotNull('feed_id')
+                ->whereIn('status', [
+                    FeedStatus::PROCESSING,
+                    FeedStatus::FAILED,
+                ])
+                ->orderBy('submit_ts', 'desc')
+                ->where(function ($query) {
+                    $query->whereNull('status_check_count')
+                          ->orWhere('status_check_count', '<', 3);
+                })
+                ->limit(5)
+                ->get();
 
-        foreach ($listingFeed as $feed) {
-            $this->fetchFeed($feed);
+            foreach ($listingFeed as $feed) {
+                $this->fetchFeed($feed);
+            }
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
+        } catch (\Throwable $e) {
+            $this->updateTrackingRecord([
+                'status' => 'failed',
+                'output' => $e->getMessage(),
+                'finished_at' => now()
+            ]);
         }
-
-        $this->updateTrackingRecord([
-            'status' => 'completed',
-            'finished_at' => now()
-        ]);
     }
 
     private function fetchFeed(mixed $feed)
