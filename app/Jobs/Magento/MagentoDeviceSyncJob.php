@@ -35,7 +35,8 @@ class MagentoDeviceSyncJob implements ShouldQueue
             $store = Store::findOrFail($this->storeId);
             $magentoAuthService = new MagentoAuthService($store->seller_id, $store->secret_key, $store->service_url);
 
-            $devices = Device::where('status', 'active')->get();
+            $devices = Device::where('status', 'active')
+                ->get();
             foreach ($devices as $device) {
                 $storePage = StoreNavigationPage::where('store_id', $this->storeId)
                     ->where('page_type', WebStorePageType::DEVICE)
@@ -48,10 +49,15 @@ class MagentoDeviceSyncJob implements ShouldQueue
                 }
 
                 Log::info("Syncing Device: " . $device->name);
+                $brand = StoreNavigationPage::where('store_id', $this->storeId)
+                    ->where('page_type', WebStorePageType::BRAND)
+                    ->where('device_brand_id', $device->brand_id)
+                    ->first();
+
                 $handle = $this->generateHandle($device->name);
                 $deviceData = [
                     'name' => $device->name,
-                    'brand_id' => $device->brand_id,
+                    'brand_id' => $brand->page_id ?? null,
                     'url_key' => $handle,
                 ];
                 $response = $magentoAuthService->createDevice($deviceData);

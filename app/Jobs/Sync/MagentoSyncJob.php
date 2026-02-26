@@ -55,20 +55,15 @@ class MagentoSyncJob implements ShouldQueue
                     $categoryJob->setChainId($this->chainId);
                     $chain[] = $categoryJob;
 
-                    // 2. Brand Sync
+//                    // 2. Brand Sync
                     $brandJob = new MagentoBrandSyncJob($store->id);
                     $brandJob->setChainId($this->chainId);
                     $chain[] = $brandJob;
-//
+
 //                    // 3. Device Sync
                     $deviceJob = new MagentoDeviceSyncJob($store->id);
                     $deviceJob->setChainId($this->chainId);
                     $chain[] = $deviceJob;
-//
-//                    // 4. Brand-Device Relation Sync
-                    $brandDeviceJob = new MagentoBrandDeviceSyncJob($store->id);
-                    $brandDeviceJob->setChainId($this->chainId);
-                    $chain[] = $brandDeviceJob;
 
                     // 5. Magento Brand Page Sync (Empty as requested)
 //                    $pageJob = new Completio();
