@@ -235,11 +235,13 @@ class TemuAuthService
                 'data_type' => 'JSON',
                 'access_token' => $this->accessToken,
             ];
+            $filterEndDateFormatted = (int)time();
 
             if (isset($cursor)) {
 
             } else {
                 $params['createAfter'] = $filterStartDateFormatted;
+                $params['createBefore'] = $filterEndDateFormatted;
             }
 
             $params['sign'] = $this->generateSign($params, $this->appSecret);

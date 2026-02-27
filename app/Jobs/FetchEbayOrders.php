@@ -33,7 +33,7 @@ class FetchEbayOrders implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'eBay Orders']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'eBay Orders']);
 
         try {
             /* get active store jobs*/
@@ -201,7 +201,18 @@ class FetchEbayOrders implements ShouldQueue
 //                }
                 }
             }
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
+
+            $this->updateTrackingRecord([
+                'status' => 'failed',
+                'output' => $e->getMessage(),
+                'finished_at' => now()
+            ]);
 
             CriticalErrorService::report('Fetch eBay Order Job Failed', [
                 'marketplace' => 'eBay',

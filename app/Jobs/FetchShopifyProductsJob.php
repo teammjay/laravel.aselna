@@ -39,85 +39,97 @@ class FetchShopifyProductsJob implements ShouldQueue
      */
     public function handle(): void
     {
+        try {
+            $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Shopify Products']);
 
-        $this->updateTrackingRecord(['tags' => 'Shopify Products']);
+            /* get active store jobs*/
+            $store_ids = Common::getActiveStoreJobs('FetchShopifyProductsJob','shopify');
+            /* get active store jobs*/
 
-        /* get active store jobs*/
-        $store_ids = Common::getActiveStoreJobs('FetchShopifyProductsJob','shopify');
-        /* get active store jobs*/
+            $query = Store::select('store.*','store_type.name as storeTypeName')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'shopify');
+            if(!empty($store_ids)){
+                $query->whereIn('store.id',$store_ids);
+            }
+            $stores = $query->get();
 
-        $query = Store::select('store.*','store_type.name as storeTypeName')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'shopify');
-        if(!empty($store_ids)){
-            $query->whereIn('store.id',$store_ids);
-        }
-        $stores = $query->get();
+            //$stores = Store::select('store.*','store_type.name as storeTypeName')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'shopify')->whereIn('store.id',$store_ids)->get();
 
-        //$stores = Store::select('store.*','store_type.name as storeTypeName')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'shopify')->whereIn('store.id',$store_ids)->get();
+            if (count($stores ?? []) > 0) {
+                foreach ($stores as $store) {
+                    if (env('APP_ENV') === 'local' && $store->name != 'GetAccessory') {
+                        continue;
+                    }
 
-        if (count($stores ?? []) > 0) {
-            foreach ($stores as $store) {
-                if (env('APP_ENV') === 'local' && $store->name != 'GetAccessory') {
-                    continue;
-                }
+                    if (($store->auto_generate_listings ?? 0) == 0) {
+                        Log::info('Auto Generate Listings is disabled for store: ' . $store->name);
+                        continue;
+                    }
 
-                if (($store->auto_generate_listings ?? 0) == 0) {
-                    Log::info('Auto Generate Listings is disabled for store: ' . $store->name);
-                    continue;
-                }
+                    Log::info('Store Name: ' . $store->name);
 
-                Log::info('Store Name: ' . $store->name);
+                    Log::info('Secret Key: ' . $store->secret_key);
 
-                Log::info('Secret Key: ' . $store->secret_key);
+                    $this->updateTrackingRecord(['tags' => $store->storeTypeName]);
 
-                $this->updateTrackingRecord(['tags' => $store->storeTypeName]);
+                    $hasNextPage = true;
+                    $afterCursor = null;
 
-                $hasNextPage = true;
-                $afterCursor = null;
-
-                while ($hasNextPage) {
-                    $after = $afterCursor ?? NULL;
-                    $allProducts = [];
-                    try {
-                        $shopifyAuth = new ShopifyAuthService($store->secret_key, $store->service_url);
-                        $response = $shopifyAuth->getProducts($after);
-                        if (isset($response['data']['products'])) {
-                            $productsData = $response['data']['products'];
-                            if (isset($productsData['nodes'])) {
-                                foreach ($productsData['nodes'] as $node) {
-                                    $allProducts[] = $node;
+                    while ($hasNextPage) {
+                        $after = $afterCursor ?? NULL;
+                        $allProducts = [];
+                        try {
+                            $shopifyAuth = new ShopifyAuthService($store->secret_key, $store->service_url);
+                            $response = $shopifyAuth->getProducts($after);
+                            if (isset($response['data']['products'])) {
+                                $productsData = $response['data']['products'];
+                                if (isset($productsData['nodes'])) {
+                                    foreach ($productsData['nodes'] as $node) {
+                                        $allProducts[] = $node;
+                                    }
                                 }
-                            }
 
-                            Log::info(('Page Info: ' . json_encode($productsData['pageInfo'])));
-                            // Prepare for next page
-                            $hasNextPage = $productsData['pageInfo']['hasNextPage'];
-                            $afterCursor = $productsData['pageInfo']['endCursor'] ?? null;
-                            $this->manageProducts($allProducts, $store, $shopifyAuth);
-                            Log::info('End Cursor: ' . $afterCursor);
+                                Log::info(('Page Info: ' . json_encode($productsData['pageInfo'])));
+                                // Prepare for next page
+                                $hasNextPage = $productsData['pageInfo']['hasNextPage'];
+                                $afterCursor = $productsData['pageInfo']['endCursor'] ?? null;
+                                $this->manageProducts($allProducts, $store, $shopifyAuth);
+                                Log::info('End Cursor: ' . $afterCursor);
 //                            $hasNextPage = false;
-                        } else {
-                            $hasNextPage = false;
+                            } else {
+                                $hasNextPage = false;
+                            }
+                        } catch (\Throwable $e) {
+
+                            $extraInfo = [
+                                'store_id' => $store->id
+                            ];
+
+                            \App\Helpers\ErrorLogger::log($e, __METHOD__, $extraInfo);
+
+                            CriticalErrorService::report('Fetch Shopify Product Job Failed', [
+                                'marketplace' => 'Shopify',
+                                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
+                                'method' => __METHOD__
+                            ],$extraInfo);
+
+                            Log::error('Error fetching products for store: ' . $store->name . ' - ' . $e->getMessage());
+                            // Optionally, you can break the loop or continue based on your error handling strategy
+                            $hasNextPage = false; // Stop the loop on error
                         }
-                    } catch (\Throwable $e) {
-
-                        $extraInfo = [
-                            'store_id' => $store->id
-                        ];
-
-                        \App\Helpers\ErrorLogger::log($e, __METHOD__, $extraInfo);
-
-                        CriticalErrorService::report('Fetch Shopify Product Job Failed', [
-                            'marketplace' => 'Shopify',
-                            'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
-                            'method' => __METHOD__
-                        ],$extraInfo);
-
-                        Log::error('Error fetching products for store: ' . $store->name . ' - ' . $e->getMessage());
-                        // Optionally, you can break the loop or continue based on your error handling strategy
-                        $hasNextPage = false; // Stop the loop on error
                     }
                 }
             }
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
+        } catch (\Throwable $e) {
+            $this->updateTrackingRecord([
+                'status' => 'failed',
+                'output' => $e->getMessage(),
+                'finished_at' => now()
+            ]);
         }
     }
 

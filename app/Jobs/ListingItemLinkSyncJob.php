@@ -32,7 +32,7 @@ class ListingItemLinkSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'Listing Item Link']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Listing Item Link']);
 
         try {
             $listingItemLinksQ = DB::connection('easyesale_db')->table('listing_item_link')
@@ -48,7 +48,18 @@ class ListingItemLinkSyncJob implements ShouldQueue
                     $this->createListingItemLink($listingItemLink);
                 }
             });
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
+
+            $this->updateTrackingRecord([
+                'status' => 'failed',
+                'output' => $e->getMessage(),
+                'finished_at' => now()
+            ]);
 
             CriticalErrorService::report('Listing Item Link Sync Job Failed', [
                 'marketplace' => 'N/A',

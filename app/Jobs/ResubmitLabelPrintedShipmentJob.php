@@ -34,7 +34,7 @@ class ResubmitLabelPrintedShipmentJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'PrintLabel']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'PrintLabel']);
 
         try {
             $operations = OrderOperation::with('order', 'operationItem', 'store', 'store.storeType')
@@ -98,7 +98,18 @@ class ResubmitLabelPrintedShipmentJob implements ShouldQueue
 
             Log::info('Resubmit Operation: No operation found');
 
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
+
         }catch (\Throwable $e) {
+
+            $this->updateTrackingRecord([
+                'status' => 'failed',
+                'output' => $e->getMessage(),
+                'finished_at' => now()
+            ]);
 
             CriticalErrorService::report('Resubmit Label Printed Shipment Job Failed', [
                 'marketplace' => 'N/A',

@@ -52,6 +52,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
     public function handle(): void
     {
         try {
+            $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now()]);
             /* shopify stores*/
             $stores = Store::select('store.*')->with('fileSystem', 'storeType')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'shopify')->where('store.store_status', '<>', 0)->get();
 
@@ -148,6 +149,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
                         ->get();
 
                     foreach ($products as $product) {
+                        Log::info('Update Products SKU :: ' . $product->product_sku . ' | Product ID :: ' . $product->product_id);
                         $this->updateProduct($product, $store);
                         if (env('APP_ENV') == 'local') {
                             break;
@@ -175,10 +177,19 @@ class SubmitShopifyProductsJob implements ShouldQueue
                         }
                     }
                 }
-
                 $this->updateTrackingRecord(['tags' => implode(' ', $tags) . ' Submit Shopify Products']);
             }
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
+            $this->updateTrackingRecord([
+                'status' => 'failed',
+                'output' => $e->getMessage(),
+                'finished_at' => now()
+            ]);
 
             CriticalErrorService::report('Submit Shopify Products Sync Job Failed', [
                 'marketplace' => 'Shopify',
@@ -575,7 +586,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
             'variant' => [$variantData],
         ];
 
-        $this->handleOldImages($shopifyAuthService, $proDetail->marketplace_product_id, $listingItem);
+        //$this->handleOldImages($shopifyAuthService, $proDetail->marketplace_product_id, $listingItem);
 
         $this->generateProductImages($productData, $store);
 
@@ -932,7 +943,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
         $oldImages = $shopifyAuthService->getProductImages($marketplace_product_id);
         $this->handleMediaImages($oldImages['data']['product'], $listingItem,$AlreadyImages);
 
-        $this->deleteOldProductImages($shopifyAuthService, $marketplace_product_id,$AlreadyImages);
+        //$this->deleteOldProductImages($shopifyAuthService, $marketplace_product_id,$AlreadyImages);
     }
 
     private function getMetafieldsData(mixed $productData)
@@ -1021,6 +1032,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
         $shopifyAuthService = new ShopifyAuthService($store->secret_key, $store->service_url);
         $publications = $shopifyAuthService->getPublications();
 
+        Log::info('Publications: ' . json_encode($publications));
         $publicationIds = [];
         foreach ($publications['data']['publications']['edges'] as $publication) {
             $publicationIds[]['publicationId'] = $publication['node']['id'];

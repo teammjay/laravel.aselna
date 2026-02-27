@@ -43,7 +43,7 @@ class SyncAllOrderStatusJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'All Orders Status']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'All Orders Status']);
 
         try {
             $orderOperations = OrderOperation::with(['order', 'store'])
@@ -74,7 +74,17 @@ class SyncAllOrderStatusJob implements ShouldQueue
                     }
                 }
             }
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
+            $this->updateTrackingRecord([
+                'status' => 'failed',
+                'output' => $e->getMessage(),
+                'finished_at' => now()
+            ]);
             Log::info('Error syncing order status for OrderOperation ID ' . $operation->id . ': ' . $e->getMessage());
 
             CriticalErrorService::report('All Orders Status Sync Job Failed', [

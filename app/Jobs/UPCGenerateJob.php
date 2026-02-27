@@ -34,7 +34,7 @@ class UPCGenerateJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'UPC Generate']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'UPC Generate']);
 
         try {
             $upcData = $this->upcData;
@@ -97,7 +97,18 @@ class UPCGenerateJob implements ShouldQueue
                     UPCCodes::insert($chunk);
                 }
             });
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
+
+            $this->updateTrackingRecord([
+                'status' => 'failed',
+                'output' => $e->getMessage(),
+                'finished_at' => now()
+            ]);
 
             CriticalErrorService::report('UPC Generate Job Failed', [
                 'marketplace' => 'N/A',

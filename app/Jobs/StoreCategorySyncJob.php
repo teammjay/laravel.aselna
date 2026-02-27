@@ -36,14 +36,24 @@ class StoreCategorySyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'Store Category']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Store Category']);
 
         Log::info("Store Category Sync Job Started");
 
         try {
             $this->getVariables();
             $this->syncCategories();
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
+            $this->updateTrackingRecord([
+                'status' => 'failed',
+                'output' => $e->getMessage(),
+                'finished_at' => now()
+            ]);
 
             CriticalErrorService::report('Store Category Sync Job Failed', [
                 'marketplace' => 'N/A',

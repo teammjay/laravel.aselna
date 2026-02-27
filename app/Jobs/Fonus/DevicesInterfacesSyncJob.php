@@ -34,7 +34,12 @@ class DevicesInterfacesSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'Device Interface']);
+        // Mark as processing when job starts
+        $this->updateTrackingRecord([
+            'status' => 'processing',
+            'started_at' => now(),
+            'tags' => 'Device Interface'
+        ]);
 
         try {
             $deviceAttributes = DB::connection('fonus_db')->table('tbl_device_attributes')->get();
@@ -51,13 +56,26 @@ class DevicesInterfacesSyncJob implements ShouldQueue
                 $this->checkAndDelete($deviceInterfaces);
             });
 
+            // Mark as completed when job finishes successfully
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         } catch (\Throwable $e) {
+            // Mark as failed when job fails
+            $this->updateTrackingRecord([
+                'status' => 'failed',
+                'output' => $e->getMessage(),
+                'finished_at' => now()
+            ]);
+
             CriticalErrorService::report('Fonus Device Interface Sync Job Failed', [
                 'marketplace' => 'N/A',
                 'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ]);
 
+            throw $e; // Re-throw to trigger chain failure handling
         }
     }
 

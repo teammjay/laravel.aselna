@@ -34,10 +34,25 @@ class ListingItemProductImageSyncJob implements ShouldQueue
     public function handle(): void
     {
         try {
+            $this->updateTrackingRecord([
+                'status' => 'processing',
+                'finished_at' => now()
+            ]);
 //        $this->ListingItemImagesAll();
 
-            $this->listingItemImagesByStore('6c7009ce-eac1-a995-a986-27d5df0103ac');
+            $this->listingItemImagesByStore('c2c8131f-c8a2-e082-9f89-3e8bf96b1049');
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
+
+            $this->updateTrackingRecord([
+                'status' => 'failed',
+                'output' => $e->getMessage(),
+                'finished_at' => now()
+            ]);
 
             CriticalErrorService::report('Listing Item Product Images Sync Job Failed', [
                 'marketplace' => 'N/A',

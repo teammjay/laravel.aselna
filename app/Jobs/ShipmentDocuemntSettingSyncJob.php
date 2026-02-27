@@ -29,14 +29,25 @@ class ShipmentDocuemntSettingSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'Shipment Document Settings']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Shipment Document Settings']);
 
         try {
             $shippingDocuments = DB::connection('easyesale_db')->table('shipping_document_setting')->get();
             foreach ($shippingDocuments as $shippingdocument) {
                 $this->createShippingDocuments($shippingdocument);
             }
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
+
+            $this->updateTrackingRecord([
+                'status' => 'failed',
+                'output' => $e->getMessage(),
+                'finished_at' => now()
+            ]);
 
             CriticalErrorService::report('Shipment Document Setting Sync Job Failed', [
                 'marketplace' => 'N/A',

@@ -39,7 +39,7 @@ class DevicesSyncJob implements ShouldQueue
     public function handle(): void
     {
         Log::info('Devices Sync Job Start');
-        $this->updateTrackingRecord(['tags' => 'Devices']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Devices']);
 
         try {
             DB::connection('easyesale_db')->table('cea_device')
@@ -60,7 +60,17 @@ class DevicesSyncJob implements ShouldQueue
             });
             Log::info('Devices Delete Job End');
 
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
+
+            $this->updateTrackingRecord([
+                'status' => 'failed',
+                'output' => $e->getMessage(),
+                'finished_at' => now()
+            ]);
 
             CriticalErrorService::report('Device Sync Job Failed', [
                 'marketplace' => 'N/A',

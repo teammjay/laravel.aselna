@@ -33,7 +33,7 @@ class ShopifyStoreProductsSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'Shopify Store Products']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Shopify Store Products']);
 
         try {
             $storeIds = Store::join('store_type', 'store_type.id', '=', 'store.store_type_id')
@@ -49,7 +49,18 @@ class ShopifyStoreProductsSyncJob implements ShouldQueue
                         $this->syncStoreProduct($product);
                     }
                 });
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
+
+            $this->updateTrackingRecord([
+                'status' => 'failed',
+                'output' => $e->getMessage(),
+                'finished_at' => now()
+            ]);
 
             CriticalErrorService::report('Shopify Store Products Sync Job Failed', [
                 'marketplace' => 'Shopify',

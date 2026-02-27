@@ -40,7 +40,7 @@ class FetchWalmartOrdersJob implements ShouldQueue
     public function handle(): void
     {
         Log::info("Testing");
-        $this->updateTrackingRecord(['tags' => 'Walmart Orders']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Walmart Orders']);
 
         try {
             /* get active store jobs*/
@@ -72,7 +72,18 @@ class FetchWalmartOrdersJob implements ShouldQueue
 
                 $this->updateTrackingRecord(['tags' => implode(' ', $tags) . ' Walmart Orders']);
             }
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
+
+            $this->updateTrackingRecord([
+                'status' => 'failed',
+                'output' => $e->getMessage(),
+                'finished_at' => now()
+            ]);
 
             CriticalErrorService::report('Fetch Walmart Orders Job Failed', [
                 'marketplace' => 'Walmart',

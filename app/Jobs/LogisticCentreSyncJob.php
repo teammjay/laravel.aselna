@@ -30,7 +30,7 @@ class LogisticCentreSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'Logistic Centers']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Logistic Centers']);
 
         try {
             $logisticCentre = DB::connection('easyesale_db')->table('logistic_center')->cursor();
@@ -42,7 +42,18 @@ class LogisticCentreSyncJob implements ShouldQueue
             foreach ($storeLogisticCentre as $centre) {
                 $this->createStoreLogisticCentre($centre);
             }
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
+
+            $this->updateTrackingRecord([
+                'status' => 'failed',
+                'output' => $e->getMessage(),
+                'finished_at' => now()
+            ]);
 
             CriticalErrorService::report('Logistic Center Sync Job Failed', [
                 'marketplace' => 'N/A',

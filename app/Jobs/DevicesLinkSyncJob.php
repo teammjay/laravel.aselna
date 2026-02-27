@@ -31,7 +31,7 @@ class DevicesLinkSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'Device Link']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Device Link']);
 
         try {
             $syncDevices = DB::connection('easyesale_db')->table('cea_device_cea_device_series_link')->get();
@@ -39,7 +39,18 @@ class DevicesLinkSyncJob implements ShouldQueue
             foreach ($syncDevices as $device) {
                 $this->createSyncDevice($device);
             }
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
+
+            $this->updateTrackingRecord([
+                'status' => 'failed',
+                'output' => $e->getMessage(),
+                'finished_at' => now()
+            ]);
 
             CriticalErrorService::report('Device Link Sync Job Failed', [
                 'marketplace' => 'N/A',

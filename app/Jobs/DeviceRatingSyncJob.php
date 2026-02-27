@@ -31,7 +31,7 @@ class DeviceRatingSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'Device Rating']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Device Rating']);
 
         try {
             DB::connection('easyesale_db')
@@ -42,7 +42,19 @@ class DeviceRatingSyncJob implements ShouldQueue
                         $this->syncDeviceRating($deviceRating);
                     }
                 });
+
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
+
+            $this->updateTrackingRecord([
+                'status' => 'failed',
+                'output' => $e->getMessage(),
+                'finished_at' => now()
+            ]);
 
             CriticalErrorService::report('Device Rating Sync Job Failed', [
                 'marketplace' => 'N/A',

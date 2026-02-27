@@ -37,7 +37,12 @@ class ProductImagesSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'Product Images']);
+        // Mark as processing when job starts
+        $this->updateTrackingRecord([
+            'status' => 'processing',
+            'started_at' => now(),
+            'tags' => 'Product Images'
+        ]);
         Log::info('ProductImagesSyncJob: Start');
 
         try {
@@ -66,13 +71,26 @@ class ProductImagesSyncJob implements ShouldQueue
 
             Log::info('ProductImagesSyncJob From : Done');
 
+            // Mark as completed when job finishes successfully
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
+            // Mark as failed when job fails
+            $this->updateTrackingRecord([
+                'status' => 'failed',
+                'output' => $e->getMessage(),
+                'finished_at' => now()
+            ]);
 
             CriticalErrorService::report('Product Images Sync Job Failed', [
                 'marketplace' => 'N/A',
                 'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ]);
+
+            throw $e; // Re-throw to trigger chain failure handling
         }
 //
 //        $easyImagesQ = DB::connection('easyesale_db')
@@ -101,7 +119,7 @@ class ProductImagesSyncJob implements ShouldQueue
 
         Log::info('Product Image Date ' . $productImage->date_updated);
         // TODO Need to remove on 1 Jan 2026
-        if (isset($SystemProductImage) && $SystemProductImage->updated_at >= ($productImage->date_updated ?? now())) {
+        if (isset($SystemProductImage) && $SystemProductImage->updated_at >= ($productImage->date_updated ?? '1970-01-01 00:00:00')) {
             return;
         }
 

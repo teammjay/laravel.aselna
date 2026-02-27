@@ -31,7 +31,7 @@ class GenerationTypeAndTemplateSync implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'Generation Type Template']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Generation Type Template']);
 
         try {
             $listingGenerationType = DB::connection('easyesale_db')->table('cea_listing_generation_type')->cursor();
@@ -43,7 +43,18 @@ class GenerationTypeAndTemplateSync implements ShouldQueue
             foreach ($listingGenerationTypeTemplate as $generationTypeTemplate) {
                 $this->createGenerationTypeTemplate($generationTypeTemplate);
             }
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
+
+            $this->updateTrackingRecord([
+                'status' => 'failed',
+                'output' => $e->getMessage(),
+                'finished_at' => now()
+            ]);
 
             CriticalErrorService::report('Generation Type Template Sync Job Failed', [
                 'marketplace' => 'N/A',

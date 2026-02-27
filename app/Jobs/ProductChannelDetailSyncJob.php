@@ -30,7 +30,7 @@ class ProductChannelDetailSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'Product Channel Detail']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Product Channel Detail']);
 
         try {
             DB::connection('easyesale_db')
@@ -42,7 +42,17 @@ class ProductChannelDetailSyncJob implements ShouldQueue
                     }
                 });
 
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
+
+            $this->updateTrackingRecord([
+                'status' => 'failed',
+                'output' => $e->getMessage(),
+                'finished_at' => now()
+            ]);
 
             CriticalErrorService::report('Product Channel Detail Sync Job Failed', [
                 'marketplace' => 'N/A',

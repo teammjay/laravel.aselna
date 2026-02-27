@@ -38,7 +38,7 @@ class FetchMagentoOrderJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'Magento Orders']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Magento Orders']);
 
         try {
             /* get amazon stores*/
@@ -167,7 +167,17 @@ class FetchMagentoOrderJob implements ShouldQueue
                     }
                 }
             }
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
+
+            $this->updateTrackingRecord([
+                'status' => 'failed',
+                'output' => $e->getMessage(),
+                'finished_at' => now()
+            ]);
 
             CriticalErrorService::report('Fetch Magento Order Job Failed', [
                 'marketplace' => 'Magento',

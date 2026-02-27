@@ -38,7 +38,7 @@ class AccountTransactionController extends Controller
     {
         $totalRecords = AccountTransaction::count();
 
-        $query = AccountTransaction::with('shippingAccount','store','store.storeType')->select('*');
+        $query = AccountTransaction::with('shippingAccount','store','store.storeType','orderOperation.order')->select('*');
 
 
 
@@ -78,6 +78,13 @@ class AccountTransactionController extends Controller
             $query->where('store_id', $request->store_id);
         }
 
+        if ($request->has('order_id') && $request->order_id != '') {
+
+            $query->where(function ($q) use ($request) {
+                $q->whereRelation('orderOperation.order', 'order_id', $request->order_id)
+                    ->orWhereRelation('orderOperation.order', 'purchase_order_id', $request->order_id);
+            });
+        }
 
 
         $columnIndex = $request->input('order.0.column', 0);
@@ -99,12 +106,21 @@ class AccountTransactionController extends Controller
 
         $data = [];
         foreach ($transactions as $transaction) {
+            $order_id = '';
+            if(isset($transaction->orderOperation) && isset($transaction->orderOperation->Order)) {
+                if (isset($transaction->store->storeType) && strtolower($transaction->store->storeType->name) == 'shopify') {
+                    $order_id = $transaction->orderOperation->Order->purchase_order_id;
+                }else{
+                    $order_id = $transaction->orderOperation->Order->order_id;
+                }
+            }
             $data[] = [
                 'shipping_account' => $transaction->shippingAccount->name.'<input type="checkbox" name="transaction_id[]" style="visibility: hidden;" data-id="'.$transaction->id .'" value="'.$transaction->tracking_number.'">',
                 'tracking_number' => $transaction->tracking_number,
                 'transaction_date' => $transaction->transaction_date,
                 'transaction_id' => $transaction->transaction_id,
                 'store' => (isset($transaction->store) && isset($transaction->store->storeType)) ? $transaction->store->name . ' - ' . $transaction->store->storeType->name : '',
+                'order_id' => $order_id,
                 'amount' => $transaction->amount,
                 'address' => $transaction->address,
                 'status' => $transaction->status,

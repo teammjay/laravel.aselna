@@ -231,6 +231,19 @@
                 </div>
 
                 <div class="row pt-3">
+                    <div class="col-md-4">
+                        <div class="row">
+                            <div class="col-4 text-right">
+                                Order ID
+                            </div>
+                            <div class="col-8">
+                                <input type="text" name="order_id" id="order_id" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row pt-3">
                     <div class="col-md-2">
                         <div class="form-group">
                             <label>&nbsp;</label>
@@ -276,6 +289,7 @@
                 <th>Transaction Date</th>
                 <th>Transaction ID</th>
                 <th>Store</th>
+                <th>Order ID</th>
                 <th>Amount</th>
                 <th>Address</th>
                 <th>Status</th>
@@ -413,13 +427,14 @@
                         sessionStorage.setItem("account_transaction_filters", JSON.stringify(formData));
                     }
                 },
-                "order": [[ 10, "desc" ]],
+                "order": [[ 11, "desc" ]],
                 columns: [
                     {data: 'shipping_account', name: 'shipping_account',orderable: false, searchable: false},
                     {data: 'tracking_number', name: 'tracking_number'},
                     {data: 'transaction_date', name: 'transaction_date'},
                     {data: 'transaction_id', name: 'transaction_id'},
                     {data: 'store', name: 'store',orderable: false},
+                    {data: 'order_id', name: 'order_id',orderable: false},
                     {data: 'amount', name: 'amount'},
                     {data: 'address', name: 'address'},
                     {data: 'status', name: 'status'},

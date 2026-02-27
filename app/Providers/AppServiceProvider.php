@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Queue\Events\JobProcessing;
 use Illuminate\Queue\Events\JobProcessed;
 use Illuminate\Queue\Events\JobFailed;
+use Illuminate\Support\Str;
 use Monolog\Logger;
 use Monolog\Handler\StreamHandler;
 use Opcodes\LogViewer\Facades\LogViewer;
@@ -104,9 +105,16 @@ class AppServiceProvider extends ServiceProvider
                     $extra['store_type'] = $job->store_type;
                 }
 
+//                $jobData = json_decode($job);
+                $jobId = $job->getJobId() ?? (string) Str::uuid();
+
                 Log::info('Extra Detail:'.json_encode($extra));
 
-                $job->createTrackingRecord($payload['uuid'], $extra);
+                /*if (!isset($job->parentJobId)){
+                    $job->createTrackingRecord($payload['uuid'], $extra);
+                }*/
+
+                $job->createTrackingRecord($jobId, $extra);
             }
             return [];
         });
@@ -114,19 +122,20 @@ class AppServiceProvider extends ServiceProvider
         // When a worker starts processing a job
         Queue::before(function (JobProcessing $event) {
             $uuid = $event->job->uuid ?? $event->job->payload()['uuid'] ?? null;
-            JobStatus::where('job_id', $uuid)->update([
-                'status' => 'processing',
-                'started_at' => now(),
-            ]);
+//            JobStatus::where('job_id', $uuid)->update([
+//                'status' => 'processing',
+//                'started_at' => now(),
+//            ]);
         });
 
         // When a job has completed successfully
         Queue::after(function (JobProcessed $event) {
             $uuid = $event->job->uuid ?? $event->job->payload()['uuid'] ?? null;
-            JobStatus::where('job_id', $uuid)->update([
-                'status' => 'completed',
-                'finished_at' => now(),
-            ]);
+            Log::info('Complete Job Payload:'.json_encode($event->job->payload()));
+//            JobStatus::where('job_id', $uuid)->update([
+//                'status' => 'completed',
+//                'finished_at' => now(),
+//            ]);
         });
 
         // When a job has failed
@@ -137,11 +146,11 @@ class AppServiceProvider extends ServiceProvider
             $errorFile = $event->exception->getFile();
             $errorLine = $event->exception->getLine();
 
-            JobStatus::where('job_id', $uuid)->update([
-                'status' => 'failed',
-                'output' => $errorMessage .' in '. $errorFile .' at line '. $errorLine,
-                'finished_at' => now(),
-            ]);
+//            JobStatus::where('job_id', $uuid)->update([
+//                'status' => 'failed',
+//                'output' => $errorMessage .' in '. $errorFile .' at line '. $errorLine,
+//                'finished_at' => now(),
+//            ]);
         });
     }
 }

@@ -30,7 +30,7 @@ class SystemPrinterSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'System Printers']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'System Printers']);
 
         try {
             DB::connection('aselna_printer_db')->table('Printers')
@@ -40,7 +40,18 @@ class SystemPrinterSyncJob implements ShouldQueue
                         $this->syncPrinter($printer);
                     }
                 });
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
+
+            $this->updateTrackingRecord([
+                'status' => 'failed',
+                'output' => $e->getMessage(),
+                'finished_at' => now()
+            ]);
 
             CriticalErrorService::report('System Printers Sync Job Failed', [
                 'marketplace' => 'N/A',

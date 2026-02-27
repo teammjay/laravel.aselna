@@ -36,7 +36,7 @@ class ProductSpecificationSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'Product Specification']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Product Specification']);
         Log::info('Product Specification Sync Job started.');
 
         try {
@@ -49,7 +49,17 @@ class ProductSpecificationSyncJob implements ShouldQueue
                     }
                 });
             Log::info('Product Specification Sync Job completed.');
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
+
+            $this->updateTrackingRecord([
+                'status' => 'failed',
+                'output' => $e->getMessage(),
+                'finished_at' => now()
+            ]);
 
             CriticalErrorService::report('Product Specification Sync Job Failed', [
                 'marketplace' => 'N/A',

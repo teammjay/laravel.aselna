@@ -39,7 +39,7 @@ class FetchAmazonOrdersJob implements ShouldQueue
     public function handle(): void
     {
 
-        $this->updateTrackingRecord(['tags' => 'Amazon Orders']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Amazon Orders']);
 
         try {
             /* get active store jobs*/
@@ -144,7 +144,18 @@ class FetchAmazonOrdersJob implements ShouldQueue
                     }
                 }
             }
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
+
+            $this->updateTrackingRecord([
+                'status' => 'failed',
+                'output' => $e->getMessage(),
+                'finished_at' => now()
+            ]);
 
             CriticalErrorService::report('Fetch Amazon Orders Job Failed', [
                 'marketplace' => 'Amazon',

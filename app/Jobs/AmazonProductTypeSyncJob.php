@@ -36,7 +36,7 @@ class AmazonProductTypeSyncJob implements ShouldQueue
     public function handle(): void
     {
         try {
-            $this->updateTrackingRecord(['tags' => 'Amazon ProductType']);
+            $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Amazon ProductType']);
 
             $this->amazonAuthService = new AmazonAuthService();
             StoreTypeCategory::whereIn('store_type_id', function ($subQuery) {
@@ -49,7 +49,18 @@ class AmazonProductTypeSyncJob implements ShouldQueue
                         sleep(1);
                     }
                 });
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
+
+            $this->updateTrackingRecord([
+                'status' => 'failed',
+                'output' => $e->getMessage(),
+                'finished_at' => now()
+            ]);
 
             CriticalErrorService::report('Amazon Product Type Sync Job Failed', [
                 'marketplace' => 'Amazon',

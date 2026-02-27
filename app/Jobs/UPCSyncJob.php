@@ -29,14 +29,25 @@ class UPCSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'UPC']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'UPC']);
 
         try {
             $upcSequence = DB::connection('easyesale_db')->table('upc_creation')->cursor();
             foreach ($upcSequence as $upc) {
                 $this->createUPCSequence($upc);
             }
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
+
+            $this->updateTrackingRecord([
+                'status' => 'failed',
+                'output' => $e->getMessage(),
+                'finished_at' => now()
+            ]);
 
             CriticalErrorService::report('UPC Sync Job Failed', [
                 'marketplace' => 'N/A',

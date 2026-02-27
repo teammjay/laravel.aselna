@@ -35,7 +35,7 @@ class DeviceInterfaces implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'Device Interface']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Device Interface']);
 
         try {
             DB::connection('easyesale_db')->table('cea_device_interface')->orderBy('id')
@@ -48,7 +48,18 @@ class DeviceInterfaces implements ShouldQueue
             DeviceInterface::orderBy('id')->chunk(1000, function ($deviceInterfaces) {
                 $this->checkAndDelete($deviceInterfaces);
             });
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
+
+            $this->updateTrackingRecord([
+                'status' => 'failed',
+                'output' => $e->getMessage(),
+                'finished_at' => now()
+            ]);
 
             CriticalErrorService::report('Device Interface Sync Job Failed', [
                 'marketplace' => 'N/A',

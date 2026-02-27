@@ -5,11 +5,13 @@ namespace App\Jobs;
 use App\Constants\HdTicketStatus;
 use App\Constants\HdTicketTypeCode;
 use App\Helpers\Common;
+use App\Jobs\Fonus\ChainCompletionJob;
 use App\Models\Customer;
 use App\Models\CustomerEmail;
 use App\Models\HDMessage;
 use App\Models\HdMessagePart;
 use App\Models\HdTicketType;
+use App\Models\JobStatus;
 use App\Models\Message;
 use App\Models\Order;
 use App\Models\Sequence;
@@ -49,7 +51,12 @@ class   FetchEmailMessagesJob implements ShouldQueue
     {
         try {
 
-            $this->updateTrackingRecord(['tags' => 'Email Messages']);
+            $this->updateTrackingRecord([
+                'status' => 'processing',
+                'started_at' => now(),
+                'tags' => 'Email Messages'
+            ]);
+            $chain = [];
 
             /* get active store jobs*/
             $store_ids = Common::getActiveStoreJobs('FetchEmailMessagesJob');
@@ -85,8 +92,6 @@ class   FetchEmailMessagesJob implements ShouldQueue
                         ->where('api_account', 0)
                         ->get();
 
-                    $chain = [];
-
                     if (count($storeMessageAccounts ?? []) > 0) {
                         foreach ($storeMessageAccounts as $maccount) {
                             // Dispatch a new job for each store message account
@@ -96,20 +101,51 @@ class   FetchEmailMessagesJob implements ShouldQueue
                             $chain[] = new ProcessStoreMessageAccountJob($maccount, $store, $store->storeType->name);
                         }
                     }
-                    if (count($chain) > 0) {
-                        // Set chainId for all initial jobs
-                        foreach ($chain as $job) {
-                            if (method_exists($job, 'setChainId')) {
-                                $job->setChainId($this->chainId);
-                            }
-                        }
-                        Bus::chain($chain)->dispatch();
-                    }
+                }
+
+                if (count($chain) > 0) {
+                    // Add the completion job at the end of the chain to mark parent as completed
+                    $chain[] = new ChainCompletionJob($this->jobId);
+
+                    // Create pending record for the completion job
+                    $this->createPendingRecordsForChain($chain, $this->jobId);
+
+                    // Store parent job ID for the catch callback
+                    $parentJobId = $this->jobId;
+
+                    Bus::chain($chain)
+                        ->catch(function (\Throwable $e) use ($parentJobId,$store) {
+                            // Mark parent as failed if chain fails
+                            JobStatus::where('job_id', $parentJobId)
+                                ->update(['status' => 'failed', 'output' => $e->getMessage(), 'finished_at' => now()]);
+
+                            Log::error('Fetch Email Message Chain Failed: ' . $e->getMessage());
+
+                            CriticalErrorService::report('Fetch Email Message Chain Failed', [
+                                'marketplace' => $store->name,
+                                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
+                                'method' => __METHOD__
+                            ]);
+                        })
+                        ->dispatch();
+
+                    //Bus::chain($chain)->dispatch();
                 }
             }
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         } catch (\Throwable $e) {
 
             \App\Helpers\ErrorLogger::log($e, __METHOD__);
+
+            $this->updateTrackingRecord([
+                'status' => 'failed',
+                'output' => $e->getMessage(),
+                'finished_at' => now()
+            ]);
 
             CriticalErrorService::report('Fetch Email Message Job Failed', [
                 'marketplace' => 'N/A',

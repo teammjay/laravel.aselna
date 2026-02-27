@@ -29,7 +29,7 @@ class SyncMessageTemplateJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'Message Templates']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Message Templates']);
 
         try {
             DB::connection('easyesale_db')->table('hd_message_template')->orderBy('id')
@@ -38,7 +38,18 @@ class SyncMessageTemplateJob implements ShouldQueue
                         $this->createSyncMessageTemplate($messageTemplate);
                     }
                 });
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
+
+            $this->updateTrackingRecord([
+                'status' => 'failed',
+                'output' => $e->getMessage(),
+                'finished_at' => now()
+            ]);
 
             CriticalErrorService::report('Message Templates Sync Job Failed', [
                 'marketplace' => 'N/A',

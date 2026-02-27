@@ -33,7 +33,7 @@ class OldOrderSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'Old Orders']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Old Orders']);
         // Order Syncing
         try {
             DB::connection('easyesale_db')->table('order')
@@ -44,7 +44,18 @@ class OldOrderSyncJob implements ShouldQueue
                         $this->syncOldOrder($order);
                     }
                 });
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
+
+            $this->updateTrackingRecord([
+                'status' => 'failed',
+                'output' => $e->getMessage(),
+                'finished_at' => now()
+            ]);
 
             CriticalErrorService::report('Old Orders Sync Job Failed', [
                 'marketplace' => 'N/A',

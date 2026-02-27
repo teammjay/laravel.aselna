@@ -30,7 +30,7 @@ class ProductTagSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'Product Tags']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Product Tags']);
 
         try {
             $productTypeKeywordQ = DB::connection('easyesale_db')->table('product_tag')
@@ -41,7 +41,18 @@ class ProductTagSyncJob implements ShouldQueue
                     $this->createProductTag($productTag);
                 }
             });
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
+
+            $this->updateTrackingRecord([
+                'status' => 'failed',
+                'output' => $e->getMessage(),
+                'finished_at' => now()
+            ]);
 
             CriticalErrorService::report('Product Tags Sync Job Failed', [
                 'marketplace' => 'N/A',

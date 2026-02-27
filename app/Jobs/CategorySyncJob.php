@@ -42,7 +42,7 @@ class CategorySyncJob implements ShouldQueue
     public function handle(): void
     {
 
-        $this->updateTrackingRecord(['tags' => 'Category']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Category']);
         try {
 
             $distinctParentIds = DB::connection('easyesale_db')->table('product_type')->whereNull('parent_id')->cursor();
@@ -86,7 +86,18 @@ class CategorySyncJob implements ShouldQueue
                     $this->createStoreTypeCategories($storeTypeCategory);
                 }
             }
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
+
+            $this->updateTrackingRecord([
+                'status' => 'failed',
+                'output' => $e->getMessage(),
+                'finished_at' => now()
+            ]);
 
             CriticalErrorService::report('Category Sync Job Failed', [
                 'marketplace' => 'N/A',

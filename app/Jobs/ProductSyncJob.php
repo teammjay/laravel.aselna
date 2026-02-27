@@ -44,7 +44,7 @@ class ProductSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'Products']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Products']);
 
 
         $producttypes = DB::connection('easyesale_db')->table('product_type')
@@ -86,8 +86,18 @@ class ProductSyncJob implements ShouldQueue
                 }
             });
         } catch (Exception $e) {
+            $this->updateTrackingRecord([
+                'status' => 'failed',
+                'output' => $e->getMessage(),
+                'finished_at' => now()
+            ]);
             Log::error($e->getMessage());
         }
+
+        $this->updateTrackingRecord([
+            'status' => 'completed',
+            'finished_at' => now()
+        ]);
     }
 
     private function createProduct($product)

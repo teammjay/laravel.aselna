@@ -33,7 +33,7 @@ class StoreProductSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'Store Products']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Store Products']);
 
         try {
             $storeIds = Store::join('store_type', 'store_type.id', '=', 'store.store_type_id')
@@ -54,7 +54,17 @@ class StoreProductSyncJob implements ShouldQueue
                     $this->createStoreProduct($storeProduct);
                 }
             });
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         } catch (Exception $e) {
+            $this->updateTrackingRecord([
+                'status' => 'failed',
+                'output' => $e->getMessage(),
+                'finished_at' => now()
+            ]);
 
             CriticalErrorService::report('Store Products Sync Job Failed', [
                 'marketplace' => 'N/A',

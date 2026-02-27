@@ -38,7 +38,12 @@ class ProductChannelSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'Fonus Product Channel']);
+        // Mark as processing when job starts
+        $this->updateTrackingRecord([
+            'status' => 'processing',
+            'started_at' => now(),
+            'tags' => 'Fonus Product Channel'
+        ]);
 
         try {
             $this->storetypes = StoreType::pluck('id','name')->toArray();
@@ -51,14 +56,29 @@ class ProductChannelSyncJob implements ShouldQueue
                         $this->createOrUpdateProductChannel($productChannel);
                     }
                 });
+
+            // Mark as completed when job finishes successfully
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
             Log::error('Fonus Product Channel Sync Job Failed: ' . $e->getTraceAsString());
+
+            // Mark as failed when job fails
+            $this->updateTrackingRecord([
+                'status' => 'failed',
+                'output' => $e->getMessage(),
+                'finished_at' => now()
+            ]);
 
             CriticalErrorService::report('Product Interface Sync Job Failed', [
                 'marketplace' => 'N/A',
                 'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ]);
+
+            throw $e; // Re-throw to trigger chain failure handling
         }
     }
 

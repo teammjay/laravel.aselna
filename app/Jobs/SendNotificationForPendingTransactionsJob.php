@@ -40,7 +40,7 @@ class SendNotificationForPendingTransactionsJob implements ShouldQueue
     {
         try {
 
-            $this->updateTrackingRecord(['tags' => 'Send Notification Pending Transaction']);
+            $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Send Notification Pending Transaction']);
 
             $tracking_numbers = AccountTransaction::select('tracking_number')->with('shippingAccount')->where('status', 'pending')
                 ->where('transaction_date', '<=', Carbon::now()->subDays(10))
@@ -102,7 +102,17 @@ class SendNotificationForPendingTransactionsJob implements ShouldQueue
                 }
             }
 
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         } catch (\Throwable $e) {
+
+            $this->updateTrackingRecord([
+                'status' => 'failed',
+                'output' => $e->getMessage(),
+                'finished_at' => now()
+            ]);
 
             \App\Helpers\ErrorLogger::log($e, __METHOD__);
 

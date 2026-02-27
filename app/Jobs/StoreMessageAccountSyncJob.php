@@ -29,7 +29,7 @@ class StoreMessageAccountSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['tags' => 'Store Message Accounts']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Store Message Accounts']);
 
         try {
             DB::connection('easyesale_db')->table('store_message_account')->orderBy('id')
@@ -38,7 +38,17 @@ class StoreMessageAccountSyncJob implements ShouldQueue
                         $this->createSyncStoreMessageAccount($storeMessageAccount);
                     }
                 });
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
         }catch (\Throwable $e) {
+            $this->updateTrackingRecord([
+                'status' => 'failed',
+                'output' => $e->getMessage(),
+                'finished_at' => now()
+            ]);
 
             CriticalErrorService::report('Store Message Accounts Sync Job Failed', [
                 'marketplace' => 'N/A',
