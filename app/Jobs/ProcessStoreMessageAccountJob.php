@@ -519,14 +519,16 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
             }
         }
 
-        // 2. For Walmart, try regex on body/subject for order ID (High-Confidence)
-        if (strtolower($store_type) === 'walmart') {
-            $text_to_search = $email['subject'] . ' ' . $email['body'];
-            if (preg_match('/\b(\d{13})\b/', $text_to_search, $matches)) {
-                $order = Order::with('customer', 'orderOperation')->where('order_id', $matches[0])->first();
-                if ($order) {
-                    return $order;
-                }
+        $text_to_search = $email['subject'] . ' ' . $email['body'];
+        if (preg_match('/#(\d+)/', $text_to_search, $matches)) {
+            $order = Order::with('customer', 'orderOperation')->where('purchase_order_id', $matches[1])->first();
+            if ($order) {
+                return $order;
+            }
+
+            $order = Order::with('customer', 'orderOperation')->where('order_id', $matches[1])->first();
+            if ($order) {
+                return $order;
             }
         }
 
