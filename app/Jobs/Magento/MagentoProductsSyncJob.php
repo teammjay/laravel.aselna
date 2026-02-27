@@ -16,6 +16,7 @@ use App\Models\ProductType;
 use App\Models\Store;
 use App\Models\StoreProduct;
 use App\Models\StoreTypeListing;
+use App\Models\ListingItemProductImage;
 use App\Services\CriticalErrorService;
 use App\Services\Marketplace\Service\MagentoService;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -31,7 +32,7 @@ class MagentoProductsSyncJob implements ShouldQueue
 
     public $timeout = 30000;
 
-    private $limit = 100;
+    private $limit = 5;
 
     public MagentoService $magentoService;
 
@@ -167,7 +168,7 @@ class MagentoProductsSyncJob implements ShouldQueue
         $listingItem = $this->addListingItem($productData, $store);
         if (!$listingItem) return;
 
-        if (isset($listingItem->sku)) {
+        if (isset($listingItem->sku) && !empty($listingItem->sku)) {
             $sku = $listingItem->sku;
         } else {
             $sku = StoreTypeListing::generateUniqueAlphabeticSku($productData->product_sku, 6);
@@ -196,6 +197,16 @@ class MagentoProductsSyncJob implements ShouldQueue
                 'upload_status' => MarketPlaceUploadStatus::SUCCESS,
             ]);
 
+            $urlKey = $this->getCustomAttribute($response, 'url_key');
+
+            $listingItem->update([
+                'store_url' => $urlKey ?: ($response['sku'] ?? $sku),
+                'store_sku' => $response['id'],
+                'sku' => $sku
+            ]);
+
+            $this->handleMediaImages($response, $listingItem, $productData);
+
             $storeProduct = StoreProduct::where('product_id', $productData->product_id)->where('store_id', $store->id)->first();
             if ($storeProduct) {
                 $storeProduct->update(['last_synch_date_time' => now()]);
@@ -214,12 +225,23 @@ class MagentoProductsSyncJob implements ShouldQueue
 
         if (!$manageProduct) return;
 
+        $listingItem = $this->addListingItem($productData, $store);
+
         $finalProductData = $this->prepareProductData($productData, $store, $manageProduct->sku, 1);
 
         $response = $this->magentoService->createOrUpdateProduct($finalProductData, $store);
 
         if (isset($response['id'])) {
             $manageProduct->update(['updated_at' => now()]);
+
+            $urlKey = $this->getCustomAttribute($response, 'url_key');
+            $listingItem->update([
+                'store_url' => $urlKey ?: ($response['sku'] ?? $manageProduct->sku),
+                'store_sku' => $response['id']
+            ]);
+
+            $this->handleMediaImages($response, $listingItem, $productData);
+
             $storeProduct = StoreProduct::where('product_id', $productData->product_id)->where('store_id', $store->id)->first();
             if ($storeProduct) {
                 $storeProduct->update(['last_synch_date_time' => now()]);
@@ -290,7 +312,7 @@ class MagentoProductsSyncJob implements ShouldQueue
                 ["attribute_code" => "short_description", "value" => $productData->product_description],
                 ["attribute_code" => "description", "value" => $productData->product_description],
                 ["attribute_code" => "bullet_points", "value" => $bulletPointHtml],
-                ["attribute_code" => "category_ids", "value" => $categoryIds]
+                ["attribute_code" => "category_ids", "value" => implode(',', $categoryIds)]
             ],
             "media_gallery_entries" => $mediaGalleryEntries
         ];
@@ -337,6 +359,34 @@ class MagentoProductsSyncJob implements ShouldQueue
         );
     }
 
+    private function handleMediaImages($magentoProduct, $listingItem, $productData)
+    {
+        if (!isset($magentoProduct['media_gallery_entries'])) return;
+
+        foreach ($magentoProduct['media_gallery_entries'] as $mediaEntry) {
+            if ($mediaEntry['media_type'] == 'image') {
+                $imageLabel = $mediaEntry['label'] ?? '';
+
+                // Try to find the local product image by label/name
+                $productImage = ProductImages::where('product_id', $productData->product_id)
+                    ->whereHas('imageObj', function($q) use ($imageLabel) {
+                        $q->where('name', $imageLabel);
+                    })->first();
+
+                if ($productImage) {
+                    ListingItemProductImage::updateOrCreate([
+                        'listing_item_id' => $listingItem->id,
+                        'product_image_id' => $productImage->id,
+                    ], [
+                        'main_image' => in_array('image', $mediaEntry['types'] ?? []),
+                        'reference_id' => $mediaEntry['id'],
+                        'path' => $mediaEntry['file'] ?? '',
+                    ]);
+                }
+            }
+        }
+    }
+
     private function getMediaGalleryEntries($productData, $store)
     {
         if (env('APP_ENV') === 'local') return [];
@@ -372,6 +422,18 @@ class MagentoProductsSyncJob implements ShouldQueue
             $mediaGalleryEntries[] = $imageEntry;
         }
         return $mediaGalleryEntries;
+    }
+
+    private function getCustomAttribute($product, $attributeCode)
+    {
+        if (isset($product['custom_attributes'])) {
+            foreach ($product['custom_attributes'] as $attr) {
+                if ($attr['attribute_code'] == $attributeCode) {
+                    return $attr['value'];
+                }
+            }
+        }
+        return null;
     }
 
     public function getCategoryIds(mixed $store, mixed $productData)
