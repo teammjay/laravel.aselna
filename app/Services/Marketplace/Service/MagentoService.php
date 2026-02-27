@@ -407,7 +407,7 @@ class MagentoService implements MarketplaceServiceInterface
     public function createOrUpdateProduct($productData, $store)
     {
         $sku = $productData['sku'];
-        $magentoAuthService = new MagentoAuthService($store->seller_id, $store->secret_key);
+        $magentoAuthService = new MagentoAuthService($store->seller_id, $store->secret_key, $store->service_url);
 
         $marketPlaceProduct = $magentoAuthService->getProduct($sku);
         if (isset($marketPlaceProduct)) {

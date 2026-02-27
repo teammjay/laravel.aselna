@@ -2,8 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Jobs\FileSystemSyncJob;
-use App\Jobs\MarketplaceCategorySyncJob;
 use App\Jobs\StoreCategorySyncJob;
 use App\Models\DeviceTypes;
 use App\Models\FileSystem;
@@ -11,16 +9,17 @@ use App\Models\ListingTemplate;
 use App\Models\LogisticCenter;
 use App\Models\Manufacturer;
 use App\Models\MessagingAccount;
+use App\Models\PageType;
 use App\Models\ProductType;
 use App\Models\ShippingCarrierService;
+use App\Models\Store;
 use App\Models\StoreCategory;
 use App\Models\StoreCategoryImage;
 use App\Models\StoreDeviceType;
 use App\Models\StoreLogisticCenter;
 use App\Models\StoreManufactureLink;
-use App\Models\StorePage;
-use App\Models\PageType;
 use App\Models\StoreMessageAccount;
+use App\Models\StorePage;
 use App\Models\StorePropertyInfo;
 use App\Models\StorePropertyValues;
 use App\Models\StoreShippingService;
@@ -28,14 +27,12 @@ use App\Models\StoreType;
 use App\Models\SysFile;
 use App\Services\Auth\EbayAuthService;
 use Illuminate\Http\Request;
-use App\Models\Store;
-use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
-use function Ramsey\Uuid\Generator\timestamp;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Auth;
+use function Ramsey\Uuid\Generator\timestamp;
 
 class StoreController extends Controller
 {
@@ -844,14 +841,6 @@ class StoreController extends Controller
             StoreCategorySyncJob::dispatch($store_id);
         }
         return response()->json(['success' => true, 'message' => 'Categories are being copied in the background']);
-    }
-
-    public function syncCategories(Request $request) {
-        $store_id = $request->get('store_id');
-        if($store_id) {
-            MarketplaceCategorySyncJob::dispatch($store_id);
-        }
-        return response()->json(['success' => true, 'message' => 'Categories are being synced in the background']);
     }
 
     // Handle eBay Callback
