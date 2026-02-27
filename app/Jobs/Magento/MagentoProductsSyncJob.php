@@ -6,10 +6,11 @@ use App\Constants\ListingStatus;
 use App\Constants\MarketPlaceUploadStatus;
 use App\Helpers\Common;
 use App\Jobs\Concerns\TrackableJob;
+use App\Constants\WebStorePageType;
 use App\Models\Catalog;
 use App\Models\ListingItem;
 use App\Models\ManageMarketplaceProduct;
-use App\Models\MarketPlaceCategoryMappings;
+use App\Models\StoreNavigationPage;
 use App\Models\ProductImages;
 use App\Models\ProductTitleKeyword;
 use App\Models\ProductType;
@@ -304,7 +305,8 @@ class MagentoProductsSyncJob implements ShouldQueue
             "extension_attributes" => [
                 "stock_item" => [
                     "qty" => 100,
-                    "is_in_stock" => true
+                    "is_in_stock" => true,
+                    "manage_stock" => true
                 ]
             ],
             "custom_attributes" => [
@@ -312,7 +314,7 @@ class MagentoProductsSyncJob implements ShouldQueue
                 ["attribute_code" => "short_description", "value" => $productData->product_description],
                 ["attribute_code" => "description", "value" => $productData->product_description],
                 ["attribute_code" => "bullet_points", "value" => $bulletPointHtml],
-                ["attribute_code" => "category_ids", "value" => implode(',', $categoryIds)]
+                ["attribute_code" => "category_ids", "value" => $categoryIds]
             ],
             "media_gallery_entries" => $mediaGalleryEntries
         ];
@@ -438,20 +440,29 @@ class MagentoProductsSyncJob implements ShouldQueue
 
     public function getCategoryIds(mixed $store, mixed $productData)
     {
-        $categoryIds = MarketPlaceCategoryMappings::where('store_id', $store->id)
-            ->where('name', $productData->productType->name)
-            ->pluck('marketplace_category_id')->toArray();
+        $categoryIds = [];
+        $productTypeId = $productData->product_type;
 
-        $parentCategoryIds = MarketPlaceCategoryMappings::where('store_id', $store->id)
-            ->where('name', $productData->productType->name)
-            ->pluck('marketplace_parent_id')->toArray();
+        while ($productTypeId) {
+            $navigationPage = StoreNavigationPage::where('store_id', $store->id)
+                ->where('page_type', WebStorePageType::PRODUCT_TYPE)
+                ->where('product_type_id', $productTypeId)
+                ->first();
 
-        foreach ($parentCategoryIds as $parentCategoryId) {
-            if ($parentCategoryId && !in_array($parentCategoryId, $categoryIds)) {
-                $categoryIds[] = $parentCategoryId;
+            if ($navigationPage && $navigationPage->page_id) {
+                $categoryIds[] = $navigationPage->page_id;
+            }
+
+            // Move to parent product type to include parent categories
+            $productType = ProductType::find($productTypeId);
+            $productTypeId = $productType ? $productType->parent_id : null;
+
+            // Avoid infinite loop if somehow parent_id points to itself or a root
+            if ($productType && $productType->code == 'cea') {
+                break;
             }
         }
 
-        return $categoryIds;
+        return array_unique($categoryIds);
     }
 }
