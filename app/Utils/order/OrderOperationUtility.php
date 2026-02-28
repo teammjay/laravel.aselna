@@ -97,8 +97,8 @@ class OrderOperationUtility
         }
 
         if (OrderOperationType::isReturn($operationType)) {
-            self::returnReplaceOrder($orderOperation);
-            return ['success' => true, 'message' => ''];
+            $response = self::returnReplaceOrder($orderOperation);
+            return ['success' => $response, 'message' => ''];
         }
 
         if (isset($replacement) && $replacement > 0) {
