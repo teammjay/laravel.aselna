@@ -1,21 +1,20 @@
 <?php
 
-namespace App\Jobs;
+namespace App\Jobs\Magento;
 
 use App\Constants\OrderStatus;
-use App\Models\ListingItem;
+use App\Jobs\Concerns\TrackableJob;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\OrderOperation;
 use App\Models\OrderOperationItem;
 use App\Models\OrderSynchronization;
 use App\Models\Store;
-use App\Services\Marketplace\Service\MagentoService;
 use App\Services\CriticalErrorService;
+use App\Services\Marketplace\Service\MagentoService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
-use App\Jobs\Concerns\TrackableJob;
 
 class FetchMagentoOrderJob implements ShouldQueue
 {

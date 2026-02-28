@@ -542,6 +542,7 @@ class TemuService implements MarketplaceServiceInterface
                     $parentOrder = $porder['parentOrderMap'];
                     $presentOrder = Order::where('order_id', $parentOrder['parentOrderSn'])->first();
                     $shippingInfo = $temuAuthService->getShippingInfo($parentOrder['parentOrderSn']);
+                    Log::info('Shipping Info for Order ' . $parentOrder['parentOrderSn'] . ': ' . json_encode($shippingInfo));
                     if (isset($shippingInfo) && isset($shippingInfo['result'])) {
                         $porder['shippingInfo'] = $shippingInfo['result'];
                     }
@@ -568,7 +569,7 @@ class TemuService implements MarketplaceServiceInterface
                             'order_date' => date('Y-m-d H:i:s', $parentOrder['parentOrderTime']),
                         ]);
                         // TODO Need To implement status change
-                        $statusChange = false;
+                        $statusChange = true;
                     }
 
                     if ($statusChange) {

@@ -53,6 +53,11 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
     public function handle()
     {
         try {
+            Log::info('===== ProcessStoreMessageAccountJob Started =====', [
+                'store_id' => $this->store->id,
+                'store_name' => $this->store->name,
+                'store_type' => $this->store_type
+            ]);
 
             $this->updateTrackingRecord([
                 'status' => 'processing',
@@ -68,6 +73,8 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
             $smtpConfig = $imapConfig = [];
 
             if ($maccount->incoming_account_id != '') {
+                Log::info('Incoming account ID found', ['incoming_account_id' => $maccount->incoming_account_id]);
+
                 if (isset($maccount->incomingAccount)) {
                     $account = $maccount->incomingAccount;
                     $imapConfig = [
@@ -83,16 +90,34 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
 
                     Log::info('Processing Incoming Account ID:' . $maccount->incomingAccount->id);
                     Log::info('Imap Config :' . json_encode($imapConfig));
+                    Log::info('Fetch parameters', [
+                        'filter_date' => $filter_date,
+                        'folder' => $folder,
+                        'fetch_limit' => $maccount->incomingAccount->fetch_limit
+                    ]);
 
                     $emailUtility = new EmailMessageUtility($smtpConfig, $imapConfig);
+                    Log::info('Fetching emails from server...');
                     $receiveEmails = $emailUtility->fetchEmails($store_type, $filter_date, $folder,$maccount->incomingAccount->fetch_limit, $this->store_name);
+                    Log::info('Email fetch completed', ['email_count' => count($receiveEmails ?? [])]);
                     $last_filter_date = $account->filter_from_date;
 
                     if (count($receiveEmails ?? []) > 0) {
-                        foreach ($receiveEmails as $email) {
+                        Log::info('Starting to process emails', ['total_emails' => count($receiveEmails)]);
+
+                        foreach ($receiveEmails as $emailIndex => $email) {
+                            Log::info("Processing email #{$emailIndex}", [
+                                'message_id' => $email['message_id'] ?? 'N/A',
+                                'from' => $email['from'] ?? 'N/A',
+                                'subject' => $email['subject'] ?? 'N/A'
+                            ]);
 
                             /*if(!is_array($email)){ continue;}*/
                             if(isset($email['error'])){
+                                Log::warning("Email has error flag, skipping", [
+                                    'email_index' => $emailIndex,
+                                    'error' => $email['error']
+                                ]);
                                 continue;
                             }
 
@@ -106,6 +131,8 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
                             $ticket_type_code = HdTicketTypeCode::MARKETPLACE_NOTIFICATION;
 
                             if (isset($email['from'])) {
+                                Log::info('Looking up customer by email', ['from_email' => $email['from']]);
+
                                 $customerDetail = Customer::select('customers.*')
                                     ->join('customer_emails as CE', 'CE.customer_id', '=', 'customers.id', 'left')
                                     ->whereLike('customers.email', '%' . $email['from'] . '%')
@@ -114,9 +141,14 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
 
                                 if ($customerDetail) {
                                     $customer_id = $customerDetail->id;
+                                    Log::info('Customer found', ['customer_id' => $customer_id]);
+                                } else {
+                                    Log::info('Customer not found for email', ['from_email' => $email['from']]);
                                 }
                             }
                             $username = NULL;
+
+                            Log::info('Finding related order for email');
                             $orderDetail = $this->findRelatedOrder($email, $store_type);
                             if ($orderDetail) {
                                 $order_id = $orderDetail->order_id;
@@ -124,9 +156,19 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
                                 $store_id = $orderDetail->store_id;
                                 $customer_id = $orderDetail->customer_id ?? (isset($orderDetail->customer) ? $orderDetail->customer->id : NULL);
                                 $order_operation_id = isset($orderDetail->orderOperation) ? $orderDetail->orderOperation->id : NULL;
+
+                                Log::info('Related order found', [
+                                    'order_id' => $order_id,
+                                    'related_order_id' => $related_order_id,
+                                    'customer_id' => $customer_id
+                                ]);
+                            } else {
+                                Log::info('No related order found for this email');
                             }
 
                             if (isset($email['parsedData']) && !empty($email['parsedData'])) {
+                                Log::info('Processing parsed email data', ['parsed_data' => $email['parsedData']]);
+
                                 if (isset($email['parsedData']['purchase_order_number'])) {
                                     $po_no = html_entity_decode($email['parsedData']['purchase_order_number']);
                                 }
@@ -146,10 +188,19 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
                                 if (isset($email['parsedData']['reference_id'])) {
                                     $reference_code = html_entity_decode($email['parsedData']['reference_id']);
                                 }
+
+                                Log::info('Parsed data extracted', [
+                                    'po_no' => $po_no,
+                                    'username' => $username,
+                                    'ticket_type_code' => $ticket_type_code,
+                                    'reference_code' => $reference_code
+                                ]);
                             }
 
 
                             if ($customer_id == NULL) {
+                                Log::info('Creating new customer from email data');
+
                                 $firstname = $lastname = '';
                                 if (isset($email['name'])) {
                                     $nameArr = explode(' ', $email['name']);
@@ -171,6 +222,11 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
 
                                 $customer_id = $customer_detail->id;
 
+                                Log::info('New customer created', [
+                                    'customer_id' => $customer_id,
+                                    'email' => $email['from']
+                                ]);
+
                                 $customerEmailData = [
                                     'customer_id' => $customer_id,
                                     'email_address' => $email['from'],
@@ -180,8 +236,15 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
                                     'email_address' => $email['from']
                                 ], $customerEmailData);
                             } else {
+                                Log::info('Using existing customer', ['customer_id' => $customer_id]);
+
                                 $customerDetail = Customer::findOrFail($customer_id);
                                 if ($customerDetail->email != $email['from']) {
+                                    Log::info('Adding secondary email to customer', [
+                                        'customer_id' => $customer_id,
+                                        'secondary_email' => $email['from']
+                                    ]);
+
                                     $customerEmailData = [
                                         'customer_id' => $customer_id,
                                         'email_address' => $email['from'],
@@ -194,7 +257,20 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
                             }
 
                             $ticket_code = $store->short_code . '-' . $this->getNextTicketNumberForStore($store->id);
+
+                            Log::info('Preparing ticket data', ['ticket_code' => $ticket_code]);
+
                             $ticketTypeDetail = HdTicketType::where('code', $ticket_type_code)->first();
+
+                            if (!$ticketTypeDetail) {
+                                Log::warning('Ticket type not found', ['ticket_type_code' => $ticket_type_code]);
+                            } else {
+                                Log::info('Ticket type found', [
+                                    'ticket_type_id' => $ticketTypeDetail->id,
+                                    'ticket_type_code' => $ticket_type_code
+                                ]);
+                            }
+
                             $ticketData = [
                                 'ticket_type_id' => $ticketTypeDetail->id,
                                 'ticket_email' => trim($email['from']),
@@ -222,7 +298,10 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
 
                             Log::info('Email From : ' . $email['from'] . ' Message ID: ' . $email['message_id']);
                             Log::info(' Reference ID: ' . json_encode($email['references']));
+
                             /*$ticketDetail = Message::where('ticket_email', trim($email['from']))->orWhere('ticket_email', trim($email['reply_to']))->first();*/
+                            Log::info('Searching for existing ticket by message_id and references');
+
                             $query = Message::where('message_id', trim($email['message_id']));
                             if (isset($email['references']) && $email['references'] != '') {
                                 if(is_array($email['references'])){
@@ -239,6 +318,7 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
                             $ticketDetail = $query->first();
 
                             if (!$ticketDetail) {
+                                Log::info('No ticket found in Messages table, checking HdMessage table');
 
                                 $hdQuery = HdMessage::select('ticket_id')
                                     ->where('message_id', trim($email['message_id']));
@@ -258,11 +338,18 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
                                 $hdMessage = $hdQuery->first();
 
                                 if ($hdMessage) {
+                                    Log::info('Found related ticket via HdMessage', ['ticket_id' => $hdMessage->ticket_id]);
                                     $ticketDetail = Message::find($hdMessage->ticket_id);
+                                } else {
+                                    Log::info('No existing ticket found in HdMessage table either');
                                 }
+                            } else {
+                                Log::info('Existing ticket found', ['ticket_id' => $ticketDetail->id]);
                             }
 
                             if ($ticketDetail) {
+                                Log::info('Updating existing ticket', ['ticket_id' => $ticketDetail->id]);
+
                                 if ($order_id) {
                                     $ticketDetail->order_id = $order_id;
                                     $ticketDetail->ticket_type_id = $ticketTypeDetail->id;
@@ -274,10 +361,13 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
 
                                 $hd_ticket = $ticketDetail;
                             } else {
+                                Log::info('Creating new ticket', ['ticket_code' => $ticket_code]);
                                 $hd_ticket = Message::create($ticketData);
+                                Log::info('New ticket created', ['ticket_id' => $hd_ticket->id]);
                             }
 
                             if (isset($hd_ticket->id)) {
+                                Log::info('Processing HD message for ticket', ['ticket_id' => $hd_ticket->id]);
 
                                 $msg = mb_convert_encoding($email['body'], 'UTF-8', 'UTF-8');
                                 $msg = preg_replace('/[^\x00-\x7F]+/', ' ', $msg);
@@ -286,10 +376,13 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
 
                                 if (!empty($email['references'])) {
                                     $threadId = $email['references'][0];
+                                    Log::info('Thread ID set from references', ['thread_id' => $threadId]);
                                 } elseif (isset($email['in_reply_to']) && $email['in_reply_to'] != '') {
                                     $threadId = $email['in_reply_to'];
+                                    Log::info('Thread ID set from in_reply_to', ['thread_id' => $threadId]);
                                 } else {
                                     $threadId = $email['message_id'];
+                                    Log::info('Thread ID set from message_id (new thread)', ['thread_id' => $threadId]);
                                 }
 
                                 $hdMessageData = [
@@ -312,12 +405,22 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
                                     'references' => $email['references'] ?? NULL,
                                 ];
 
+                                Log::info('Creating/updating HD message', [
+                                    'ticket_id' => $hd_ticket->id,
+                                    'message_id' => trim($email['message_id']),
+                                    'thread_id' => $threadId
+                                ]);
+
                                 $hd_message = HDMessage::updateOrCreate([
                                     'ticket_id' => $hd_ticket->id,
                                     'message_id' => trim($email['message_id']),
                                 ], $hdMessageData);
 
+                                Log::info('HD message saved', ['hd_message_id' => $hd_message->id]);
+
                                 if (isset($hd_message->id) && !empty($email['parts'])) {
+                                    Log::info('Processing message parts', ['hd_message_id' => $hd_message->id]);
+
                                     $email['parts']['message_id'] = $hd_message->id;
 
                                     $partmsg = mb_convert_encoding($email['parts']['content'], 'UTF-8', 'UTF-8');
@@ -327,9 +430,16 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
                                     HdMessagePart::updateOrCreate([
                                         'message_id' => $hd_message->id,
                                     ], $email['parts']);
+
+                                    Log::info('Message parts saved');
                                 }
 
                                 if(isset($email['references']) && !empty($email['references']) && is_array($email['references'])){
+                                    Log::info('Processing message references', [
+                                        'reference_count' => count($email['references']),
+                                        'references' => $email['references']
+                                    ]);
+
                                     foreach($email['references'] as $ref){
                                         $refData = [
                                             'ticket_id' => $hd_ticket->id,
@@ -342,17 +452,30 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
                                             'reference' => $ref,
                                         ], $refData);
                                     }
+
+                                    Log::info('Message references saved');
                                 }
 
                                 if (isset($hd_message->id) && !empty($email['attachments'])) {
+                                    Log::info('Processing email attachments', [
+                                        'hd_message_id' => $hd_message->id,
+                                        'attachment_count' => count($email['attachments'])
+                                    ]);
 
                                     if (!empty($email['attachments'])) {
                                         $uniqueAttachments = [];
-                                        foreach ($email['attachments'] as $attachment) {
+                                        foreach ($email['attachments'] as $attachmentIndex => $attachment) {
                                             $fileName = $attachment->getName();
                                             $fileMimeType = $attachment->getMimeType();
                                             $fileSize = $attachment->getSize();
                                             $attachmentID = $attachment->getId();
+
+                                            Log::info("Processing attachment #{$attachmentIndex}", [
+                                                'file_name' => $fileName,
+                                                'mime_type' => $fileMimeType,
+                                                'size' => $fileSize,
+                                                'attachment_id' => $attachmentID
+                                            ]);
 
                                             $key = $fileName . '-' . $fileSize;
 
@@ -360,6 +483,7 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
                                             $savePath = storage_path('app/public/email_attachment/');
                                             if (!file_exists($savePath)) {
                                                 mkdir($savePath, 0755, true);
+                                                Log::info('Created attachment directory', ['path' => $savePath]);
                                             }
 
                                             //$uniqueFileName = uniqid('email_', true) . '.' . $extension;
@@ -368,6 +492,7 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
                                                 if (!in_array($key, $uniqueAttachments)) {
                                                     $uniqueAttachments[] = $key;
 
+                                                    Log::info('Saving attachment to disk', ['file_name' => $fileName]);
                                                     $attachment->save($savePath, $fileName);
 
                                                     $filedata = [
@@ -384,6 +509,8 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
 
                                                     /*$fileDetail = SysFile::create($filedata);*/
                                                     $file_id = $fileDetail->id;
+
+                                                    Log::info('File record created', ['file_id' => $file_id]);
 
                                                     if ($hd_ticket->id && $file_id) {
                                                         $attachementData = [
@@ -402,7 +529,11 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
                                                             'file_id' => $file_id,
                                                         ], $attachementData);
 
+                                                        Log::info('Attachment record saved to database');
+
                                                     }
+                                                } else {
+                                                    Log::info('Skipping duplicate attachment', ['key' => $key]);
                                                 }
 
                                             } catch (\Throwable $e) {
@@ -417,6 +548,8 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
                                                 Log::error('Error saving attachment: ' . $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine());
                                             }
                                         }
+
+                                        Log::info('All attachments processed', ['total_saved' => count($uniqueAttachments)]);
                                     }
                                 }
                             }
@@ -426,24 +559,53 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
                             Log::info('Updating last filter date to: ' . $last_filter_date);
                             $last_filter_datef = \Carbon\Carbon::parse($last_filter_date)->setTimezone('America/New_York');
                             $account->update(['filter_from_date' => $last_filter_datef]);
+                            Log::info('Filter date updated successfully', ['new_filter_date' => $last_filter_datef->toDateTimeString()]);
                         }
 
                     } else {
+                        Log::info('No emails received from server');
+
                         $filterDateObj = \Carbon\Carbon::parse($filter_date, 'America/New_York');
                         $maxDate = $filterDateObj->copy()->addDays(1);
-                        Log::info("Diff " . json_encode(\Carbon\Carbon::now('America/New_York')->diffInDays($filterDateObj, false)));
-                        if (\Carbon\Carbon::now('America/New_York')->diffInDays($filterDateObj, false) < -1) {
+                        $daysDiff = \Carbon\Carbon::now('America/New_York')->diffInDays($filterDateObj, false);
+
+                        Log::info("Diff " . json_encode($daysDiff));
+                        Log::info('Checking if filter date should be incremented', [
+                            'current_filter_date' => $filter_date,
+                            'days_diff' => $daysDiff
+                        ]);
+
+                        if ($daysDiff < -1) {
                             $account->update(['filter_from_date' => $maxDate->toDateString()]);
+                            Log::info('Filter date incremented by 1 day', ['new_filter_date' => $maxDate->toDateString()]);
                         }
                     }
+                } else {
+                    Log::warning('Incoming account not found', ['incoming_account_id' => $maccount->incoming_account_id]);
                 }
+            } else {
+                Log::info('No incoming account ID set for this store message account');
             }
 
             $this->updateTrackingRecord([
                 'status' => 'completed',
                 'finished_at' => now()
             ]);
+
+            Log::info('===== ProcessStoreMessageAccountJob Completed Successfully =====', [
+                'store_id' => $this->store->id,
+                'store_name' => $this->store->name
+            ]);
         } catch (\Throwable $e) {
+
+            Log::error('===== ProcessStoreMessageAccountJob Failed =====', [
+                'store_id' => $this->store->id,
+                'store_name' => $this->store->name,
+                'error_message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
+            ]);
 
             $extraInfo = [
                 'store_id' => $this->store->id
@@ -510,35 +672,67 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
      */
     private function findRelatedOrder(array $email, string $store_type): ?Order
     {
+        Log::info('Starting findRelatedOrder process', [
+            'store_type' => $store_type,
+            'email_from' => $email['from'] ?? 'N/A',
+            'email_subject' => $email['subject'] ?? 'N/A'
+        ]);
+
         // 1. Match by parsed Order ID (High-Confidence)
         if (!empty($email['parsedData']['order_id'])) {
             $order_id = html_entity_decode($email['parsedData']['order_id']);
+            Log::info('Attempting to find order by parsed order_id', ['order_id' => $order_id]);
+
             $order = Order::with('customer', 'orderOperation')->where('order_id', trim($order_id))->first();
             if ($order) {
+                Log::info('Order found by parsed order_id', [
+                    'order_id' => $order->order_id,
+                    'related_order_id' => $order->id
+                ]);
                 return $order;
             }
+            Log::info('No order found by parsed order_id');
         }
 
-        // 2. For Walmart, try regex on body/subject for order ID (High-Confidence)
-        if (strtolower($store_type) === 'walmart') {
-            $text_to_search = $email['subject'] . ' ' . $email['body'];
-            if (preg_match('/\b(\d{13})\b/', $text_to_search, $matches)) {
-                $order = Order::with('customer', 'orderOperation')->where('order_id', $matches[0])->first();
-                if ($order) {
-                    return $order;
-                }
+        $text_to_search = $email['subject'] . ' ' . $email['body'];
+        if (preg_match('/#(\d+)/', $text_to_search, $matches)) {
+            Log::info('Found order/PO number pattern in email', ['number' => $matches[1]]);
+
+            $order = Order::with('customer', 'orderOperation')->where('purchase_order_id', $matches[1])->first();
+            if ($order) {
+                Log::info('Order found by purchase_order_id', [
+                    'purchase_order_id' => $matches[1],
+                    'order_id' => $order->order_id
+                ]);
+                return $order;
             }
+
+            $order = Order::with('customer', 'orderOperation')->where('order_id', $matches[1])->first();
+            if ($order) {
+                Log::info('Order found by order_id from pattern', [
+                    'order_id' => $matches[1]
+                ]);
+                return $order;
+            }
+            Log::info('No order found by pattern matching');
         }
 
         // 3. Match by sender's email address (Medium-Confidence)
         if (!empty($email['from'])) {
+            Log::info('Attempting to find order by buyer email', ['email' => $email['from']]);
+
             $order = Order::with('customer', 'orderOperation')
                 ->where('buyer_email', trim($email['from']))
                 ->orderBy('order_date', 'desc')
                 ->first();
             if ($order) {
+                Log::info('Order found by buyer_email', [
+                    'order_id' => $order->order_id,
+                    'order_date' => $order->order_date
+                ]);
                 return $order;
             }
+            Log::info('No order found by buyer email');
         }
 
         // 4. Match by sender's name (Low-Confidence)
@@ -546,6 +740,11 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
             $nameParts = explode(' ', trim($email['name']));
             $firstName = $nameParts[0];
             $lastName = count($nameParts) > 1 ? end($nameParts) : null;
+
+            Log::info('Attempting to find order by buyer name', [
+                'first_name' => $firstName,
+                'last_name' => $lastName
+            ]);
 
             $query = Order::with('customer', 'orderOperation')
                 ->where('buyer_first_name', 'like', '%' . $firstName . '%')
@@ -557,10 +756,16 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
 
             $order = $query->orderBy('order_date', 'desc')->first();
             if ($order) {
+                Log::info('Order found by buyer name', [
+                    'order_id' => $order->order_id,
+                    'buyer_name' => $order->buyer_first_name . ' ' . $order->buyer_last_name
+                ]);
                 return $order;
             }
+            Log::info('No order found by buyer name');
         }
 
+        Log::info('No related order found using any matching strategy');
         return null;
     }
 }
