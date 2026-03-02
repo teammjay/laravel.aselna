@@ -1232,6 +1232,8 @@ class MessagesController extends Controller
 
             $orderDetail = Order::with('orderItem', 'orderOperation', 'orderOperation.carrier', 'customer', 'store')->where('order_id', $order_id)->orWhere('purchase_order_id', $order_id)->first();
 
+            Log::info('RMA order Detail:'.json_encode($orderDetail));
+
             if ($orderDetail) {
 
                 if (isset($orderDetail->orderOperation)) {
@@ -1244,7 +1246,15 @@ class MessagesController extends Controller
                     }
                     $store = Store::findOrFail($orderDetail->store_id);
 
-                    if($orderOperation->rma_number == '' || $orderOperation->rma_number == null){
+                    $returnOperation = OrderOperation::where('order_id', $orderDetail->id)
+                        ->where('operation_type', OrderOperationType::OrderReturn)
+                        ->first();
+
+                    if ($returnOperation) {
+                        $order_opration_id = $returnOperation->id;
+                        $rma_number = $returnOperation->rma_number;
+                    } else {
+
                         $rmaObject = new RmaNumberGenerator();
                         $rma_number = $rmaObject->generate($store);
                         $clonedOrderOperation = [
@@ -1296,11 +1306,7 @@ class MessagesController extends Controller
                                 ], $newOrderItem);
                             }
                         }
-                    }else{
-                        $order_opration_id = $orderOperation->id;
-                        $rma_number = $orderOperation->rma_number;
                     }
-
 
                     $orderOperations = OrderOperation::with('order', 'order.customer', 'store', 'store.storeType','carrier')->where('id', $order_opration_id)->first();
 
@@ -1315,8 +1321,6 @@ class MessagesController extends Controller
                             'message' => $successRes['message'] ?? 'Something went wrong with API. Please try again!'
                         ]);
                     }
-
-
 
                     $template_code = $template_id = '';
                     if($label_generation == 1){
@@ -1387,13 +1391,13 @@ class MessagesController extends Controller
                 }
             }
 
-            DB::commit();
+            DB::rollBack();
             return response()->json([
                 'success' => false
             ]);
 
         }catch (\Exception $exception) {
-            DB::commit();
+            DB::rollBack();
             return response()->json([
                 'success' => false,
                 'message' => $exception->getMessage()
@@ -2166,7 +2170,7 @@ class MessagesController extends Controller
                 $imageUrl = asset('storage/labels/' . $imageName);
 
                 $files[] = [
-                    'image_name'  => $file->getClientOriginalName(),
+                    'image_name'  => $imageName,
                     'image_url'   => $imageUrl,
                     'imagesPath'  => storage_path('app/public/labels/' . $imageName)
                 ];
