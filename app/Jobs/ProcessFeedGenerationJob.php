@@ -723,7 +723,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                     $upcCode = $listitem->sku;
                                 }*/
 
-                                if(isset($this->storeDetail->include_upc_in_feed) && $this->storeDetail->include_upc_in_feed == 1){
+                                if(isset($this->storeDetail->include_upc_in_feed) && $this->storeDetail->include_upc_in_feed != 1){
                                     $upcCode = $listitem->sku;
                                 }
                                 fputcsv($this->fileHandle, [
