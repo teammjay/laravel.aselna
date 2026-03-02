@@ -376,7 +376,7 @@ class SyncAllOrderStatusJob implements ShouldQueue
                                             $temuOrder['shippingInfo'] = $shippingInfo['result'];
                                         }
                                         OrderUtility::mapTemuOrders($order, $temuOrder, $store);
-                                        $order->order_status = OrderStatus::Acknowledged;
+                                        $order->order_status = OrderStatus::Synchronizing;
                                         $operation->status = OrderOperationStatus::Created;
                                     }
                                     break;
