@@ -104,13 +104,13 @@ class EbayEmailParser extends ReceivedMessageParser
 
         if($lines) {
             foreach ($lines as $line) {
-                if (str_starts_with(trim($line), self::PREFIXES['customer_name'])) {
+                if (stripos($line, self::PREFIXES['customer_name']) === 0) {
                     $this->customer_name = trim(substr(trim($line), strlen(self::PREFIXES['customer_name'])));
                     $this->addEntity($this->customer_name, 'customer_name');
-                }elseif (str_starts_with(trim($line), self::PREFIXES['customer_order_number'])) {
+                }elseif (stripos($line, self::PREFIXES['customer_order_number']) === 0) {
                     $this->customer_order_number = trim(substr(trim($line), strlen(self::PREFIXES['customer_order_number'])));
                     $this->addEntity($this->customer_order_number, 'order_id');
-                } elseif (str_starts_with(trim($line), self::PREFIXES['item_id'])) {
+                } elseif (stripos($line, self::PREFIXES['item_id']) === 0) {
                     $this->item_id = trim(substr(trim($line), strlen(self::PREFIXES['item_id'])));
                     $this->addEntity($this->item_id, 'item_id');
                 } elseif ($messageStarted) {

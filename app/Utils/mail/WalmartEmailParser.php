@@ -234,10 +234,10 @@ class WalmartEmailParser extends ReceivedMessageParser
         
 
         foreach ($lines as $line) {
-            if (str_starts_with(trim($line), self::PREFIXES['customer_name'])) {
+            if (stripos($line, self::PREFIXES['customer_name']) === 0) {
                 $this->customer_name = trim(substr(trim($line), strlen(self::PREFIXES['customer_name'])));
                 $this->addEntity($this->customer_name, 'customer_name');
-            }elseif (stripos($line, self::PREFIXES['customer_name']) === 0) {
+            }elseif (stripos($line, self::PREFIXES['customer_order_number']) === 0) {
                 $this->customer_order_number = trim(substr(trim($line), strlen(self::PREFIXES['customer_order_number'])));
                 $this->addEntity($this->customer_order_number, 'order_id');
             }elseif (stripos($line, self::PREFIXES['purchase_order_number']) === 0) {
