@@ -758,7 +758,7 @@ class OrderOperationUtility
             }
         }
 
-        return false;
+        return true;
     }
 
     private static function refundOrder($orderOperation)
