@@ -12,6 +12,7 @@ use App\Services\Auth\ShopifyAuthService;
 use App\Services\Auth\TemuAuthService;
 use App\Services\Auth\WalmartAuthService;
 use App\Services\CriticalErrorService;
+use App\Utils\order\OrderUtility;
 use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -358,7 +359,6 @@ class SyncAllOrderStatusJob implements ShouldQueue
                                     $operation->status = OrderOperationStatus::Canceled;
                                     break;
                                 case 1;
-                                case 2;
                                     $order->order_status = OrderStatus::Pending;
                                     break;
                                 case 41;
@@ -368,6 +368,17 @@ class SyncAllOrderStatusJob implements ShouldQueue
                                 case 5:
                                     $order->order_status = OrderStatus::Shipped;
                                     $operation->status = OrderOperationStatus::Delivered;
+                                    break;
+                                case 2:
+                                    $shippingInfo = $temuAuthService->getShippingInfo($temuOrder['parentOrderMap']['parentOrderSn']);
+                                    if ($shippingInfo['success'] === true) {
+                                        if (isset($shippingInfo) && isset($shippingInfo['result'])) {
+                                            $temuOrder['shippingInfo'] = $shippingInfo['result'];
+                                        }
+                                        OrderUtility::mapTemuOrders($order, $temuOrder, $store);
+                                        $order->order_status = OrderStatus::Synchronizing;
+                                        $operation->status = OrderOperationStatus::Created;
+                                    }
                                     break;
                             }
                         }
