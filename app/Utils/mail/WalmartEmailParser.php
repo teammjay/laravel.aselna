@@ -221,6 +221,7 @@ class WalmartEmailParser extends ReceivedMessageParser
 
     protected function parseCustomerMessage($text)
     {
+        $text = str_replace(["\r\n", "\r"], "\n", $text);
         $lines = array_filter(array_map('trim', explode("\n", $text)));
         $message = [];
         $itemTitle = [];
@@ -236,26 +237,26 @@ class WalmartEmailParser extends ReceivedMessageParser
             if (str_starts_with(trim($line), self::PREFIXES['customer_name'])) {
                 $this->customer_name = trim(substr(trim($line), strlen(self::PREFIXES['customer_name'])));
                 $this->addEntity($this->customer_name, 'customer_name');
-            }elseif (str_starts_with(trim($line), self::PREFIXES['customer_order_number'])) {
+            }elseif (stripos($line, self::PREFIXES['customer_name']) === 0) {
                 $this->customer_order_number = trim(substr(trim($line), strlen(self::PREFIXES['customer_order_number'])));
                 $this->addEntity($this->customer_order_number, 'order_id');
-            }elseif (str_starts_with(trim($line), self::PREFIXES['purchase_order_number'])) {
+            }elseif (stripos($line, self::PREFIXES['purchase_order_number']) === 0) {
                 $this->purchase_order_number = trim(substr(trim($line), strlen(self::PREFIXES['purchase_order_number'])));
                 $this->addEntity($this->purchase_order_number, 'purchase_order_number');
-            } elseif (str_starts_with(trim($line), self::PREFIXES['item_id'])) {
+            } elseif (stripos($line, self::PREFIXES['item_id']) === 0) {
                 $this->item_id = trim(substr(trim($line), strlen(self::PREFIXES['item_id'])));
                 $this->addEntity($this->item_id, 'item_id');
-            } elseif (str_starts_with(trim($line), self::PREFIXES['item_title'])) {
+            } elseif (stripos($line, self::PREFIXES['item_title']) === 0) {
                 $this->item_title = trim(substr(trim($line), strlen(self::PREFIXES['item_title'])));
                 $itemTitle[] = $this->item_title;
                 $this->addEntity($this->item_title, 'item_title');
-            } elseif (str_starts_with(trim($line), self::PREFIXES['message'])) {
+            } elseif (stripos($line, self::PREFIXES['message']) === 0) {
                 $messageStarted = true;
                 $this->item_title = implode(" ", $itemTitle);
                 $this->addEntity($this->item_title, 'item_title');
-            } elseif (str_starts_with(trim($line), self::PREFIXES['note'])) {
+            } elseif (stripos($line, self::PREFIXES['note']) === 0) {
                 $messageStarted = false;
-            } elseif (str_starts_with(trim($line), self::PREFIXES['ref_id'])) {
+            } elseif (stripos($line, self::PREFIXES['ref_id']) === 0) {
                 $this->reference_id = trim(substr(trim($line), strlen(self::PREFIXES['ref_id'])));
                 $this->addEntity($this->reference_id, 'ref_id');
             } elseif ($messageStarted) {

@@ -107,7 +107,7 @@ class EbayEmailParser extends ReceivedMessageParser
                 if (str_starts_with(trim($line), self::PREFIXES['customer_name'])) {
                     $this->customer_name = trim(substr(trim($line), strlen(self::PREFIXES['customer_name'])));
                     $this->addEntity($this->customer_name, 'customer_name');
-                } elseif (str_starts_with(trim($line), self::PREFIXES['customer_order_number'])) {
+                }elseif (str_starts_with(trim($line), self::PREFIXES['customer_order_number'])) {
                     $this->customer_order_number = trim(substr(trim($line), strlen(self::PREFIXES['customer_order_number'])));
                     $this->addEntity($this->customer_order_number, 'order_id');
                 } elseif (str_starts_with(trim($line), self::PREFIXES['item_id'])) {
@@ -122,7 +122,13 @@ class EbayEmailParser extends ReceivedMessageParser
             }
         }
 
-        if (preg_match('/\b\d{2}-\d{5}-\d{5}\b/', $text, $matches)){
+        if (preg_match('/Order number:\s*([\r\n]+)?\s*(\d{2}-\d{5}-\d{5})/i', $text, $matches)) {
+            $orderId = trim($matches[2]);
+            $this->addEntity($orderId, 'order_id');
+        }else if (preg_match('/Order number:\s*[\r\n]+([\d]{2}-[\d]{5}-[\d]{5})/i', $text, $matches)) {
+            $orderId = trim($matches[1]);
+            $this->addEntity($orderId, 'order_id');
+        }else if (preg_match('/\b\d{2}-\d{5}-\d{5}\b/', $text, $matches)){
             $orderId = $matches[0];
             ///echo $orderId;
             $this->addEntity(trim($orderId), 'order_id');
