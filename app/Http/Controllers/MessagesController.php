@@ -1232,6 +1232,8 @@ class MessagesController extends Controller
 
             $orderDetail = Order::with('orderItem', 'orderOperation', 'orderOperation.carrier', 'customer', 'store')->where('order_id', $order_id)->orWhere('purchase_order_id', $order_id)->first();
 
+            Log::info('RMA order Detail:'.json_encode($orderDetail));
+
             if ($orderDetail) {
 
                 if (isset($orderDetail->orderOperation)) {
