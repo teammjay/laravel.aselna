@@ -723,6 +723,7 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
 
             $order = Order::with('customer', 'orderOperation')
                 ->where('buyer_email', trim($email['from']))
+                ->whereNotNull('purchase_order_id')
                 ->orderBy('order_date', 'desc')
                 ->first();
             if ($order) {
@@ -754,6 +755,7 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
                 $query->where('buyer_last_name', 'like', '%' . $lastName . '%');
             }
 
+            $query->whereNotNull('purchase_order_id');
             $order = $query->orderBy('order_date', 'desc')->first();
             if ($order) {
                 Log::info('Order found by buyer name', [
