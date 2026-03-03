@@ -92,6 +92,11 @@ class WalmartListingItemSyncJob implements ShouldQueue
                 }
             });
 
+        $this->updateTrackingRecord([
+            'status' => 'completed',
+            'finished_at' => now()
+        ]);
+
         /*foreach ($walmart_store_ids as $storeId) {
             $store = Store::find($storeId);
 
