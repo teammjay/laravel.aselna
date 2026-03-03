@@ -95,6 +95,11 @@ class ExistingListingItemSyncJob implements ShouldQueue
                     }
                 }
             });
+
+        $this->updateTrackingRecord([
+            'status' => 'completed',
+            'finished_at' => now()
+        ]);
     }
 
     private function syncListingItems($store_id, $items, $marketPlaceId)
