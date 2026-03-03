@@ -50,6 +50,11 @@ class TransactionStatusCheckJob implements ShouldQueue
                 $this->checkTransactionStatus($transactions);
             });
 
+        $this->updateTrackingRecord([
+            'status' => 'completed',
+            'finished_at' => now()
+        ]);
+
     }
 
     /**
