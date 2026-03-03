@@ -67,7 +67,7 @@ class OrderSyncStatus
 
     public static function getOrderSyncStatusName($orderStatusId)
     {
-        return self::names[$orderStatusId];
+        return self::names[$orderStatusId] ?? '';
     }
 
     // create a function to get id from name
