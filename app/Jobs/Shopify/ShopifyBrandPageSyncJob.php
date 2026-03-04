@@ -458,7 +458,7 @@ class ShopifyBrandPageSyncJob implements ShouldQueue
                                 [
                                     'store_id' => $this->store_id,
                                     'page_type' => WebStorePageType::PRODUCT_TYPE,
-                                    'product_type_id' => $productType->id,
+                                    'url_path' => $handle,
                                 ],
                                 [
                                     'store_id' => $this->store_id,
