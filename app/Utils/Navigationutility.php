@@ -213,8 +213,9 @@ class Navigationutility
                 break;
 
             case WebStorePageType::BRAND_DEVICE_PRODUCT_TYPES:
-                $productTypes = ProductType::whereNull('parent_id')->whereNot('code','cea')
-                    ->whereNotNull('sort_order')->orderBy('sort_order', 'asc')->get();
+                $productTypes = ProductType::whereIn('parent_id', function ($subquery) {
+                    $subquery->select('id')->from('product_type')->where('code', 'cea');
+                })->whereNotNull('sort_order')->orderBy('sort_order', 'asc')->get();
 
                 $links = StoreNavigationPage::where('store_id', $store_id)
                     ->where('page_type', WebStorePageType::PRODUCT_TYPE)
