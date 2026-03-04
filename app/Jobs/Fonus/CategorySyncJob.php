@@ -101,7 +101,8 @@ class CategorySyncJob implements ShouldQueue
 
             ProductType::updateOrCreate(
                 [
-                    'code' => $fonusCategory->category_id
+                    'code' => $fonusCategory->category_id,
+                    'parent_id' => null
                 ],
                 [
                     'name' => $fonusCategory->category,
