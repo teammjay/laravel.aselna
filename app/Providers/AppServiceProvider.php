@@ -4,6 +4,8 @@ namespace App\Providers;
 
 
 use App\Models\JobStatus;
+use App\Models\HdTicketLabel;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Schema;
@@ -20,6 +22,7 @@ use Opcodes\LogViewer\LogFolder;
 use Illuminate\Support\Facades\Gate;
 use App\Jobs\Concerns\TrackableJob;
 use Illuminate\Support\Facades\Log;
+use JeroenNoten\LaravelAdminLte\Events\BuildingMenu;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -38,6 +41,25 @@ class AppServiceProvider extends ServiceProvider
     {
         //
         Schema::defaultStringLength(225);
+
+        // Dynamic menu for HD Ticket Labels (Tags)
+        Event::listen(BuildingMenu::class, function (BuildingMenu $event) {
+            try {
+                // Get all ticket labels from database
+                $ticketLabels = HdTicketLabel::all();
+
+                // Add each ticket label to the Tags submenu
+                foreach ($ticketLabels as $label) {
+                    $event->menu->addIn('tags_menu', [
+                        'text' => $label->name,
+                        'url' => '/messages/label/' . $label->id,
+                        'icon' => 'fa fa-fw fa-tag',
+                    ]);
+                }
+            } catch (\Exception $e) {
+                Log::error('Error loading ticket labels for menu: ' . $e->getMessage());
+            }
+        });
 
         LogViewer::auth(function ($request) {
             return $request->user()

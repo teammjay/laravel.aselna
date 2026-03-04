@@ -357,13 +357,10 @@ return [
                 ],
                 [
                     'text' => 'Tags',
+                    'key' => 'tags_menu',
                     'icon' => 'fa fa-fw fa-tag',
                     'submenu' => [
-                        [
-                            'text' => 'As Hakan',
-                            'url' => '/messages/label/35e3767e-7cb9-4c27-a4b1-5d0e0cadb82f',
-                            'icon' => 'fa fa-fw fa-exclamation-circle',
-                        ],
+                        // Tags will be dynamically loaded from HdTicketLabel in AppServiceProvider
                     ],
                 ],
                 [
