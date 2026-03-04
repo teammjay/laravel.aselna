@@ -360,8 +360,9 @@ class ShopifyBrandPageSyncJob implements ShouldQueue
                     break;
                 case WebStorePageType::PRODUCT_TYPE:
                     $this->getPuplications();
-                    $productTypes = ProductType::whereNull('parent_id')->whereNot('code','cea')
-                        ->whereNotNull('sort_order')->orderBy('sort_order', 'asc')->get();
+                    $productTypes = ProductType::whereIn('parent_id', function ($subquery) {
+                        $subquery->select('id')->from('product_type')->where('code', 'cea');
+                    })->whereNotNull('sort_order')->orderBy('sort_order', 'asc')->get();
 
                     Log::info("Product Types Count :: " . count($productTypes));
                     foreach ($productTypes as $productType) {
@@ -457,7 +458,7 @@ class ShopifyBrandPageSyncJob implements ShouldQueue
                                 [
                                     'store_id' => $this->store_id,
                                     'page_type' => WebStorePageType::PRODUCT_TYPE,
-                                    'product_type_id' => $productType->id,
+                                    'url_path' => $handle,
                                 ],
                                 [
                                     'store_id' => $this->store_id,
