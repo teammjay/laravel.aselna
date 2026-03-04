@@ -239,6 +239,9 @@ class Navigationutility
 
                 $productTypeMap = [];
                 foreach ($productTypeMapQuery as $ptm) {
+                    if ($ptm->product_count <= 0) {
+                        continue;
+                    }
                     $productTypeMap[$ptm->parent_id] = $ptm->product_count;
                 }
 
