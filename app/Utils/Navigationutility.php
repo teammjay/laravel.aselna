@@ -213,13 +213,12 @@ class Navigationutility
                 break;
 
             case WebStorePageType::BRAND_DEVICE_PRODUCT_TYPES:
-//                $productTypes = ProductType::whereIn('parent_id', function ($subquery) {
-//                    $subquery->select('id')->from('product_type')->where('code', 'cea');
-//                })->whereNotNull('sort_order')->orderBy('sort_order', 'asc')->get();
+                $productTypes = ProductType::whereNull('parent_id')->whereNot('code','cea')
+                    ->whereNotNull('sort_order')->orderBy('sort_order', 'asc')->get();
 
                 $links = StoreNavigationPage::where('store_id', $store_id)
                     ->where('page_type', WebStorePageType::PRODUCT_TYPE)
-//                    ->whereIn('product_type_id', $productTypes->pluck('id'))
+                    ->whereIn('product_type_id', $productTypes->pluck('id'))
                     ->get();
 
                 $deviceCollectionPage = StoreNavigationPage::where('store_id', $store_id)
@@ -240,6 +239,9 @@ class Navigationutility
 
                 $productTypeMap = [];
                 foreach ($productTypeMapQuery as $ptm) {
+                    if ($ptm->product_count <= 0) {
+                        continue;
+                    }
                     $productTypeMap[$ptm->parent_id] = $ptm->product_count;
                 }
 
