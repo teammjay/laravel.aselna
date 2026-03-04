@@ -1235,7 +1235,7 @@
                                     <td>{{ $simage->category->name }}</td>
                                     <td>
                                         @if(!empty($simage->imageObj))
-                                            <img class="mainImage" src="{{ asset('storage/store_category_images/'. $simage->imageObj->name) }}" alt="{{ $simage->imageObj->name }}" width="70" height="70">
+                                            <img class="mainImage" src="{{ asset('storage/store_category_images/'. $simage->imageObj->name) }}" alt="{{ $simage->imageObj->name }}" width="70" height="70" loading="lazy">
                                         @else
                                             N/A
                                         @endif
