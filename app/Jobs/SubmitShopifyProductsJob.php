@@ -1013,7 +1013,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
         }
         $descriptionHtml .= '</div>';
 
-        if (isset($productData->productDescription)) {
+        if (isset($productData->product_description)) {
             $descriptionHtml .= '<div class="product-desc">';
             $descriptionHtml .= '<h2>Product Description</h2>';
             $descriptionHtml .= '<p>' . $productData->product_description . '</p>';
