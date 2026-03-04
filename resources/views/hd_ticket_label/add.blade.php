@@ -42,7 +42,7 @@
                                 <option value=""></option>
                                 @if(count($ticket_labels ?? []) > 0)
                                     @foreach($ticket_labels as $lable)
-                                        <option value="{{ $lable->id }}" {{ (isset($hd_ticket_label['parent_id']) && $lable->id == $hd_ticket_label['parent_id']) ? 'selected' : ''}}>{{ $stype->name }}</option>
+                                        <option value="{{ $lable->id }}" {{ (isset($hd_ticket_label['parent_id']) && $lable->id == $hd_ticket_label['parent_id']) ? 'selected' : ''}}>{{ $lable->name }}</option>
                                     @endforeach
                                 @endif
 
