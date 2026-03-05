@@ -122,7 +122,7 @@ class ProductSyncJob implements ShouldQueue
             Log::error('ProductImagesSyncJob: ' . $e->getMessage());
         }
 
-        Catalog::updateOrCreate(
+        $addUpdateProduct = Catalog::updateOrCreate(
             ['product_code' => $product->product_id],
             [
                 'product_code' => $product->product_id,
@@ -167,7 +167,7 @@ class ProductSyncJob implements ShouldQueue
             ]
         );
 
-        $this->syncProductKeyFeatures($product, $alreadyExists);
+        $this->syncProductKeyFeatures($product, $addUpdateProduct);
     }
 
     private function syncProductKeyFeatures($product,$aselnaProduct)
