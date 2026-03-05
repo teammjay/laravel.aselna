@@ -486,11 +486,6 @@ class SubmitShopifyProductsJob implements ShouldQueue
             $inventoryItemId = $shopifyAuthService->getInventoryItemId($variantId);
             $locationId = $shopifyAuthService->getLocationId();
 
-            if (!$inventoryItemId || !$locationId) {
-                Log::info('Invalid inventory item or location for variant ' . $variantId . '"]');
-                return false;
-            }
-
             $this->handleMediaImages($response['data']['productSet']['product'], $listingItem);
 
             $listingItem->update([
@@ -499,14 +494,16 @@ class SubmitShopifyProductsJob implements ShouldQueue
                 'sku' => $sku
             ]);
 
-            // Prepare inventory update array
-            $inventoryUpdates['locationId'] = $locationId;
-            $inventoryUpdates['changes'] = [
-                'inventoryItemId' => $inventoryItemId,
-                'locationId' => $locationId,
-                'delta' => 20
-            ];
-            $shopifyAuthService->updateInventory($inventoryUpdates);
+            if (isset($inventoryItemId) && isset($locationId)) {
+                // Prepare inventory update array
+                $inventoryUpdates['locationId'] = $locationId;
+                $inventoryUpdates['changes'] = [
+                    'inventoryItemId' => $inventoryItemId,
+                    'locationId' => $locationId,
+                    'delta' => 20
+                ];
+                $shopifyAuthService->updateInventory($inventoryUpdates);
+            }
             $shopifyAuthService->productPublish($productId, $this->publications);
 
             if (isset($response['data']) && empty($response['data']['userErrors'])) {
