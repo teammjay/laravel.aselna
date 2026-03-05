@@ -1427,6 +1427,7 @@ class ShipmentsController extends Controller
                 if($status == 2){
                     $updateRecord['status'] = OrderOperationStatus::Created;
                 }
+                OrderOperation::where('is_merged', true)->where('merged_with', $selected_shipment_id)->update($updateRecord);
                 $orderOperation->update($updateRecord);
             }
             return response()->json([
