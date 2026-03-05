@@ -60,7 +60,6 @@ class ExistingListingItemSyncJob implements ShouldQueue
             ->join('listing_item', 'listing_item_link.item_id', '=', 'listing_item.id')
             ->join('listing', 'listing_item_link.listing_id', '=', 'listing.id')
             ->whereIn('listing.store_id', $ebay_store_ids)
-            ->whereNot('listing_item.status', ListingStatus::Deleted)
             ->whereNotNull('listing_item.store_sku')
             ->orderBy('listing_item.created_at','asc')
             ->chunk(100, function ($listingItemLinks) {
@@ -74,7 +73,7 @@ class ExistingListingItemSyncJob implements ShouldQueue
                     $itemDetail = $listingItemLink->listingItem;
 
                     if ($itemDetail->created_at){
-                        $minDate = $minDate == null ? $itemDetail->created_at : ($itemDetail->created_at < $minDate ? $itemDetail->created_at : $minDate);
+                        $minDate = $minDate == null ? $itemDetail->created_at->subDays(1) : ($itemDetail->created_at < $minDate ? $itemDetail->created_at : $minDate);
                     }
 
                     if (isset($minDate) && $itemDetail->created_at && $minDate->diffInDays($itemDetail->created_at) > 114) {
@@ -138,6 +137,10 @@ class ExistingListingItemSyncJob implements ShouldQueue
                             if (isset($item['ItemID'])) {
                                 $itemSkuArray[] = $item['SKU'];
                                 Log::info("SKU Active: " . $item['SKU']);
+                                $itemDetail->update([
+                                    'status' => ListingStatus::Active,
+                                    'sync_status' => ListingSyncStatus::Synchronized,
+                                ]);
                             }
                         } else {
                             Log::info("SKU Missing: " . $item['SKU']);
