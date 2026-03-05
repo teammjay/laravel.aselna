@@ -213,9 +213,15 @@ class Navigationutility
                 break;
 
             case WebStorePageType::BRAND_DEVICE_PRODUCT_TYPES:
+                $productTypes = ProductType::whereIn('parent_id', function ($subquery) {
+                    $subquery->select('id')->from('product_type')->where('code', 'cea');
+                })->whereNotNull('sort_order')->orderBy('sort_order', 'asc')->get();
+
                 $links = StoreNavigationPage::where('store_id', $store_id)
                     ->where('page_type', WebStorePageType::PRODUCT_TYPE)
+                    ->whereIn('product_type_id', $productTypes->pluck('id'))
                     ->get();
+
                 $deviceCollectionPage = StoreNavigationPage::where('store_id', $store_id)
                     ->where('page_type', WebStorePageType::DEVICE)
                     ->where('device_id', $request->device_id)
@@ -223,17 +229,24 @@ class Navigationutility
 
                 $productTypeMapQuery = DeviceInterface::join('product_interface', 'device_interface.interface_id', '=', 'product_interface.interface_id')
                     ->join('products', 'products.product_id', '=', 'product_interface.product_id')
-                    ->join('product_type', 'product_type.id', '=', 'products.product_type')
+                    ->join('product_type as child_pt', 'child_pt.id', '=', 'products.product_type')
+                    ->leftJoin('product_type as parent_pt', 'parent_pt.id', '=', 'child_pt.parent_id')
                     ->join('device', 'device_interface.device_id', '=', 'device.id')
                     ->where('device.status', 'active')
                     ->where('products.product_status', 'active')
                     ->where('device_interface.device_id', $request->device_id)
-                    ->groupBy('product_type.parent_id')
-                    ->select('product_type.parent_id', \DB::raw('count(products.product_id) as product_count'))
+                    ->groupBy(\DB::raw('COALESCE(parent_pt.id, child_pt.id)'))
+                    ->select(
+                        \DB::raw('COALESCE(parent_pt.id, child_pt.id) as parent_id'),
+                        \DB::raw('COUNT(products.product_id) as product_count')
+                    )
                     ->get();
 
                 $productTypeMap = [];
                 foreach ($productTypeMapQuery as $ptm) {
+                    if ($ptm->product_count <= 0) {
+                        continue;
+                    }
                     $productTypeMap[$ptm->parent_id] = $ptm->product_count;
                 }
 
@@ -243,7 +256,7 @@ class Navigationutility
                 foreach ($links as $link) {
                     // skip product types which do not have products for this device
                     if (!array_key_exists($link->product_type_id, $productTypeMap)) {
-                        continue;
+                        //continue;
                     }
                     $finalLinkArray['popular_link'][] = [
                         'id' => $link->id,

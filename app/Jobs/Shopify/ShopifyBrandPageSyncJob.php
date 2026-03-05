@@ -458,7 +458,7 @@ class ShopifyBrandPageSyncJob implements ShouldQueue
                                 [
                                     'store_id' => $this->store_id,
                                     'page_type' => WebStorePageType::PRODUCT_TYPE,
-                                    'product_type_id' => $productType->id,
+                                    'url_path' => $handle,
                                 ],
                                 [
                                     'store_id' => $this->store_id,
@@ -474,9 +474,8 @@ class ShopifyBrandPageSyncJob implements ShouldQueue
                     }
                     break;
                 case WebStorePageType::PRODUCT_TYPE_BRANDS:
-                    $productTypes = ProductType::whereIn('parent_id', function ($subquery) {
-                        $subquery->select('id')->from('product_type')->where('code', 'cea');
-                    })->whereNotNull('sort_order')->orderBy('sort_order', 'asc')->get();
+                    $productTypes = ProductType::whereNull('parent_id')->whereNot('code','cea')
+                        ->whereNotNull('sort_order')->orderBy('sort_order', 'asc')->get();
 
                     foreach ($productTypes as $productType) {
                         $request['product_type'] = $productType->id;
