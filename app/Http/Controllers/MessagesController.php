@@ -72,6 +72,11 @@ class MessagesController extends Controller
         if($request->has('status') && $request->status != ''){
             $query->where('status',$request->status);
         }
+
+        if ($request->has('label') && $request->status != '') {
+            $hdTickets = HdTicketLabelLink::where('hd_ticket_label_id',$request->label)->pluck('hd_ticket_id')->toArray();
+            $query->whereIn('id', $hdTickets);
+        }
         // Filter by ticket email
         QueryFilters::applyFilter($query, $request, 'ticket_email', 'sender_email_operator', 'sender_email');
 
