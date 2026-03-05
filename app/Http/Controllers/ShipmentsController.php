@@ -261,6 +261,16 @@ class ShipmentsController extends Controller
                     $status = 1;
                     $status_message = $order->sync_message;
                 }
+                $mergedOperations = OrderOperation::select('sync_message')->where('merge_with', $order->id)->get();
+                if (isset($mergedOperations)) {
+                    foreach ($mergedOperations as $operation) {
+                        if ($operation->sync_message != NULL) {
+                            $status = 1;
+                            $status_message = $operation->sync_message;
+                            break; // if any of the merged operation has sync message, we will show that message in shipment list
+                        }
+                    }
+                }
                 if ($order->status == OrderOperationStatus::CanceledRequested) {
                     $status = 2;
                     $status_message = 'Customer Requested Cancellation for this order';
