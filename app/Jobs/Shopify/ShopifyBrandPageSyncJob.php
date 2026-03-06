@@ -21,6 +21,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Mockery\Exception;
 
 class ShopifyBrandPageSyncJob implements ShouldQueue
 {
@@ -591,6 +592,7 @@ class ShopifyBrandPageSyncJob implements ShouldQueue
 
     private function getDeviceMetafields(mixed $device)
     {
+        Log::info('Metafield Addition start for device :: ' . $device->name);
         $metafields = [];
         $metafields[] = [
             'namespace' => 'global',
@@ -603,6 +605,13 @@ class ShopifyBrandPageSyncJob implements ShouldQueue
             'namespace' => 'global',
             'key' => 'device_brand_name',
             'value' => $device->brand->name,
+            'type' => 'single_line_text_field'
+        ];
+
+        $metafields[] = [
+            'namespace' => 'global',
+            'key' => 'device_code',
+            'value' => $device->code,
             'type' => 'single_line_text_field'
         ];
 
@@ -619,16 +628,125 @@ class ShopifyBrandPageSyncJob implements ShouldQueue
             'type' => 'single_line_text_field'
         ];
 
-        //device_id
         $metafields[] = [
             'namespace' => 'global',
             'key' => 'device_id',
             'value' => (string)$device->id,
             'type' => 'single_line_text_field'
         ];
+        //Need to create the above json and save in metafield with namespace global and key device_categories_json
+        $productTypes = ProductType::whereIn('parent_id', function ($subquery) {
+            $subquery->select('id')->from('product_type')->where('code', 'cea');
+        })->whereNotNull('sort_order')->orderBy('sort_order', 'asc')->get();
 
-        // remainging device_type,device_code,device_sub_type, description_tag,title_tag,device_image_url,device_categories_json,interfaces.
+        $productTypeMap = $this->getProductTypeMap($device);
+        $interfaces = $this->getInterfacesForDevice($device);
+
+        foreach ($productTypes as $productType) {
+            if (!key_exists($productType->id, $productTypeMap)) continue;
+            $page = StoreNavigationPage::where('store_id', $this->store_id)
+                ->where('page_type', WebStorePageType::PRODUCT_TYPE)
+                ->where('product_type_id', $productType->id)
+                ->first();
+
+            $shildrenProductTypes = ProductType::where('parent_id', $productType->id)->orderBy('sort_order', 'asc')->get();
+            $subCategories = [];
+            foreach ($shildrenProductTypes as $childproductType) {
+                if (!key_exists($childproductType->id, $productTypeMap)) continue;
+                $subCategories[] = [
+                    'name' => $childproductType->name,
+                    'tag' => $this->generateShopifyHandle($childproductType->name)
+                ];
+            }
+
+            $categories[] = [
+                'name' => $productType->name,
+                'imageUrl' => $page->store_image_url ?? '',
+                'tag' => $page->url_path ?? '',
+                'sortOrder' => $productType->sort_order,
+                'subCategories' => $subCategories
+            ];
+        }
+
+        $metafields[] = [
+            'namespace' => 'global',
+            'key' => 'device_categories_json',
+            'value' => json_encode($categories),
+            'type' => 'json'
+        ];
+
+        $metafields[] = [
+            'namespace' => 'global',
+            'key' => 'device_categories_json',
+            'value' => json_encode($interfaces),
+            'type' => 'single_line_text_field'
+        ];
+
+        $metafields[] = [
+            'namespace' => 'global',
+            'key' => 'device_type',
+            'value' => $device->deviceType->name ?? '',
+            'type' => 'single_line_text_field'
+        ];
 
         return $metafields;
+    }
+
+    /**
+     * @param mixed $device
+     * @return array
+     */
+    public function getProductTypeMap(mixed $device): array
+    {
+        $productTypeMapQuery = DeviceInterface::join('product_interface', 'device_interface.interface_id', '=', 'product_interface.interface_id')
+            ->join('products', 'products.product_id', '=', 'product_interface.product_id')
+            ->join('product_type as child_pt', 'child_pt.id', '=', 'products.product_type')
+            ->leftJoin('product_type as parent_pt', 'parent_pt.id', '=', 'child_pt.parent_id')
+            ->join('device', 'device_interface.device_id', '=', 'device.id')
+            ->where('device.status', 'active')
+            ->where('products.product_status', 'active')
+            ->where('device_interface.device_id', $device->id)
+            ->groupBy(\DB::raw('child_pt.id'))
+            ->select(
+                \DB::raw('child_pt.id as parent_id'),
+                \DB::raw('COUNT(products.product_id) as product_count')
+            )
+            ->get();
+
+        $parentProductTypeMapQuery = DeviceInterface::join('product_interface', 'device_interface.interface_id', '=', 'product_interface.interface_id')
+            ->join('products', 'products.product_id', '=', 'product_interface.product_id')
+            ->join('product_type as child_pt', 'child_pt.id', '=', 'products.product_type')
+            ->leftJoin('product_type as parent_pt', 'parent_pt.id', '=', 'child_pt.parent_id')
+            ->join('device', 'device_interface.device_id', '=', 'device.id')
+            ->where('device.status', 'active')
+            ->where('products.product_status', 'active')
+            ->where('device_interface.device_id', $device->id)
+            ->groupBy(\DB::raw('parent_pt.id'))
+            ->select(
+                \DB::raw('parent_pt.id as parent_id'),
+                \DB::raw('COUNT(products.product_id) as product_count')
+            )
+            ->get();
+
+        $productTypeMap = [];
+        foreach ($productTypeMapQuery as $ptm) {
+            if ($ptm->product_count <= 0) {
+                continue;
+            }
+            $productTypeMap[$ptm->parent_id] = $ptm->product_count;
+        }
+
+        foreach ($parentProductTypeMapQuery as $ptm) {
+            if ($ptm->product_count <= 0) {
+                continue;
+            }
+            $productTypeMap[$ptm->parent_id] = $ptm->product_count;
+        }
+        return $productTypeMap;
+    }
+
+    private function getInterfacesForDevice(mixed $device)
+    {
+        return DeviceInterface::where('device_id', $device->id)->pluck('interface_id')->toArray();
     }
 }
