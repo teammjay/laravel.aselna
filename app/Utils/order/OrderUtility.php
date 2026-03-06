@@ -506,7 +506,7 @@ class OrderUtility
                         'client_id' => $itemDetail->client,
                         'listing_item_id' => $itemDetail->id,
                         'sku' => $item['sku'],
-                        'store_sku' => $item['lineItemId'],
+                        'store_sku' => $item['legacyItemId'],
                         'quantity' => $item['quantity'],
                         'id1' => '',
                         'item_price' => $item['lineItemCost']['value'],
@@ -520,7 +520,7 @@ class OrderUtility
                     $order_item = OrderItem::updateOrCreate([
                         'order_id' => $order->id,
                         'product_id' => $itemDetail->storeProduct->product->product_id,
-                        'store_sku' => $item['lineItemId'],
+                        'store_sku' => $item['legacyItemId'],
                     ], $orderItemData);
                     Log::info("Came Till Here 3 :: " . json_encode($order_item));
 
@@ -564,7 +564,7 @@ class OrderUtility
                         'client_id' => null,
 //                        'listing_item_id' => $itemDetail->id,
                         'sku' => $item['sku'],
-                        'store_sku' => $item['lineItemId'],
+                        'store_sku' => $item['legacyItemId'],
                         'quantity' => $item['quantity'],
                         'id1' => '',
                         'item_price' => $item['lineItemCost']['value'],
@@ -578,7 +578,7 @@ class OrderUtility
 
                     $order_item = OrderItem::updateOrCreate([
                         'order_id' => $order->id,
-                        'store_sku' => $item['lineItemId'],
+                        'store_sku' => $item['legacyItemId'],
                     ], $orderItemData);
 
                     if ($order_item->id) {
