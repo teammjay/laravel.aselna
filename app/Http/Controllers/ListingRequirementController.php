@@ -61,6 +61,8 @@ class ListingRequirementController extends Controller
             $query->whereLike('category', '%'.$request->category.'%');
         }
 
+        $query->where('is_common', 0);
+
 
         $totalRecords = (clone $query)->toBase()->getCountForPagination();
         $query->orderBy($columnName, $columnSortOrder);

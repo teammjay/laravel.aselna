@@ -12,6 +12,7 @@ use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class PopularDevicesSyncJob implements ShouldQueue
 {
@@ -78,14 +79,16 @@ class PopularDevicesSyncJob implements ShouldQueue
 
     private function createPopularDevice(mixed $device)
     {
-        $device = Device::where('code', $device->device_id)->first();
+        $aselnaDevice = Device::where('code', $device->device_id)->first();
         $deviceType = DeviceTypes::where('code', $device->device_type_id)->first();
-        if ($device && $deviceType) {
-            PopularDevice::upsert([
-                'device_id' => $device->id,
+        Log::info('Fonus Device: '.json_encode($device));
+        Log::info('Popular device sync: device code - '.$aselnaDevice->code.', device type code - '.$aselnaDevice->code);
+        if ($aselnaDevice && $deviceType) {
+            PopularDevice::updateOrCreate([
+                'device_id' => $aselnaDevice->id,
                 'device_type_id' => $deviceType->id,
             ], [
-                'device_id' => $device->id,
+                'device_id' => $aselnaDevice->id,
                 'device_type_id' => $deviceType->id,
                 'priority' => $device->priority,
             ]);
