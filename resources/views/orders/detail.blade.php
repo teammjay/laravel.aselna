@@ -387,7 +387,13 @@
                                             @endif
                                         </td>
                                         <td>{{ $item->sku }}</td>
-                                        <td>{{ $item->store_sku }}</td>
+                                        <td>
+                                            @if(isset($item->listingItem->store_sku) && $item->listingItem->store_sku != '')
+                                                {{ $item->listingItem->store_sku }}
+                                            @else
+                                                {{ $item->store_sku }}
+                                            @endif
+                                        </td>
                                         <td>{{ (isset($item->product)) ? $item->product->product_sku : '' }}</td>
                                         <td>{{ $item->quantity }}</td>
                                         <td>{{ $item->item_price }}</td>
