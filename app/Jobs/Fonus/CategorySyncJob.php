@@ -20,6 +20,7 @@ class CategorySyncJob implements ShouldQueue
     }
 
     public $timeout = 3000;
+    private $parentProductTypeId;
 
     use Queueable;
 
@@ -44,6 +45,8 @@ class CategorySyncJob implements ShouldQueue
         ]);
 
         try {
+            $this->parentProductTypeId = ProductType::where('code', 'cea')->pluck('id')->first();
+
             $ctagories = DB::connection('fonus_db')->table('tbl_category')->get();
             foreach ($ctagories as $category) {
                  Log::info("Id :: " . $category->category_id);
@@ -102,13 +105,13 @@ class CategorySyncJob implements ShouldQueue
             ProductType::updateOrCreate(
                 [
                     'code' => $fonusCategory->category_id,
-                    'parent_id' => null
+                    'parent_id' => $this->parentProductTypeId
                 ],
                 [
                     'name' => $fonusCategory->category,
                     'code' => $fonusCategory->category_id,
                     'image_id' => $imageDetail->id ?? null,
-                    'parent_id' => null,
+                    'parent_id' => $this->parentProductTypeId,
                     'singular_name' => $fonusCategory->category,
                     'sort_order' => $fonusCategory->order_no,
                 ]
@@ -125,11 +128,11 @@ class CategorySyncJob implements ShouldQueue
 
         ProductType::updateOrCreate(
             [
-                'code' => $subCategory->sub_category_id
+                'code' => $subCategory->category_id . '-' . $subCategory->sub_category_id
             ],
             [
                 'name' => $subCategory->sub_category,
-                'code' => $subCategory->sub_category_id,
+                'code' => $subCategory->category_id . '-' . $subCategory->sub_category_id,
                 'image_id' => null,
                 'parent_id' => $category->id,
                 'singular_name' => $subCategory->sub_category,

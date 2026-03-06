@@ -36,6 +36,8 @@ class ExistingListingItemSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now()]);
+
         Log::info('AmazonExistingListingItemSyncJob started');
 
         $store_ids = Common::getActiveStoreJobs('AmazonListingItemSyncJob','Amazon');

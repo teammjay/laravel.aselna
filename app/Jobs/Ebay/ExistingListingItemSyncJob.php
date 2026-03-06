@@ -37,6 +37,7 @@ class ExistingListingItemSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now()]);
         Log::info('EbayExistingListingItemSyncJob started');
 
         $store_ids = Common::getActiveStoreJobs('EbayListingItemSyncJob','ebay');
