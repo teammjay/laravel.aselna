@@ -339,7 +339,7 @@
                                                 <div class="form-group">
                                                     <label for="package__weight">Package Weight</label>
                                                     <div class="d-flex">
-                                                        <input type="text" class="form-control mr-1" id="package__weight" name="package_weight" value="{{ old('package_weight',$product->package_weight) }}" placeholder="">
+                                                        <input type="text" class="form-control mr-1" id="package__weight" name="product_package_weight" value="{{ old('package_weight',$product->product_package_weight) }}" placeholder="">
                                                         <select class="form-control w-25" id="package_weight_unit" name="package_weight_unit">
                                                             <option value="0" {{ 0 == $product->package_weight_unit ? 'selected' : '' }}>Oz</option>
                                                             <option value="1" {{ 1 == $product->package_weight_unit ? 'selected' : '' }}>Lb</option>
