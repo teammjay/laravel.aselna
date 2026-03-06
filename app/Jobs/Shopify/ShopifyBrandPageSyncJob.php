@@ -678,7 +678,7 @@ class ShopifyBrandPageSyncJob implements ShouldQueue
 
         $metafields[] = [
             'namespace' => 'global',
-            'key' => 'device_categories_json',
+            'key' => 'interfaces',
             'value' => json_encode($interfaces),
             'type' => 'single_line_text_field'
         ];
