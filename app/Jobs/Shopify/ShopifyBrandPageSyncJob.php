@@ -642,6 +642,7 @@ class ShopifyBrandPageSyncJob implements ShouldQueue
         $productTypeMap = $this->getProductTypeMap($device);
         $interfaces = $this->getInterfacesForDevice($device);
 
+        $categories = [];
         foreach ($productTypes as $productType) {
             if (!key_exists($productType->id, $productTypeMap)) continue;
             $page = StoreNavigationPage::where('store_id', $this->store_id)
