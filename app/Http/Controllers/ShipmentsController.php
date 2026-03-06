@@ -261,7 +261,7 @@ class ShipmentsController extends Controller
                     $status = 1;
                     $status_message = $order->sync_message;
                 }
-                $mergedOperations = OrderOperation::select('sync_message')->where('merge_with', $order->id)->get();
+                $mergedOperations = OrderOperation::select('sync_message')->where('merged_with', $order->id)->get();
                 if (isset($mergedOperations)) {
                     foreach ($mergedOperations as $operation) {
                         if ($operation->sync_message != NULL) {
