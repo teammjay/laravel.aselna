@@ -250,7 +250,7 @@ class ListingUtility
                 }
             }
 
-            if (isset($issues[$key]['title'])) {
+            if (isset($issues[$key]['title']) && $req->type !== 'column') {
                 $qquery = ProductSpecificationInfo::where('field_local_name', $fieldName);
                 if ($storeTypeId) {
                     $qquery->where('store_type_id', $storeTypeId);
