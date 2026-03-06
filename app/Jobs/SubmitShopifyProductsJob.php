@@ -453,7 +453,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
                         ],
                         'inventoryItem' => [
                             'sku' => $sku,
-                            'tracked' => true,
+                            'tracked' => false,
                         ]
                     ]
                 ],
