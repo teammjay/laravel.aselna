@@ -37,6 +37,9 @@
             background-color: #fff !important;
             font-weight: 600;
         }
+        tr.bg-blue {
+            background-color: #007bff!important;
+        }
     </style>
 @stop
 
@@ -67,8 +70,12 @@
 
         </div>
         <div class="col-md-9 d-flex">
-            <button type="button" class="btn btn-default" id="open_message" disabled="">
+            <button type="button" class="btn btn-default mr-2" id="open_message" disabled="">
                 <i class="fas fa-fw fa-pencil-alt"></i> Open
+            </button>
+
+            <button type="button" class="btn btn-default mr-2" id="mark_as_open" disabled="">
+                <i class="fas fa-fw fa-envelope"></i> Mark As Open
             </button>
 
         </div>
@@ -132,8 +139,9 @@
             ele.addClass('bg-blue');
             ele.find('input[name="message_id[]"]').prop('checked',true);
             $('#open_message').removeAttr('disabled');
-            var ticket_id = ele.find('input[name="message_id[]"]').val();
-            location.href = "{{ url('messages/detail') }}/" + ticket_id;
+            $('#mark_as_open').removeAttr('disabled');
+            //var ticket_id = ele.find('input[name="message_id[]"]').val();
+            //location.href = "{{ url('messages/detail') }}/" + ticket_id;
         });
 
         $('#open_message').on('click',function () {
@@ -213,7 +221,51 @@
             loadDatatables();
         });
 
+        $(document).on('click','#mark_as_open',function () {
+            var selected_ticket = [];
+
+            $('input[name="message_id[]"]:checked').each(function () {
+                selected_ticket.push($(this).val())
+            });
+
+            var data = {
+                ticket_id: selected_ticket,
+                status: 0,
+                message_read: 0
+            };
+
+            if(selected_ticket.length) {
+                updateTicket(data);
+            }
+        });
+
     });
+
+    function updateTicket(data) {
+        let ticket_id = $('input[name="message_id[]"]:checked').val();
+
+        if(ticket_id != '') {
+            $.ajax({
+                type: "POST",
+                url: "{{ route('message.updateticket') }}",
+                data: data,
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+
+                success: function (data) {
+                    if (data.success) {
+                        location.reload();
+                    }
+                },
+                error: function (xhr) {
+                },
+                complete: function () {
+                    $("#ajax-preloader").hide();
+                }
+            });
+        }
+    }
 
     function loadDatatables() {
 

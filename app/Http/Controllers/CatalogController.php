@@ -587,6 +587,8 @@ class CatalogController extends Controller
                         'product_id' => $productId,
                         'value' => $request->features[$i],
                         'sort_order' => $request->feature_sort_order[$i],
+                        'created_at' => now(),
+                        'updated_at' => now(),
                     );
                 }
                 ProductKeyFeatures::where('product_id', $productId)->delete();
@@ -606,6 +608,8 @@ class CatalogController extends Controller
                     'product_id' => $productId,
                     'term' => $request->search_term[$i],
                     'sort_order' => $request->search_sort_order[$i],
+                    'created_at' => now(),
+                    'updated_at' => now(),
                 );
             }
             ProductSearchTerm::where('product_id', $productId)->delete();
@@ -618,7 +622,9 @@ class CatalogController extends Controller
                 $data[] = array(
                     'id' => (string)Str::uuid(),
                     'product_id' => $productId,
-                    'name' => $request->tags[$i]
+                    'name' => $request->tags[$i],
+                    'created_at' => now(),
+                    'updated_at' => now(),
                 );
             }
             //ProductTags::where('product_id', $productId)->delete();
@@ -668,6 +674,8 @@ class CatalogController extends Controller
                         'product_id' => $productId,
                         'keyword' => $request->title_keyword[$i],
                         'priority' => $request->title_priority[$i],
+                        'created_at' => now(),
+                        'updated_at' => now(),
                     );
                 }
                 ProductTitleKeyword::where('product_id', $productId)->delete();
@@ -689,7 +697,9 @@ class CatalogController extends Controller
                         'product_id' => $productId,
                         'name' => $request->specification[$i],
                         'value' => $request->specification_value[$i],
-                        'store_type_id' => $request->specification_store_type_id
+                        'store_type_id' => $request->specification_store_type_id,
+                        'created_at' => now(),
+                        'updated_at' => now(),
                     );
                 }
                 ProductSpecification::where(['product_id' => $productId, 'store_type_id' => $request->specification_store_type_id])->delete();

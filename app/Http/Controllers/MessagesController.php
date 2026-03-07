@@ -802,7 +802,7 @@ class MessagesController extends Controller
                 $updatedData['subject'] = $subject;
             }
 
-            if(isset($status) && $status){
+            if(isset($status) && $status != ''){
                 $updatedData['status'] = $status;
             }
 
