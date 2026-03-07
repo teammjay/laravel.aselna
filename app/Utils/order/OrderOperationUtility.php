@@ -900,7 +900,7 @@ class OrderOperationUtility
                 foreach ($orderOperation->operationItem as $item) {
 
                     $payload["refundItems"][] = [
-                        "lineItemId" => $item->orderItem->store_sku,
+                        "lineItemId" => $item->orderItem->id1,
                         "refundAmount" => $item->item_price,
                     ];
 
@@ -1070,7 +1070,7 @@ class OrderOperationUtility
 
                     foreach ($orderOperation->order->orderItem as $item) {
                         $payload["lineItems"][] = [
-                            "lineItemId" => $item->store_sku,
+                            "lineItemId" => $item->id1,
                             "quantity" => $item->quantity,
                         ];
                     }
@@ -1111,7 +1111,7 @@ class OrderOperationUtility
 
                                 foreach ($oop->order->orderItem as $item) {
                                     $payload2["lineItems"][] = [
-                                        "lineItemId" => $item->store_sku,
+                                        "lineItemId" => $item->id1,
                                         "quantity" => $item->quantity,
                                     ];
                                 }
