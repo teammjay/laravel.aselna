@@ -185,14 +185,34 @@ class ProductSyncJob implements ShouldQueue
                 '5' => $product->bullet_point5,
                 '6' => $product->bullet_point6,
             ];
+
+            $data = [];
             foreach ($bullet_points as $key => $value) {
-                ProductKeyFeatures::updateOrCreate(
+                /*ProductKeyFeatures::updateOrCreate(
                     ['product_id' => $product_id, 'sort_order' => $key],
                     [
-                        'product_id' => $product_id,
                         'value' => $value,
-                        'sort_order' => $key,
                     ]
+                );*/
+
+                if (empty($value)) {
+                    continue;
+                }
+
+                $data[] = [
+                    'product_id' => $product_id,
+                    'value' => $value,
+                    'sort_order' => $key,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+            }
+
+            if (!empty($data)) {
+                ProductKeyFeatures::upsert(
+                    $data,
+                    ['product_id', 'sort_order'],
+                    ['value', 'updated_at']
                 );
             }
         } catch (Exception $e) {

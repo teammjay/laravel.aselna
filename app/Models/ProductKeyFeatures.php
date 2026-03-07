@@ -14,6 +14,8 @@ class ProductKeyFeatures extends Model
 
     public $incrementing = false;
 
+    public $timestamps = true;
+
     protected static function boot()
     {
         parent::boot();
