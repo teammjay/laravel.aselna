@@ -28,6 +28,7 @@ use App\Jobs\FetchShopifyProductsJob;
 use App\Jobs\FetchTemuOrders;
 use App\Jobs\FetchWalmartOrdersJob;
 use App\Jobs\FileSystemSyncJob;
+use App\Jobs\Fonus\ProductInterfacesSyncJob;
 use App\Jobs\GenerationTypeAndTemplateSync;
 use App\Jobs\InterfaceSyncJob;
 use App\Jobs\ListingFeedSyncJob;
@@ -233,11 +234,12 @@ class SyncAllTables extends Command
 //        ExistingListingItemSyncJob::dispatch();
 //        FetchShopifyOrders::dispatch();
 //        FonusCombinedSyncJob::dispatch();
-//        MagentoSyncJob::dispatch();
+//        ProductInterfacesSyncJob::dispatch();
+        MagentoSyncJob::dispatch();
 //        MagentoProductsSyncJob::dispatch();
 //        StorePagesJobSync::dispatch();
 //        FonusCombinedSyncJob::dispatch();
-        ShopifyOnlySyncJob::dispatch();
+//        ShopifyOnlySyncJob::dispatch();
 
         $transactionIds = [
 ////            '9400150105798006163885',

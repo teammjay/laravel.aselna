@@ -281,6 +281,62 @@ class MagentoAuthService
         return json_decode($response->getBody(), true);
     }
 
+    public function createRelation($relationData)
+    {
+        $accessToken = $this->authenticate();
+        Log::info('Access Token Created ' . $accessToken);
+
+        $headers = [
+            'Content-Type' => 'application/json',
+            'Accept' => 'application/json',
+            'Authorization' => 'Bearer ' . $accessToken,
+        ];
+
+        $body = ['relation' => $relationData];
+
+        Log::info('Request: ' . json_encode($body));
+
+        $request = new Request('POST', $this->endpoint . '/rest/V1/mjailabs/relations', $headers);
+        $response = $this->client->sendAsync($request, ['json' => $body])->wait();
+
+        return json_decode($response->getBody(), true);
+    }
+
+    public function searchRelations($searchCriteria = [])
+    {
+        $accessToken = $this->authenticate();
+        Log::info('Access Token Created ' . $accessToken);
+
+        $headers = [
+            'Content-Type' => 'application/json',
+            'Accept' => 'application/json',
+            'Authorization' => 'Bearer ' . $accessToken,
+        ];
+
+        $queryString = http_build_query($searchCriteria);
+        $request = new Request('GET', $this->endpoint . '/rest/V1/mjailabs/relations/search?' . $queryString, $headers);
+        $response = $this->client->sendAsync($request)->wait();
+
+        return json_decode($response->getBody(), true);
+    }
+
+    public function deleteRelation($relationId)
+    {
+        $accessToken = $this->authenticate();
+        Log::info('Access Token Created ' . $accessToken);
+
+        $headers = [
+            'Content-Type' => 'application/json',
+            'Accept' => 'application/json',
+            'Authorization' => 'Bearer ' . $accessToken,
+        ];
+
+        $request = new Request('DELETE', $this->endpoint . '/rest/V1/mjailabs/relations/' . $relationId, $headers);
+        $response = $this->client->sendAsync($request)->wait();
+
+        return json_decode($response->getBody(), true);
+    }
+
     public function createBrandDeviceRelation($brandId, $deviceId)
     {
         $accessToken = $this->authenticate();
