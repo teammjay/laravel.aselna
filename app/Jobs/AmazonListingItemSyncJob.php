@@ -169,11 +169,26 @@ class AmazonListingItemSyncJob implements ShouldQueue
                                 if($itemDetail){
                                     if(isset($item['summaries'])) {
                                         $summary = $item['summaries'][0];
-                                        Log::info("Listing Item Updated :" . $item['sku'].'->'.$summary['asin']);
-                                        $itemDetail->update([
-                                            'store_sku' => $summary['asin'],
-                                            'sync_status' => ListingSyncStatus::Synchronized,
-                                        ]);
+                                        if(isset($summary['asin'])) {
+                                            Log::info("Listing Item Updated :" . $item['sku'] . '->' . $summary['asin']);
+                                            $itemDetail->update([
+                                                'store_sku' => $summary['asin'],
+                                                'sync_status' => ListingSyncStatus::Synchronized,
+                                            ]);
+                                        }else{
+                                            $date = \Carbon\Carbon::parse($itemDetail->created_at);
+                                            if ($date->diffInDays(now()) >= 5) {
+                                                Log::info("Listing item older than 5 days - ".$itemDetail->sku);
+                                                $itemDetail->update([
+                                                    'status' =>ListingStatus::Deleted,
+                                                ]);
+                                            }else{
+                                                $retry_count = $itemDetail->creation_retry_count ?? 0;
+                                                $itemDetail->update([
+                                                    'creation_retry_count' => $retry_count + 1,
+                                                ]);
+                                            }
+                                        }
                                     }else{
                                         $date = \Carbon\Carbon::parse($itemDetail->created_at);
                                         if ($date->diffInDays(now()) >= 5) {
