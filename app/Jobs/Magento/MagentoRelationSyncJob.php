@@ -6,7 +6,7 @@ use App\Constants\WebStorePageType;
 use App\Jobs\Concerns\TrackableJob;
 use App\Models\DeviceInterface;
 use App\Models\ManageMarketplaceProduct;
-use App\Models\MarketplaceAttributeMapping;
+use App\Models\ProductInterface;
 use App\Models\Store;
 use App\Models\StoreNavigationPage;
 use App\Services\Auth\MagentoAuthService;
@@ -37,56 +37,16 @@ class MagentoRelationSyncJob implements ShouldQueue
             $store = Store::findOrFail($this->storeId);
             $magentoAuthService = new MagentoAuthService($store->seller_id, $store->secret_key, $store->service_url);
 
-            // Get relations between devices and products based on shared interfaces
-            $relations = DeviceInterface::join('product_interface', 'device_interface.interface_id', '=', 'product_interface.interface_id')
-                ->join('products', 'products.product_id', '=', 'product_interface.product_id')
-                ->join('device', 'device_interface.device_id', '=', 'device.id')
-                ->where('device.status', 'active')
-//                ->where('products.product_status', 'active')
-                ->select('device_interface.device_id', 'products.product_id')
-                ->where('products.product_id', '=', '260ad8c1-499b-4e4e-bf11-729023566d3e')
-                ->distinct()
+            // Get all synced products for this store
+            $syncedProducts = ManageMarketplaceProduct::where('store_id', $this->storeId)
+                ->where('upload_status', 'success')
+                ->whereNotNull('marketplace_product_id')
                 ->get();
 
-            Log::info("Found " . count($relations) . " technical relations to sync for store: " . $store->name);
+            Log::info("Optimized Sync: Checking relations for " . count($syncedProducts) . " products in store: " . $store->name);
 
-            foreach ($relations as $relation) {
-                // 1. Get Magento Product ID
-                $manageProduct = ManageMarketplaceProduct::where('product_id', $relation->product_id)
-                    ->where('store_id', $this->storeId)
-                    ->where('upload_status', 'success')
-                    ->first();
-
-                if (!$manageProduct || !$manageProduct->marketplace_product_id) {
-                    Log::info('Skipping relation for Product ID: ' . $relation->product_id . ' - not synced to Magento store yet.');
-                    continue; // Product not yet synced to this store
-                }
-
-                // 2. Get Magento Device ID
-                $devicePage = StoreNavigationPage::where('store_id', $this->storeId)
-                    ->where('page_type', WebStorePageType::DEVICE)
-                    ->where('device_id', $relation->device_id)
-                    ->first();
-
-                if (!$devicePage || !$devicePage->page_id) {
-                    Log::info('Skipping relation for Device ID: ' . $relation->device_id . ' - not synced to Magento store yet.');
-                    continue; // Device not yet synced to this store
-                }
-
-                Log::info("Syncing Relation for Product: " . $manageProduct->marketplace_product_id . " and Device: " . $devicePage->page_id);
-
-                $relationData = [
-                    'product_id' => $manageProduct->marketplace_product_id,
-                    'device_id' => $devicePage->page_id
-                ];
-
-                $response = $magentoAuthService->createRelation($relationData);
-
-                if (isset($response['entity_id'])) {
-                    Log::info("Relation synced successfully. Magento ID: " . $response['entity_id']);
-                } else {
-                    Log::error("Failed to sync relation: " . json_encode($response));
-                }
+            foreach ($syncedProducts as $manageProduct) {
+                $this->syncProductRelations($manageProduct, $magentoAuthService);
             }
 
         } catch (\Throwable $e) {
@@ -95,6 +55,87 @@ class MagentoRelationSyncJob implements ShouldQueue
                 'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
                 'method' => __METHOD__
             ]);
+        }
+    }
+
+    private function syncProductRelations($manageProduct, $magentoAuthService)
+    {
+        $productId = $manageProduct->product_id;
+        $magentoProductId = $manageProduct->marketplace_product_id;
+
+        // 1. Get technical compatible device IDs for this product
+        $technicalDeviceIds = DeviceInterface::join('product_interface', 'device_interface.interface_id', '=', 'product_interface.interface_id')
+            ->where('product_interface.product_id', $productId)
+            ->pluck('device_interface.device_id')
+            ->unique()
+            ->toArray();
+
+        // 2. Map technical device IDs to Magento Device IDs (only those synced to this store)
+        $shouldHaveMagentoDeviceIds = StoreNavigationPage::where('store_id', $this->storeId)
+            ->where('page_type', WebStorePageType::DEVICE)
+            ->whereIn('device_id', $technicalDeviceIds)
+            ->pluck('page_id')
+            ->unique()
+            ->toArray();
+
+        // 3. Fetch current relations from Magento for this specific product
+        $searchCriteria = [
+            'searchCriteria' => [
+                'filterGroups' => [
+                    [
+                        'filters' => [
+                            [
+                                'field' => 'product_id',
+                                'value' => $magentoProductId,
+                                'condition_type' => 'eq'
+                            ]
+                        ]
+                    ]
+                ]
+            ]
+        ];
+
+        $magentoResponse = $magentoAuthService->searchRelations($searchCriteria);
+        $magentoItems = $magentoResponse['items'] ?? [];
+
+        $currentMagentoDeviceToRelationId = [];
+        foreach ($magentoItems as $item) {
+            $currentMagentoDeviceToRelationId[$item['device_id']] = $item['entity_id'];
+        }
+
+        $currentlyLinkedMagentoDeviceIds = array_keys($currentMagentoDeviceToRelationId);
+
+        // 4. Diffing
+        $toAdd = array_diff($shouldHaveMagentoDeviceIds, $currentlyLinkedMagentoDeviceIds);
+        $toDelete = array_diff($currentlyLinkedMagentoDeviceIds, $shouldHaveMagentoDeviceIds);
+
+        if (empty($toAdd) && empty($toDelete)) {
+            // Log::info("Product $productId is already in sync.");
+            return;
+        }
+
+        Log::info("Syncing Product $magentoProductId: Adding " . count($toAdd) . " relations, Deleting " . count($toDelete));
+
+        // 5. Execute Additions
+        foreach ($toAdd as $magentoDeviceId) {
+            try {
+                $magentoAuthService->createRelation([
+                    'product_id' => $magentoProductId,
+                    'device_id' => $magentoDeviceId
+                ]);
+            } catch (\Exception $e) {
+                Log::error("Failed to create relation for Product $magentoProductId and Device $magentoDeviceId: " . $e->getMessage());
+            }
+        }
+
+        // 6. Execute Deletions
+        foreach ($toDelete as $magentoDeviceId) {
+            try {
+                $relationId = $currentMagentoDeviceToRelationId[$magentoDeviceId];
+                $magentoAuthService->deleteRelation($relationId);
+            } catch (\Exception $e) {
+                Log::error("Failed to delete relation $relationId: " . $e->getMessage());
+            }
         }
     }
 }
