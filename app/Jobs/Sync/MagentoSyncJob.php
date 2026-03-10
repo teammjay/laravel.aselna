@@ -3,11 +3,11 @@
 namespace App\Jobs\Sync;
 
 use App\Jobs\Concerns\TrackableJob;
-use App\Jobs\Magento\MagentoBrandDeviceSyncJob;
-use App\Jobs\Magento\MagentoBrandPageSyncJob;
+use App\Jobs\Fonus\ChainCompletionJob;
 use App\Jobs\Magento\MagentoBrandSyncJob;
 use App\Jobs\Magento\MagentoCategorySyncJob;
 use App\Jobs\Magento\MagentoDeviceSyncJob;
+use App\Jobs\Magento\MagentoRelationSyncJob;
 use App\Models\Store;
 use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -65,10 +65,13 @@ class MagentoSyncJob implements ShouldQueue
                     $deviceJob->setChainId($this->chainId);
                     $chain[] = $deviceJob;
 
-                    // 5. Magento Brand Page Sync (Empty as requested)
-//                    $pageJob = new Completio();
-                    // $pageJob->setChainId($this->chainId); // TrackableJob?
-//                    $chain[] = $pageJob;
+                    $relationJob = new MagentoRelationSyncJob($store->id);
+                    $relationJob->setChainId($this->chainId);
+                    $chain[] = $relationJob;
+
+                    $pageJob = new ChainCompletionJob($this->jobId);
+                    $pageJob->setChainId($this->chainId);
+                    $chain[] = $pageJob;
                 }
 
                 if (!empty($chain)) {

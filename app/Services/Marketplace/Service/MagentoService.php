@@ -416,4 +416,10 @@ class MagentoService implements MarketplaceServiceInterface
             return $magentoAuthService->saveProduct($productData);
         }
     }
+
+    public function createRelation($relationData, $store)
+    {
+        $magentoAuthService = new MagentoAuthService($store->seller_id, $store->secret_key, $store->service_url);
+        return $magentoAuthService->createRelation($relationData);
+    }
 }
