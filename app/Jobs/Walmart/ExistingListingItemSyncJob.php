@@ -60,7 +60,7 @@ class ExistingListingItemSyncJob implements ShouldQueue
             ->join('listing_item', 'listing_item_link.item_id', '=', 'listing_item.id')
             ->join('listing', 'listing_item_link.listing_id', '=', 'listing.id')
             ->whereIn('listing.store_id', $walmart_store_ids)
-            ->whereNot('listing_item.status', ListingStatus::Deleted)
+            //->whereNot('listing_item.status', ListingStatus::Deleted)
             ->whereNotNull('listing_item.store_sku')
             ->orderBy('listing_item.created_at','asc')
             ->chunk(100, function ($listingItemLinks) {
@@ -86,10 +86,21 @@ class ExistingListingItemSyncJob implements ShouldQueue
             $authService = new WalmartAuthService($store->seller_id, $store->secret_key);
             $response = $authService->getItemSearch($itemDetail->upc);
 
-            if (!isset($response['items'][0])){
-                $itemDetail->update([
-                    'status' =>ListingStatus::Deleted,
-                ]);
+            if(!isset($response['error'])) {
+                if (isset($response['items'][0])) {
+                    $item = $response['items'][0];
+                    if (isset($item['itemId']) && $item['itemId'] != '') {
+                        Log::info("Update Listing Item with " . $item['itemId']);
+                        $itemDetail->update([
+                            'store_sku' => $item['itemId'],
+                            'sync_status' => ListingSyncStatus::Synchronized,
+                        ]);
+                    }
+                }else{
+                    $itemDetail->update([
+                        'status' => ListingStatus::Deleted,
+                    ]);
+                }
             }
 
         } catch (\Throwable $e) {
