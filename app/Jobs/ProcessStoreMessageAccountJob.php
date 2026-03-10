@@ -575,7 +575,7 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
                             'days_diff' => $daysDiff
                         ]);
 
-                        if ($daysDiff < -1) {
+                        if ($daysDiff < -1 && $maxDate->isPast()) {
                             $account->update(['filter_from_date' => $maxDate->toDateString()]);
                             Log::info('Filter date incremented by 1 day', ['new_filter_date' => $maxDate->toDateString()]);
                         }
