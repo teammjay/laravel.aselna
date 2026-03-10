@@ -39,8 +39,8 @@ class ShopifyListingProductsSyncJob implements ShouldQueue
 
         try {
             $storeIds = Store::join('store_type', 'store_type.id', '=', 'store.store_type_id')
-                ->where('store_type.code', 'walmart')
-                ->whereIn('store.name', ['OdeMobile'])
+                ->where('store_type.code', 'shopify')
+                ->whereIn('store.name', ['UZID'])
                 ->pluck('store.id');
 
             DB::connection('easyesale_db')->table('listing_item')

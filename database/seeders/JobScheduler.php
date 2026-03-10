@@ -290,6 +290,11 @@ class JobScheduler extends Seeder
                 'class_name' => 'App\Jobs\Magento\MagentoProductsSyncJob',
             ],
             [
+                'name' => 'Magento Relation Sync',
+                'description' => 'Sync all Magento device-product relations',
+                'class_name' => 'App\Jobs\Magento\MagentoRelationSyncJob',
+            ],
+            [
                 //FetchShopifyProductsJob
                 'name' => 'Fetch Shopify Products',
                 'description' => 'Fetch Shopify products',
