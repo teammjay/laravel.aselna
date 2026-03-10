@@ -143,27 +143,29 @@ class WalmartListingItemSyncJob implements ShouldQueue
             $authService = new WalmartAuthService($store->seller_id, $store->secret_key);
             $response = $authService->getItemSearch($itemDetail->upc);
 
-            if (isset($response['items'][0])) {
-                $item = $response['items'][0];
-                if(isset($item['itemId']) && $item['itemId'] != '') {
-                    Log::info("Update Listing Item with ".$item['itemId']);
-                    $itemDetail->update([
-                        'store_sku' => $item['itemId'],
-                        'sync_status' => ListingSyncStatus::Synchronized,
-                    ]);
-                }
-            }else{
-                $date = \Carbon\Carbon::parse($itemDetail->created_at);
-                if ($date->diffInDays(now()) >= 5) {
-                    Log::info("Listing item older than 5 days - ".$itemDetail->upc);
-                    $itemDetail->update([
-                        'status' =>ListingStatus::Deleted,
-                    ]);
-                }else{
-                    $retry_count = $itemDetail->creation_retry_count ?? 0;
-                    $itemDetail->update([
-                        'creation_retry_count' => $retry_count + 1,
-                    ]);
+            if(!isset($response['error'])){
+                if (isset($response['items'][0])) {
+                    $item = $response['items'][0];
+                    if (isset($item['itemId']) && $item['itemId'] != '') {
+                        Log::info("Update Listing Item with " . $item['itemId']);
+                        $itemDetail->update([
+                            'store_sku' => $item['itemId'],
+                            'sync_status' => ListingSyncStatus::Synchronized,
+                        ]);
+                    }
+                } else {
+                    $date = \Carbon\Carbon::parse($itemDetail->created_at);
+                    if ($date->diffInDays(now()) >= 5) {
+                        Log::info("Listing item older than 5 days - " . $itemDetail->upc);
+                        $itemDetail->update([
+                            'status' => ListingStatus::Deleted,
+                        ]);
+                    } else {
+                        $retry_count = $itemDetail->creation_retry_count ?? 0;
+                        $itemDetail->update([
+                            'creation_retry_count' => $retry_count + 1,
+                        ]);
+                    }
                 }
             }
 
