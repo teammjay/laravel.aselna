@@ -889,7 +889,11 @@ class MessagesController extends Controller
 
                 }
 
-                if (isset($ticketDetail->ticket_email) && $ticketDetail->ticket_email != '') {
+                $messageDetail = HDMessage::where('ticket_id', $ticket_id)->whereNull('author')->orderBy('created_at', 'desc')->first();
+
+                if(isset($messageDetail->reply_to_email) && $messageDetail->reply_to_email != ''){
+                    $email = $messageDetail->reply_to_email;
+                }else if (isset($ticketDetail->ticket_email) && $ticketDetail->ticket_email != '') {
                     $email = $ticketDetail->ticket_email;
                 } else if (isset($ticketDetail->customer)) {
                     $email = $ticketDetail->customer->email;
