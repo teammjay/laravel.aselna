@@ -9,6 +9,7 @@ use App\Helpers\QueryFilters;
 use App\Jobs\SyncAllOrderStatusJob;
 use App\Jobs\SyncFailedMarketplaceShipmentJob;
 use App\Models\Catalog;
+use App\Models\Customer;
 use App\Models\CustomerAddress;
 use App\Models\LogisticCenter;
 use App\Models\Order;
@@ -837,6 +838,9 @@ class ShipmentsController extends Controller
 
             if (isset($request['full_name']) && $request['full_name'] != '') {
                 $fullname = $request['full_name'] . ',<br>';
+            }else if(isset($request['first_name']) && $request['first_name'] != ''){
+                $fullname = $request['first_name'] .' '. $request['last_name']. ',<br>';
+                $request['full_name'] = $request['first_name'].' '.$request['last_name'];
             }
 
             if (isset($request['address_line_1']) && $request['address_line_1'] != '') {
@@ -849,6 +853,17 @@ class ShipmentsController extends Controller
 
             $address_combined = $fullname . $address1 . $address2 . $request['city'] . ', ' . $request['state'] . ' ' . $request['zip'];
             $address->update($request->except(['phone', 'id']));
+
+            if(isset($address->customer_id) && $address->customer_id != ''){
+                $customer = Customer::findOrFail($address->customer_id);
+                $customerData = [
+                    'first_name' => $request['first_name'],
+                    'last_name' => $request['last_name'],
+                    'full_name' => (isset($request['full_name']) && $request['full_name'] != '') ? $request['full_name'] : $request['first_name'].' '.$request['last_name'],
+                ];
+
+                $customer->update($customerData);
+            }
             return response()->json(['success' => true, 'address' => $address_combined, 'message' => 'Data saved successfully!']);
 
         } catch (QueryException $e) {
