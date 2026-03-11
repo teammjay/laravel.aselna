@@ -557,7 +557,7 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
 
                         if ($last_filter_date != '') {
                             Log::info('Updating last filter date to: ' . $last_filter_date);
-                            $last_filter_datef = \Carbon\Carbon::parse($last_filter_date)->setTimezone('America/New_York');
+                            $last_filter_datef = \Carbon\Carbon::parse($last_filter_date, 'America/New_York')->setTimezone('America/New_York');
                             $account->update(['filter_from_date' => $last_filter_datef]);
                             Log::info('Filter date updated successfully', ['new_filter_date' => $last_filter_datef->toDateTimeString()]);
                         }
