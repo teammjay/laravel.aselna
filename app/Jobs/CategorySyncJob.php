@@ -70,22 +70,22 @@ class CategorySyncJob implements ShouldQueue
                 }
             }
 
-            $queue = new Queue();
-            $storeTypeCategories = DB::connection('easyesale_db')->table('channel_category')->whereNull('parent_id')->cursor();
-            foreach ($storeTypeCategories as $storeTypeCategory) {
-                $queue->enqueue($storeTypeCategory->id);
-                $this->createStoreTypeCategories($storeTypeCategory);
-            }
-
-            while ($queue->size() > 0) {
-                $nextId = $queue->peek();
-                $queue->dequeue();
-                $storeTypeCategories = DB::connection('easyesale_db')->table('channel_category')->where('parent_id', $nextId)->cursor();
-                foreach ($storeTypeCategories as $storeTypeCategory) {
-                    $queue->enqueue($storeTypeCategory->id);
-                    $this->createStoreTypeCategories($storeTypeCategory);
-                }
-            }
+//            $queue = new Queue();
+//            $storeTypeCategories = DB::connection('easyesale_db')->table('channel_category')->whereNull('parent_id')->cursor();
+//            foreach ($storeTypeCategories as $storeTypeCategory) {
+//                $queue->enqueue($storeTypeCategory->id);
+//                $this->createStoreTypeCategories($storeTypeCategory);
+//            }
+//
+//            while ($queue->size() > 0) {
+//                $nextId = $queue->peek();
+//                $queue->dequeue();
+//                $storeTypeCategories = DB::connection('easyesale_db')->table('channel_category')->where('parent_id', $nextId)->cursor();
+//                foreach ($storeTypeCategories as $storeTypeCategory) {
+//                    $queue->enqueue($storeTypeCategory->id);
+//                    $this->createStoreTypeCategories($storeTypeCategory);
+//                }
+//            }
 
             $this->updateTrackingRecord([
                 'status' => 'completed',
@@ -114,23 +114,23 @@ class CategorySyncJob implements ShouldQueue
     {
 
         $fonusCategory = DB::connection('fonus_db')->table('tbl_category')->where('category_id',$category->code)->first();
-        if (isset($fonusCategory)) {
-            $imageName = $fonusCategory->picture1;
-            $imageDetail = null;
-
-            try {
-                if(!isset($imageDetail)) {
-                    Log::info('CategoryImagesSync: ' . $imageName);
-                    $imagePath = env('FONUS_BASE_URL') . 'inv_images/category_images/' . $imageName;
-                    $imageDetail = FileUtility::saveImage($imagePath, 'category_images', $imageName);
-                }
-            } catch (Exception $e) {
-
-                \App\Helpers\ErrorLogger::log($e, __METHOD__);
-
-                Log::error('ProductImagesSyncJob: ' . $e->getMessage());
-            }
-        }
+//        if (isset($fonusCategory)) {
+//            $imageName = $fonusCategory->picture1;
+//            $imageDetail = null;
+//
+//            try {
+//                if(!isset($imageDetail)) {
+//                    Log::info('CategoryImagesSync: ' . $imageName);
+//                    $imagePath = env('FONUS_BASE_URL') . 'inv_images/category_images/' . $imageName;
+//                    $imageDetail = FileUtility::saveImage($imagePath, 'category_images', $imageName);
+//                }
+//            } catch (Exception $e) {
+//
+//                \App\Helpers\ErrorLogger::log($e, __METHOD__);
+//
+//                Log::error('ProductImagesSyncJob: ' . $e->getMessage());
+//            }
+//        }
 
         $createdCategory = ProductType::updateOrCreate(
             ['id' => $category->id],
