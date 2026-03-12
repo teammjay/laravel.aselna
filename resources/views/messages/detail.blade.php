@@ -405,7 +405,10 @@
                 <div class="card-body">
                     <div class="row pt-3" >
                         <div class="col-md-12">
-                            {{ ($ticketDetail->ticket_email !='') ? $ticketDetail->ticket_email : $ticketDetail->customer->email  }}
+                            @if(isset($messageDetail->reply_to_email))
+                                <div class="mb-1"><strong>Reply To : </strong> {{ $messageDetail->reply_to_email  }}</div>
+                            @endif
+                            <div><strong>Receive From:</strong> {{ ($ticketDetail->ticket_email !='') ? $ticketDetail->ticket_email : $ticketDetail->customer->email  }}</div>
                             <input type="hidden" id="customer_id" value="{{ $ticketDetail->customer_id }}">
                             <input type="hidden" id="customer_name" value="{{ isset($ticketDetail->customer) ? $ticketDetail->customer->first_name : '' }}">
                             <input type="hidden" id="store_name" value="{{ isset($ticketDetail->store) ? $ticketDetail->store->name : '' }}">
