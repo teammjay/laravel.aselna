@@ -665,6 +665,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
             }
 
             $this->handleMediaImages($response['data']['productUpdate']['product'], $listingItem);
+//            $this->deleteOldProductImages($shopifyAuthService, $proDetail->marketplace_product_id, []);
             $firstImage = ListingItemProductImage::where('listing_item_id', $listingItem->id)->where('main_image', 1)->first();
             if (!isset($firstImage)) {
                 $productImage = ProductImages::select('id')->where('product_id', $productData->product_id)->where('main_image', 1)->first();
@@ -906,10 +907,14 @@ class SubmitShopifyProductsJob implements ShouldQueue
                 continue;
             }
             $mediaId = $image['id'];
-            $altText = $image['alt'];
-            if ($altText == null || $altText == '') {
+            $imageIdReplaced = str_replace('gid://shopify/MediaImage/', '', $mediaId);
+            if (!ListingItemProductImage::where('reference_id',$imageIdReplaced)->exist()) {
                 $mediaIds[] = $mediaId;
             }
+//            $altText = $image['alt'];
+//            if ($altText == null || $altText == '') {
+//                $mediaIds[] = $mediaId;
+//            }
         }
         if (count($mediaIds) == 0) {
             return;
