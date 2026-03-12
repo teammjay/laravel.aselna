@@ -219,6 +219,9 @@ class EmailMessageUtility
 //            $messages = $query->get();
             $batchSize = 10;
 
+            $totalMessagesCount = $folder->query()->since($searchDateCriteria)->before($toDateCriteria)->count();
+
+            Log::info('Total Message Count ::' . $totalMessagesCount);
             $page = 1;
 
             $remainUIs = [];
@@ -235,6 +238,10 @@ class EmailMessageUtility
 
                 $tempMessages = $query->get();
                 Log::info("Fetched batch {$page} with " . $tempMessages->count() . " messages");
+
+                if ($tempMessages->count() == 0) {
+                    break;
+                }
 
                 $imapMessageIds = [];
                 $imapUids = [];
@@ -257,11 +264,32 @@ class EmailMessageUtility
                     ->pluck('message_id')
                     ->toArray();
 
+                $existingLookup = array_flip($existingIds);
+
                 foreach ($imapUids as $mid => $uid) {
+
+                    if (!isset($existingLookup[$mid])) {
+                        $remainUIs[] = $uid;
+
+                        if (count($remainUIs) >= $limit) {
+                            //break 2;
+                        }
+                    }
+                }
+
+                if ($tempMessages->count() < $batchSize) {
+                    break;
+                }
+
+                if($totalMessagesCount <= count($remainUIs)){
+                    break;
+                }
+
+                /*foreach ($imapUids as $mid => $uid) {
                     if (!in_array($mid, $existingIds)) {
                         $remainUIs[] = $uid;
                     }
-                }
+                }*/
 
 //                // Break the loop if we've already reached our limit
 //                if (count($remainUIs) >= $limit) {
@@ -277,8 +305,8 @@ class EmailMessageUtility
                 sleep(1); // prevent server throttling
                 Log::info('New Messages Count :: ' . count($remainUIs));
                 $query = null;
-            } while ($tempMessages->count() > 0 && !($tempMessages->count() < $batchSize) && count($remainUIs) <= $limit);
-//            } while (true);
+            //} while ($tempMessages->count() > 0 && !($tempMessages->count() < $batchSize) && count($remainUIs) <= $limit && $totalMessagesCount < $page * $batchSize);
+            } while(true);
 
             Log::info("Found UID" . json_encode($remainUIs) . " messages matching the time criteria");
             Log::info("Found " . count($remainUIs) . " messages matching the time criteria");

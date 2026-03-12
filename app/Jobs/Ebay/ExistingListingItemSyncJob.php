@@ -11,6 +11,7 @@ use App\Models\ListingItemLink;
 use App\Models\Store;
 use App\Services\Auth\EbayAuthService;
 use App\Services\CriticalErrorService;
+use Carbon\Carbon;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
@@ -136,6 +137,12 @@ class ExistingListingItemSyncJob implements ShouldQueue
                         })->first();
                         if ($itemDetail) {
                             if (isset($item['ItemID'])) {
+                                if(isset($item['ListingDetails']['EndTime']) && $item['ListingDetails']['EndTime'] != ''){
+                                    $endTime = $item['ListingDetails']['EndTime'];
+                                    if (now()->gt($endTime)) {
+                                        continue;
+                                    }
+                                }
                                 $itemSkuArray[] = $item['SKU'];
                                 Log::info("SKU Active: " . $item['SKU']);
                                 $itemDetail->update([
