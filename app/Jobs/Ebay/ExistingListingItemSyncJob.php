@@ -145,6 +145,7 @@ class ExistingListingItemSyncJob implements ShouldQueue
                                         'status' => ListingStatus::Active,
                                         'sync_status' => ListingSyncStatus::Synchronized,
                                     ]);
+                                    $itemSkuArray[] = $item['SKU'];
                                     Log::info("Updated Active item. SKU: " . $item['SKU'] . " | ItemID: " . $item['ItemID']);
                                 } else {
                                     // The item is 'Completed', 'Ended', or otherwise inactive
@@ -160,19 +161,19 @@ class ExistingListingItemSyncJob implements ShouldQueue
                     }
                 }
 
-//                if (isset($response['ReturnedItemCountActual']) && ((int)$response['ReturnedItemCountActual']) < count($skuArray)) {
-//                    foreach ($skuArray as $sku) {
-//                        if (!in_array($sku, $itemSkuArray)) {
-//                            $itemDetails = ListingItem::where('sku', $sku)->get();
-//                            foreach ($itemDetails as $item) {
-//                                Log::info("Item with SKU: " . $sku . " not found in eBay response, marking as Deleted.");
-//                                $item->update([
-//                                    'status' => ListingStatus::Deleted,
-//                                ]);
-//                            }
-//                        }
-//                    }
-//                }
+                if (isset($response['ReturnedItemCountActual']) && ((int)$response['ReturnedItemCountActual']) < count($skuArray)) {
+                    foreach ($skuArray as $sku) {
+                        if (!in_array($sku, $itemSkuArray)) {
+                            $itemDetails = ListingItem::where('sku', $sku)->get();
+                            foreach ($itemDetails as $item) {
+                                Log::info("Item with SKU: " . $sku . " not found in eBay response, marking as Deleted.");
+                                $item->update([
+                                    'status' => ListingStatus::Deleted,
+                                ]);
+                            }
+                        }
+                    }
+                }
             }
 
         } catch (\Throwable $e) {
