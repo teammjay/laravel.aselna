@@ -487,10 +487,12 @@ class MessagesController extends Controller
                 }
             }
 
+            $messageDetail = HDMessage::where('ticket_id', $id)->whereNull('author')->orderBy('created_at', 'desc')->first();
+
             $stores = Store::with('storeType')->get();
 
             //print_r($action);
-            return view('messages.detail', compact('message_template', 'ticketDetail', 'messages', 'ticketTypeCode', 'action', 'store_type_name', 'ticketHistory', 'rma_done', 'lable_generate', 'type', 'template', 'ticketAllLabels', 'ticketLabels', 'stores'));
+            return view('messages.detail', compact('message_template', 'ticketDetail', 'messages', 'ticketTypeCode', 'action', 'store_type_name', 'ticketHistory', 'rma_done', 'lable_generate', 'type', 'template', 'ticketAllLabels', 'ticketLabels', 'stores','messageDetail'));
         }else{
             return redirect()->route('message.index');
         }
