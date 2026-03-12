@@ -255,8 +255,8 @@ class Navigationutility
                 $finalLinkArray['final_title'] = $device->brand->name . ' ' . $device->name . ' Accessories';
                 foreach ($links as $link) {
                     // skip product types which do not have products for this device
-                    if (!array_key_exists($link->product_type_id, $productTypeMap)) {
-                        //continue;
+                    if (!isset($productTypeMap[$link->product_type_id])) {
+                        continue;
                     }
                     $finalLinkArray['popular_link'][] = [
                         'id' => $link->id,
