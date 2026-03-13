@@ -227,25 +227,32 @@ class Navigationutility
                     ->where('device_id', $request->device_id)
                     ->first();
 
+                $productTypeMapQuery = DeviceInterface::join('product_interface', 'device_interface.interface_id', '=', 'product_interface.interface_id')
+                    ->join('products', 'products.product_id', '=', 'product_interface.product_id')
+                    ->join('product_type as child_pt', 'child_pt.id', '=', 'products.product_type')
+                    ->leftJoin('product_type as parent_pt', function($join) {
+                        $join->on('parent_pt.id', '=', 'child_pt.parent_id')
+                             ->where('parent_pt.code', '!=', 'cea');
+                    })
+                    ->join('device', 'device_interface.device_id', '=', 'device.id')
+                    ->where('device.status', 'active')
+                    ->where('products.product_status', 'active')
+                    ->where('device_interface.device_id', $request->device_id)
+                    ->groupBy(\DB::raw('COALESCE(parent_pt.id, child_pt.id)'))
+                    ->select(
+                        \DB::raw('COALESCE(parent_pt.id, child_pt.id) as parent_id'),
+                        \DB::raw('COUNT(products.product_id) as product_count')
+                    );
+
+                Log::info('Product Type Map Query Result: ', ['query' => $productTypeMapQuery->toSql(), 'bindings' => $productTypeMapQuery->getBindings()]);
+                $productTypeMapQueryData = $productTypeMapQuery->get();
+
                 $productTypeMap = [];
-                foreach ($productTypes as $pt) {
-                    $childProductTypeIds = ProductType::where('parent_id', $pt->id)->pluck('id')->toArray();
-                    $subChildIds = ProductType::whereIn('parent_id', $childProductTypeIds)->pluck('id')->toArray();
-                    $allIds = array_merge($childProductTypeIds, $subChildIds);
-                    $allIds[] = $pt->id;
-
-                    $productCount = DeviceInterface::join('product_interface', 'device_interface.interface_id', '=', 'product_interface.interface_id')
-                        ->join('products', 'products.product_id', '=', 'product_interface.product_id')
-                        ->join('device', 'device_interface.device_id', '=', 'device.id')
-                        ->where('device.status', 'active')
-                        ->where('products.product_status', 'active')
-                        ->where('device_interface.device_id', $request->device_id)
-                        ->whereIn('products.product_type_id',$allIds)
-                        ->count();
-
-                    if ($productCount > 0) {
-                        $productTypeMap[$pt->id] = $productCount;
+                foreach ($productTypeMapQueryData as $ptm) {
+                    if ($ptm->product_count <= 0) {
+                        continue;
                     }
+                    $productTypeMap[$ptm->parent_id] = $ptm->product_count;
                 }
 
                 $device = Device::where('id', $request->device_id)->firstOrFail();
