@@ -703,6 +703,27 @@ class ShopifyBrandPageSyncJob implements ShouldQueue
      */
     public function getProductTypeMap(mixed $device): array
     {
+        $productTypes = ProductType::whereIn('parent_id', function ($subquery) {
+            $subquery->select('id')->from('product_type')->where('code', 'cea');
+        })->whereNotNull('sort_order')->orderBy('sort_order', 'asc')->get();
+
+        foreach ($productTypes as $productType) {
+            $childProductTypeIds = ProductType::where('parent_id', $productType->id)->pluck('id')->toArray();
+            $subChildIds = ProductType::whereIn('parent_id', $childProductTypeIds)->pluck('id')->toArray();
+            $allIds = array_merge($childProductTypeIds, $subChildIds);
+            $allIds[] = $productType->id;
+            $productCount = DeviceInterface::join('product_interface', 'device_interface.interface_id', '=', 'product_interface.interface_id')
+                ->join('products', 'products.product_id', '=', 'product_interface.product_id')
+                ->join('device', 'device_interface.device_id', '=', 'device.id')
+                ->where('device.status', 'active')
+                ->where('products.product_status', 'active')
+                ->where('device_interface.device_id', $device->id)
+                ->whereIn('products.product_type_id',$allIds)
+                ->count();
+
+
+        }
+
         $productTypeMapQuery = DeviceInterface::join('product_interface', 'device_interface.interface_id', '=', 'product_interface.interface_id')
             ->join('products', 'products.product_id', '=', 'product_interface.product_id')
             ->join('product_type as child_pt', 'child_pt.id', '=', 'products.product_type')
