@@ -152,7 +152,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
                                     'store_product.last_synch_date_time',
                                     '<',
                                     'products.updated_at'
-                                );
+                                )->orWhereNull('store_product.last_synch_date_time');
                         })
                         ->orderBy('manage_marketplace_products.updated_at', 'asc')
                         ->limit(200)
