@@ -387,6 +387,10 @@ class ShopifyBrandPageSyncJob implements ShouldQueue
                             $handle = $this->generateShopifyHandle($title);
                         }
 
+                        $metafields = $this->getProductTypeMetafields($productType);
+
+                        $collectionData['collection']['metafields'] = $metafields;
+
                         $collectionData['collection']['ruleSet']['rules'][] = [
                             'column' => 'TAG',
                             'relation' => 'EQUALS',
@@ -749,5 +753,47 @@ class ShopifyBrandPageSyncJob implements ShouldQueue
     private function getInterfacesForDevice(mixed $device)
     {
         return DeviceInterface::where('device_id', $device->id)->pluck('interface_id')->toArray();
+    }
+
+    private function getProductTypeMetafields(mixed $productType)
+    {
+        $metafields = [];
+        $shildrenProductTypes = ProductType::where('parent_id', $productType->id)->orderBy('sort_order', 'asc')->get();
+        $subCategories = [];
+        foreach ($shildrenProductTypes as $childproductType) {
+            $subCategories[] = [
+                'name' => $childproductType->name,
+                'tag' => $this->generateShopifyHandle($childproductType->name)
+            ];
+        }
+
+        $page = StoreNavigationPage::where('store_id', $this->store_id)
+            ->where('page_type', WebStorePageType::PRODUCT_TYPE)
+            ->where('product_type_id', $productType->id)
+            ->first();
+
+        $category = [
+            'name' => $productType->name,
+            'imageUrl' => $page->store_image_url ?? '',
+            'tag' => $page->url_path ?? '',
+            'sortOrder' => $productType->sort_order,
+            'subCategories' => $subCategories
+        ];
+
+        $metafields[] = [
+            'namespace' => 'global',
+            'key' => 'categories_json',
+            'value' => json_encode($category),
+            'type' => 'json'
+        ];
+
+        $metafields[] = [
+            'namespace' => 'global',
+            'key' => 'interfaces',
+            'value' => json_encode([$productType->id]),
+            'type' => 'single_line_text_field'
+        ];
+
+        return $metafields;
     }
 }
