@@ -65,4 +65,14 @@ class JobStatus extends Model
     {
         return $this->parent_job_id === null;
     }
+
+    /**
+     * Check if a specific job type is currently running or pending.
+     */
+    public static function isJobRunning(string $type): bool
+    {
+        return self::where('type', $type)
+            ->whereIn('status', ['pending', 'processing'])
+            ->exists();
+    }
 }

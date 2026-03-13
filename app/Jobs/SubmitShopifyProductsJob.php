@@ -19,6 +19,8 @@ use App\Models\ProductTags;
 use App\Models\StoreProduct;
 use App\Models\StoreTypeListing;
 use App\Models\UPCCodes;
+use App\Models\JobStatus;
+use App\Jobs\Sync\FonusCombinedSyncJob;
 use App\Services\Auth\ShopifyAuthService;
 use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -51,6 +53,14 @@ class SubmitShopifyProductsJob implements ShouldQueue
      */
     public function handle(): void
     {
+        if (JobStatus::isJobRunning(FonusCombinedSyncJob::class)) {
+            Log::info('Skipping SubmitShopifyProductsJob: FonusCombinedSyncJob is currently running.');
+            $this->updateTrackingRecord([
+                'status' => 'failed', 'output' => 'Skipping SubmitShopifyProductsJob: FonusCombinedSyncJob is currently running.', 'finished_at' => now()
+            ]);
+            return;
+        }
+
         try {
             $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now()]);
             /* shopify stores*/

@@ -9,6 +9,7 @@ use App\Jobs\Magento\MagentoCategorySyncJob;
 use App\Jobs\Magento\MagentoDeviceSyncJob;
 use App\Jobs\Magento\MagentoRelationSyncJob;
 use App\Models\Store;
+use App\Models\JobStatus;
 use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -36,6 +37,14 @@ class MagentoSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
+        if (JobStatus::isJobRunning(FonusCombinedSyncJob::class)) {
+            Log::info('Skipping MagentoSyncJob: FonusCombinedSyncJob is currently running.');
+            $this->updateTrackingRecord([
+                'status' => 'failed', 'output' => 'Skipping MagentoSyncJob: FonusCombinedSyncJob is currently running.', 'finished_at' => now()
+            ]);
+            return;
+        }
+
         $this->updateTrackingRecord(['tags' => 'Magento Combined']);
 
         try {
