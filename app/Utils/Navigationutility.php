@@ -242,11 +242,13 @@ class Navigationutility
                     ->select(
                         \DB::raw('COALESCE(parent_pt.id, child_pt.id) as parent_id'),
                         \DB::raw('COUNT(products.product_id) as product_count')
-                    )
-                    ->get();
+                    );
+
+                Log::info('Product Type Map Query Result: ', ['query' => $productTypeMapQuery->toSql(), 'bindings' => $productTypeMapQuery->getBindings()]);
+                $productTypeMapQueryData = $productTypeMapQuery->get();
 
                 $productTypeMap = [];
-                foreach ($productTypeMapQuery as $ptm) {
+                foreach ($productTypeMapQueryData as $ptm) {
                     if ($ptm->product_count <= 0) {
                         continue;
                     }
