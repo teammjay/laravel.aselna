@@ -69,25 +69,25 @@ class FonusCombinedSyncJob implements ShouldQueue
 
         try {
             $chain = [
-//                new ProductcolorSyncJob(), // DONE
-//                new ManufacturerSyncJob(), // DONE
-//                new CarrierSyncJob(), // DONE
-//                new ProductSyncJob(), // Partial Done
-//                new InterfacesSyncJob(), // DONE
+                new ProductcolorSyncJob(), // DONE
+                new ManufacturerSyncJob(), // DONE
+                new CarrierSyncJob(), // DONE
+                new ProductSyncJob(), // Partial Done
+                new InterfacesSyncJob(), // DONE
                 new CategorySyncJob(), // DONE
-//                new BrandSyncJob(), // DONE
-//                new DeviceTypeSyncJob(),// DONE
-//                new DevicesSyncJob(), // DONE
-//                new DeviceCarrierSyncJob(), // DONE
-//                new DevicesInterfacesSyncJob(),// DONE
-//                new ProductInterfacesSyncJob(), // DONE
-//                new ProductTitleKeyword(), // DONE
-//                new ProductChannelSyncJob(), // DONE
-////                new DeviceChannelSyncJob(),// DONE
-//                new PopularDevicesSyncJob(), // DONE
-//                new ProductImagesSyncJob(), // DONE
-//                new ProductAlternativeImagesSyncJob(), // DONE
-//                new ProductSpecificationsSyncJob(),
+                new BrandSyncJob(), // DONE
+                new DeviceTypeSyncJob(),// DONE
+                new DevicesSyncJob(), // DONE
+                new DeviceCarrierSyncJob(), // DONE
+                new DevicesInterfacesSyncJob(),// DONE
+                new ProductInterfacesSyncJob(), // DONE
+                new ProductTitleKeyword(), // DONE
+                new ProductChannelSyncJob(), // DONE
+//                new DeviceChannelSyncJob(),// DONE
+                new PopularDevicesSyncJob(), // DONE
+                new ProductImagesSyncJob(), // DONE
+                new ProductAlternativeImagesSyncJob(), // DONE
+                new ProductSpecificationsSyncJob(),
             ];
 
             // Add the completion job at the end of the chain to mark parent as completed
