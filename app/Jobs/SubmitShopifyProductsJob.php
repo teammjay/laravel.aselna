@@ -681,9 +681,11 @@ class SubmitShopifyProductsJob implements ShouldQueue
             if (!isset($firstImage)) {
                 $productImage = ProductImages::select('id')->where('product_id', $productData->product_id)->where('main_image', 1)->first();
                 $firstImage = ListingItemProductImage::where('listing_item_id', $listingItem->id)->where('product_image_id', $productImage->id)->first();
-                $firstImage->update([
-                    'main_image' => 1
-                ]);
+                if ($firstImage) {
+                    $firstImage->update([
+                        'main_image' => 1
+                    ]);
+                }
             }
 
             if (isset($firstImage) && isset($firstImage->reference_id) && !empty($firstImage->reference_id)) {
