@@ -462,7 +462,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
             }),
         ];
 
-        $metafields = $this->getMetafieldsData($productData);
+        $metafields = $this->getMetafieldsData($productData,$store);
         if (count($metafields) > 0) {
             $productNewData['productSet']['metafields'] = $metafields;
         }
@@ -609,7 +609,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
             $productUpdateData['media'] = $media;
         }
 
-        $metafields = $this->getMetafieldsData($productData);
+        $metafields = $this->getMetafieldsData($productData,$store);
         if (count($metafields) > 0) {
             $productUpdateData['product']['metafields'] = $metafields;
         }
@@ -786,10 +786,14 @@ class SubmitShopifyProductsJob implements ShouldQueue
         return $listingItem;
     }
 
-    public static function generateProductTitle($productData, $store)
+    public static function generateProductTitle($productData, $store, $is_require_for_metatitle = 0)
     {
         $titleTemplate = $store->shopify_title_template;
         if($titleTemplate != ''){
+
+            if (str_contains($titleTemplate, "#device_name") && $is_require_for_metatitle == 0) {
+                $titleTemplate = str_replace('#device_name','',$titleTemplate);
+            }
 
             $keywords = ProductTitleKeyword::select('product_id', 'keyword')
                 ->where('product_id', $productData->product_id)
@@ -948,7 +952,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
         //$this->deleteOldProductImages($shopifyAuthService, $marketplace_product_id,$AlreadyImages);
     }
 
-    private function getMetafieldsData(mixed $productData)
+    private function getMetafieldsData(mixed $productData, $store)
     {
         $product_type = ProductType::where('id', $productData->product_type)->first();
         $parent_product_type = ProductType::where('id', $product_type->parent_id)->first();
@@ -995,6 +999,20 @@ class SubmitShopifyProductsJob implements ShouldQueue
                 'type' => 'single_line_text_field'
             ];
         }
+
+        if(isset($store->shopify_title_template) && $store->shopify_title_template != '') {
+
+            if (str_contains($store->shopify_title_template, "#device_name")) {
+                $productTitle = $this->generateProductTitle($productData, $store, 1);
+                $metafields[] = [
+                    'namespace' => 'device_name',
+                    'key' => 'device_title',
+                    'value' => $productTitle,
+                    'type' => 'single_line_text_field'
+                ];
+            }
+        }
+
 
         return $metafields;
     }

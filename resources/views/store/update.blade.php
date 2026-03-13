@@ -1984,7 +1984,7 @@
             });
         }
 
-        const allHashtags = ["#title_keyword1", "#title_keyword2", "#title_keyword3", "#title_keyword4", "#title_keyword5", "#title_keyword6", "#title_keyword7", "#title_keyword8", "#title_keyword9", "#store_short_code", "#product_code"];
+        const allHashtags = ["#title_keyword1", "#title_keyword2", "#title_keyword3", "#title_keyword4", "#title_keyword5", "#title_keyword6", "#title_keyword7", "#title_keyword8", "#title_keyword9", "#store_short_code", "#product_code", "#device_name"];
         let usedHashtags = [];
 
         const textarea = document.getElementById("shopify_title_template");
