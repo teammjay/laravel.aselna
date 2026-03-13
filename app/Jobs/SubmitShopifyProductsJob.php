@@ -795,6 +795,8 @@ class SubmitShopifyProductsJob implements ShouldQueue
                 $titleTemplate = str_replace('#device_name','',$titleTemplate);
             }
 
+            Log::info('Shopify Store Product Title Template ::'.$titleTemplate);
+
             $keywords = ProductTitleKeyword::select('product_id', 'keyword')
                 ->where('product_id', $productData->product_id)
                 ->orderBy('priority', 'asc')->get()->toArray();
@@ -816,6 +818,8 @@ class SubmitShopifyProductsJob implements ShouldQueue
             );
 
             $title = preg_replace('/\s+/', ' ', trim($title));
+
+            Log::info('Final Title Template ::'.$title);
 
             return trim($title);
         }else {
@@ -1000,8 +1004,9 @@ class SubmitShopifyProductsJob implements ShouldQueue
             ];
         }
 
-        if(isset($store->shopify_title_template) && $store->shopify_title_template != '') {
 
+        if(isset($store->shopify_title_template) && $store->shopify_title_template != '') {
+            Log::info('Shopify Store Title Template ::'.$store->shopify_title_template);
             if (str_contains($store->shopify_title_template, "#device_name")) {
                 $productTitle = $this->generateProductTitle($productData, $store, 1);
                 $metafields[] = [
@@ -1013,7 +1018,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
             }
         }
 
-
+        Log::info('Metafields ::'.json_encode($metafields));
         return $metafields;
     }
 
