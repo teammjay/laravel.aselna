@@ -47,6 +47,14 @@ class ShopifyOnlySyncJob implements ShouldQueue
      */
     public function handle(): void
     {
+        if (JobStatus::isJobRunning(FonusCombinedSyncJob::class)) {
+            Log::info('Skipping ShopifyOnlySyncJob: FonusCombinedSyncJob is currently running.');
+            $this->updateTrackingRecord([
+                'status' => 'failed', 'output' => 'Skipping ShopifyOnlySyncJob: FonusCombinedSyncJob is currently running.', 'started_at' => now(), 'finished_at' => now()
+            ]);
+            return;
+        }
+
         $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Shopify Combined']);
 
         try {
