@@ -121,7 +121,8 @@ class CategorySyncJob implements ShouldQueue
 
     private function createSubCategory(mixed $subCategory)
     {
-        $category = ProductType::where('code', $subCategory->category_id)->first();
+        $category = ProductType::where('code', '' . $subCategory->category_id);
+        $category = $category->first();
         if (!isset($category)) {
             return;
         }
