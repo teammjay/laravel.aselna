@@ -706,7 +706,10 @@ class ShopifyBrandPageSyncJob implements ShouldQueue
         $productTypeMapQuery = DeviceInterface::join('product_interface', 'device_interface.interface_id', '=', 'product_interface.interface_id')
             ->join('products', 'products.product_id', '=', 'product_interface.product_id')
             ->join('product_type as child_pt', 'child_pt.id', '=', 'products.product_type')
-            ->leftJoin('product_type as parent_pt', 'parent_pt.id', '=', 'child_pt.parent_id')
+            ->leftJoin('product_type as parent_pt', function($join) {
+                $join->on('parent_pt.id', '=', 'child_pt.parent_id')
+                    ->where('parent_pt.code', '!=', 'cea');
+            })
             ->join('device', 'device_interface.device_id', '=', 'device.id')
             ->where('device.status', 'active')
             ->where('products.product_status', 'active')
@@ -721,7 +724,10 @@ class ShopifyBrandPageSyncJob implements ShouldQueue
         $parentProductTypeMapQuery = DeviceInterface::join('product_interface', 'device_interface.interface_id', '=', 'product_interface.interface_id')
             ->join('products', 'products.product_id', '=', 'product_interface.product_id')
             ->join('product_type as child_pt', 'child_pt.id', '=', 'products.product_type')
-            ->leftJoin('product_type as parent_pt', 'parent_pt.id', '=', 'child_pt.parent_id')
+            ->leftJoin('product_type as parent_pt', function($join) {
+                $join->on('parent_pt.id', '=', 'child_pt.parent_id')
+                    ->where('parent_pt.code', '!=', 'cea');
+            })
             ->join('device', 'device_interface.device_id', '=', 'device.id')
             ->where('device.status', 'active')
             ->where('products.product_status', 'active')
