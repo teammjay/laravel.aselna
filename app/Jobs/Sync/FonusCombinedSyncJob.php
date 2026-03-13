@@ -24,6 +24,7 @@ use App\Jobs\Fonus\ProductSyncJob;
 use App\Jobs\Fonus\ProductTitleKeyword;
 use App\Jobs\ProductAlternativeImagesSyncJob;
 use App\Jobs\ProductImagesSyncJob;
+use App\Jobs\SubmitShopifyProductsJob;
 use App\Models\JobStatus;
 use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -51,6 +52,14 @@ class FonusCombinedSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
+        if (JobStatus::isJobRunning(SubmitShopifyProductsJob::class) || JobStatus::isJobRunning(ShopifyOnlySyncJob::class)) {
+            Log::info('Skipping FonusCombinedSyncJob: SubmitShopifyProductsJob or ShopifyOnlySyncJob is currently running.');
+            $this->updateTrackingRecord([
+                'status' => 'failed', 'output' => 'Skipping FonusCombinedSyncJob: SubmitShopifyProductsJob or ShopifyOnlySyncJob is currently running.','started_at' => now(), 'finished_at' => now()
+            ]);
+            return;
+        }
+
         // Keep parent job as "processing" - NOT completed yet
         $this->updateTrackingRecord([
             'status' => 'processing',
