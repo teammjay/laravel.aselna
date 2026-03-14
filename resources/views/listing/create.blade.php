@@ -2820,7 +2820,7 @@
         }
 
         function followThirdStep(){
-            let selected_product = [];
+            //let selected_product = [];
             let store_type = $('#listing_store option:selected').data('storetype');
             if(store_type == 'Ebay' || store_type == 'eBay'){
                 $('input[data-name="Combined Devices"]').parent().hide();
@@ -2831,7 +2831,10 @@
                 $('.inc_carrier_option').hide();
             }
             getStoreManufacturer();
-            productDetail = {};
+
+            loadSelectedProducts();
+
+            /*productDetail = {};
             $('input[name="selected_store_product[]"]').each(function () {
                 var pid = $(this).val();
                 var pro_id = $('.pid-'+pid).val();
@@ -2854,9 +2857,9 @@
                 productDetail[pid]['price'] = price;
                 productDetail[pid]['price_overwrite'] = price_overwrite;
                 productDetail[pid]['store_type_category_id'] = store_type_category_id;
-            });
+            });*/
 
-            let device_type = [];
+            /*let device_type = [];
             $('input[name="device_type[]"]:checked').each(function () {
                 device_type.push($(this).val())
             });
@@ -2864,9 +2867,6 @@
             let is_selected = 0;
             if($('#selected_device_only').is(':checked')) {
                 is_selected = 1;
-                /*$('input[name="listing_product_id[]"]:checked').each(function () {
-                    selected_device.push($(this).val())
-                });*/
             }
 
             let brand = [];
@@ -2943,14 +2943,14 @@
                     }
                 },
                 error: function (xhr) {
-                    /*if (xhr.responseJSON?.error) {
+                    /!*if (xhr.responseJSON?.error) {
                         $('#responseMessage').html('<p style="color:red;">' + xhr.responseJSON.error.image[0] + '</p>');
-                    }*/
+                    }*!/
                 },
                 complete: function () {
                     $("#ajax-preloader").hide();
                 }
-            });
+            });*/
 
             let deviceSeries1 = [];
             $('input[name="device_series[]"]').each(function()
