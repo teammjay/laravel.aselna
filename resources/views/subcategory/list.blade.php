@@ -44,7 +44,7 @@
 @section('js')
     <script>
         $(document).ready(function () {
-            $('#subcategoryTable').DataTable({});
+            $('#subcategoryTable').DataTable({"dom": '<"datatable-top"lfip>rt<"datatable-bottom"ip>',});
         });
     </script>
 @stop

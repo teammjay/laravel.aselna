@@ -81,6 +81,11 @@ class Catalog extends Model
         return $this->hasMany(ProductImages::class, 'product_id', 'product_id');
     }
 
+    public function additionalimages()
+    {
+        return $this->hasMany(ProductImageAlternative::class, 'product_id', 'product_id');
+    }
+
     // siae and material
     public function size()
     {

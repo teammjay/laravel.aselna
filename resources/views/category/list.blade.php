@@ -46,6 +46,7 @@
     <script>
         $(document).ready(function () {
             $('#categoryTable').DataTable({
+                "dom": '<"datatable-top"lfip>rt<"datatable-bottom"ip>',
                 stateSave:true,
                 stateSaveCallback: function(settings, data) {
                     sessionStorage.setItem(

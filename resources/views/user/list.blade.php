@@ -132,7 +132,7 @@
                 $('.card-body').toggle();
             });
 
-            $('#userTable').DataTable({});
+            $('#userTable').DataTable({"dom": '<"datatable-top"lfip>rt<"datatable-bottom"ip>',});
 
 
             $('#filter-form').on('submit', function(e) {
@@ -149,7 +149,7 @@
                         $('#user-list').html(response.html);
                         //$('#pagination').html(response.pagination);
 
-                        $('#userTable').DataTable({});
+                        $('#userTable').DataTable({"dom": '<"datatable-top"lfip>rt<"datatable-bottom"ip>',});
                     },
                     error: function(xhr) {
                         console.error('Error:', xhr);

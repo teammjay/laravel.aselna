@@ -1330,7 +1330,8 @@
             });
 
             $(document).on('click', 'input[name="device_type[]"]', function() {
-                loadListingProduct(0);
+                loadSelectedProducts();
+                ///loadListingProduct(0);
             });
 
             $(document).on('click', 'input[name="include_carrier"]', function() {
@@ -1340,7 +1341,8 @@
                 }else{
                     $('.carr-filter').hide();
                 }
-                loadListingProduct(0);
+                loadSelectedProducts();
+                //loadListingProduct(0);
             });
 
 
@@ -1624,7 +1626,8 @@
                     }
 
                     if (ele.parents('.pro-brand').length || ele.parents('.pro-rating').length || ele.parents('.pro-popular').length || ele.parents('.pro-carrier').length) {
-                        loadListingProduct(0);
+                        loadSelectedProducts();
+                        //loadListingProduct(0);
                     }
                 },300);
             });
@@ -1769,7 +1772,8 @@
                     }
 
                     if (ele.parents('.pro-brand').length || ele.parents('.pro-rating').length || ele.parents('.pro-popular').length || ele.parents('.pro-carrier').length) {
-                        loadListingProduct(0);
+                        loadSelectedProducts();
+                        //loadListingProduct(0);
                     }
                 },300);
             });
@@ -1916,7 +1920,8 @@
                     }
 
                     if (ele.parents('.pro-brand').length || ele.parents('.pro-rating').length || ele.parents('.pro-popular').length || ele.parents('.pro-carrier').length) {
-                        loadListingProduct(0);
+                        loadSelectedProducts();
+                        //loadListingProduct(0);
                     }
 
 
@@ -2248,7 +2253,8 @@
                     },
                 });
 
-                loadListingProduct(0);
+                loadSelectedProducts();
+                //loadListingProduct(0);
             });
 
             $('#product_code_filter').autocomplete({
@@ -2850,6 +2856,60 @@
                 productDetail[pid]['store_type_category_id'] = store_type_category_id;
             });
 
+            let device_type = [];
+            $('input[name="device_type[]"]:checked').each(function () {
+                device_type.push($(this).val())
+            });
+
+            let is_selected = 0;
+            if($('#selected_device_only').is(':checked')) {
+                is_selected = 1;
+                /*$('input[name="listing_product_id[]"]:checked').each(function () {
+                    selected_device.push($(this).val())
+                });*/
+            }
+
+            let brand = [];
+            $("#brand_filter option").each(function()
+            {
+                brand.push($(this).val())
+            });
+            let rating = [];
+            $("#rating_filter option").each(function()
+            {
+                rating.push($(this).val())
+            });
+            let popularity = [];
+            $("#popularity_filter option").each(function()
+            {
+                popularity.push($(this).val())
+            });
+
+            let carriers = [];
+            $("#carrier_filter option").each(function()
+            {
+                carriers.push($(this).val())
+            });
+
+            let devices = [];
+            $('input[name="device[]"]').each(function()
+            {
+                devices.push($(this).val())
+            });
+
+            let deviceSeries = [];
+            $('input[name="device_series[]"]').each(function()
+            {
+                deviceSeries.push($(this).val())
+            });
+
+            let include_carrier = 0;
+            if($('input[name="include_carrier"]').is(':checked')){
+                include_carrier = 1;
+            }
+
+            let generate_type_name = $('input[name="generate_type"]:checked').data('name');
+
             $("#ajax-preloader").show();
             $.ajax({
                 url: "{{ route('listing.getselectedproducts') }}",
@@ -2858,6 +2918,17 @@
                     product_ids:selected_product,
                     store_id:$('#listing_store').val(),
                     product_detail:JSON.stringify(productDetail),
+                    device_type:device_type,
+                    devices:devices,
+                    device_series:deviceSeries,
+                    brand:brand,
+                    rating:rating,
+                    popularity:popularity,
+                    carriers:carriers,
+                    selected_device:selected_device,
+                    is_selected:is_selected,
+                    include_carrier:include_carrier,
+                    generate_type_name:generate_type_name,
                     step:3
                 },
                 headers: {
@@ -2881,18 +2952,18 @@
                 }
             });
 
-            let deviceSeries = [];
+            let deviceSeries1 = [];
             $('input[name="device_series[]"]').each(function()
             {
-                deviceSeries.push($(this).val())
+                deviceSeries1.push($(this).val())
             });
 
-            if(deviceSeries.length){
+            if(deviceSeries1.length){
                 $.ajax({
                     url: "{{ route('listing.getdeviceseries') }}",
                     type: 'POST',
                     data: {
-                        deviceSeries:deviceSeries,
+                        deviceSeries:deviceSeries1,
                     },
                     headers: {
                         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -3078,6 +3149,130 @@
             });
         }
 
+        function loadSelectedProducts(){
+            let selected_product = [];
+            productDetail = {};
+            $('input[name="selected_store_product[]"]').each(function () {
+                var pid = $(this).val();
+                var pro_id = $('.pid-'+pid).val();
+                selected_product.push(pro_id);
+                var title = $('.title-'+pro_id).val();
+                var short_keyword = $('.shortKey-'+pro_id).val();
+                var long_keyword = $('.longKey-'+pro_id).val();
+                var price = $('.price-'+pro_id).val();
+                var store_type_category_id = $('.stc-'+pro_id).val();
+                if($('.po-'+pro_id).is(':checked')) {
+                    var price_overwrite = 1;
+                }else{
+                    var price_overwrite = 0;
+                }
+                productDetail[pid] = {};
+                productDetail[pid]['product_id'] = pro_id;
+                productDetail[pid]['title'] = title;
+                productDetail[pid]['short_keyword'] = short_keyword;
+                productDetail[pid]['long_keyword'] = long_keyword;
+                productDetail[pid]['price'] = price;
+                productDetail[pid]['price_overwrite'] = price_overwrite;
+                productDetail[pid]['store_type_category_id'] = store_type_category_id;
+            });
+
+            let device_type = [];
+            $('input[name="device_type[]"]:checked').each(function () {
+                device_type.push($(this).val())
+            });
+
+            let is_selected = 0;
+            if($('#selected_device_only').is(':checked')) {
+                is_selected = 1;
+                /*$('input[name="listing_product_id[]"]:checked').each(function () {
+                    selected_device.push($(this).val())
+                });*/
+            }
+
+            let brand = [];
+            $("#brand_filter option").each(function()
+            {
+                brand.push($(this).val())
+            });
+            let rating = [];
+            $("#rating_filter option").each(function()
+            {
+                rating.push($(this).val())
+            });
+            let popularity = [];
+            $("#popularity_filter option").each(function()
+            {
+                popularity.push($(this).val())
+            });
+
+            let carriers = [];
+            $("#carrier_filter option").each(function()
+            {
+                carriers.push($(this).val())
+            });
+
+            let devices = [];
+            $('input[name="device[]"]').each(function()
+            {
+                devices.push($(this).val())
+            });
+
+            let deviceSeries = [];
+            $('input[name="device_series[]"]').each(function()
+            {
+                deviceSeries.push($(this).val())
+            });
+
+            let include_carrier = 0;
+            if($('input[name="include_carrier"]').is(':checked')){
+                include_carrier = 1;
+            }
+
+            let generate_type_name = $('input[name="generate_type"]:checked').data('name');
+
+            $("#ajax-preloader").show();
+            $.ajax({
+                url: "{{ route('listing.getselectedproducts') }}",
+                type: 'POST',
+                data: {
+                    product_ids:selected_product,
+                    store_id:$('#listing_store').val(),
+                    product_detail:JSON.stringify(productDetail),
+                    device_type:device_type,
+                    devices:devices,
+                    device_series:deviceSeries,
+                    brand:brand,
+                    rating:rating,
+                    popularity:popularity,
+                    carriers:carriers,
+                    selected_device:selected_device,
+                    is_selected:is_selected,
+                    include_carrier:include_carrier,
+                    generate_type_name:generate_type_name,
+                    step:3
+                },
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function (response) {
+                    if (response.html) {
+                        $('#product-list-3').html(response.html);
+                        var selected_template = $('#title_template').val();
+                        $('input[name="product_title_template[]"]').val(selected_template);
+                        loadListingProduct(0);
+                    }
+                },
+                error: function (xhr) {
+                    /*if (xhr.responseJSON?.error) {
+                        $('#responseMessage').html('<p style="color:red;">' + xhr.responseJSON.error.image[0] + '</p>');
+                    }*/
+                },
+                complete: function () {
+                    $("#ajax-preloader").hide();
+                }
+            });
+        }
+
         function loadListingProduct(single){
             //let product_id = ele.find('.pro-id').val();
             let product_ids = [];
@@ -3123,8 +3318,6 @@
             {
                 carriers.push($(this).val())
             });
-
-
 
             let devices = [];
             $('input[name="device[]"]').each(function()

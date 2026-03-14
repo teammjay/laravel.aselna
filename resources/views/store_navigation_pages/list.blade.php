@@ -225,6 +225,7 @@
             $('#store_id').select2();
 
             navigationTable = $('#navigationPageTable').DataTable({
+                "dom": '<"datatable-top"lfip>rt<"datatable-bottom"ip>',
                 processing: true,
                 serverSide: true,
                 stateSave: true,
