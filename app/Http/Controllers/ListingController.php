@@ -967,7 +967,12 @@ class ListingController extends Controller
                 }
 
                 /* check product exist in store product or not*/
-                $query = StoreProduct::select('store_product.id', 'store_product.store_type_category_id', 'store_product.product_id', 'store_product.title', 'store_product.price', 'store_product.overwrite_price', 'store_product.created_at', 'product_type.name as ProductType')->with('Product');
+                $query = StoreProduct::select('store_product.id', 'store_product.store_type_category_id', 'store_product.product_id', 'store_product.title', 'store_product.price', 'store_product.overwrite_price', 'store_product.created_at', 'product_type.name as ProductType')->with('product');
+                $query->addSelect([
+                    'total_alt_images' => DB::table('product_image_alternatives')
+                        ->selectRaw('COUNT(*)')
+                        ->whereColumn('product_image_alternatives.product_id', 'store_product.product_id')
+                ]);
                 $query->leftJoin('products', 'products.product_id', '=', 'store_product.product_id');
                 $query->leftJoin('product_type', 'products.product_type', '=', 'product_type.id');
                 $query->whereIn('store_product.product_id', $product_ids);
@@ -1052,7 +1057,71 @@ class ListingController extends Controller
                     echo '</pre>';die;*/
                     $view = view('listing.selected_product_list', compact('products', 'storeCategories', 'storeTypeName', 'issues'))->render();
                 } else if ($step == 3) {
-                    $view = view('listing.select_device_product_list', compact('products', 'storeCategories', 'storeTypeName'))->render();
+
+                    $device_type = (array)$request->input('device_type');
+                    $brand = (array)$request->input('brand');
+                    $devices = (array)$request->input('devices');
+                    $deviceSeries = (array)$request->input('device_series');
+                    $rating = (array)$request->input('rating');
+                    $popularity = (array)$request->input('popularity');
+                    $carriers = (array)$request->input('carriers');
+                    $is_selected = $request->input('is_selected');
+                    $include_carrier = $request->input('include_carrier');
+                    $generate_type_name = $request->input('generate_type_name');
+                    $selected_device = $request->input('selected_device');
+
+                    $query = Device::select(
+                        'product_interface.product_id',
+                        DB::raw('COUNT(device.id) as device_count')
+                    )
+                        ->leftJoin('brands', 'brands.id', '=', 'device.brand_id')
+                        ->leftJoin('device_interface', 'device_interface.device_id', '=', 'device.id')
+                        ->leftJoin('product_interface', 'product_interface.interface_id', '=', 'device_interface.interface_id')
+                        ->leftJoin('products', 'product_interface.product_id', '=', 'products.product_id');
+
+                    if ($include_carrier || $generate_type_name == 'Carrier Group') {
+                        $query->leftJoin('device_carrier', 'device_carrier.device_id', '=', 'device.id');
+                        $query->leftJoin('carrier', 'carrier.id', '=', 'device_carrier.carrier_id');
+
+                        if ($carriers) {
+                            $query->whereIn('device_carrier.carrier_id', $carriers);
+                        }
+
+                        $query->whereNotNull('carrier.id');
+                    }
+
+                    $query->whereIn('product_interface.product_id', $product_ids);
+
+                    if ($device_type) {
+                        $query->whereIn('device.device_type_id', $device_type);
+                    }
+
+                    if ($brand) {
+                        $query->whereIn('device.brand_id', $brand);
+                    }
+
+                    if ($rating) {
+                        $query->whereIn('device.rating_id', $rating);
+                    }
+
+                    if ($devices) {
+                        $query->whereIn('device.id', $devices);
+                    }
+
+                    if ($deviceSeries) {
+                        $devices = DevicesLinkedDevice::select('device_id')
+                            ->whereIn('device_series_id', $deviceSeries)
+                            ->pluck('device_id')
+                            ->toArray();
+
+                        $query->whereIn('device.id', $devices);
+                    }
+
+                    $productDeviceCounts = $query
+                        ->groupBy('product_interface.product_id')
+                        ->pluck('device_count', 'product_interface.product_id')->toArray();
+
+                    $view = view('listing.select_device_product_list', compact('products', 'storeCategories', 'storeTypeName','productDeviceCounts'))->render();
                 }
 
                 if ($request->ajax()) {

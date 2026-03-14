@@ -89,6 +89,17 @@
         body,.form-control, .btn{
             font-size:14px !important;
         }
+
+        .datatable-top, .datatable-bottom {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .datatable-top > div, .datatable-bottom > div {
+            margin: 0;
+        }
     </style>
 
     {{-- Favicon --}}
