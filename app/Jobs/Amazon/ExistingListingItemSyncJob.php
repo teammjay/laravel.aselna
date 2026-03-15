@@ -36,72 +36,84 @@ class ExistingListingItemSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now()]);
+        try {
+            $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now()]);
 
-        Log::info('AmazonExistingListingItemSyncJob started');
+            Log::info('AmazonExistingListingItemSyncJob started');
 
-        $store_ids = Common::getActiveStoreJobs('AmazonListingItemSyncJob','Amazon');
+            $store_ids = Common::getActiveStoreJobs('AmazonListingItemSyncJob', 'Amazon');
 
-        $query = Store::where('store_type_id', function ($subquery) {
-            return $subquery->select('id')
-                ->from('store_type')
-                ->where('code', 'amazon');
-        })->where('store_status','<>',0);
+            $query = Store::where('store_type_id', function ($subquery) {
+                return $subquery->select('id')
+                    ->from('store_type')
+                    ->where('code', 'amazon');
+            })->where('store_status', '<>', 0);
 
-        if(!empty($store_ids)) {
-            $query->whereIn('id', $store_ids);
-        }
-        $amazon_store_ids = $query->pluck('id');
-        Log::info('Amazon store ids: ' . json_encode($amazon_store_ids));
-
-        $marketPlaceId = [];
-        if($amazon_store_ids){
-            foreach($amazon_store_ids as $store_id) {
-                Log::info('Fetching marketplace ids for store id: ' . $store_id);
-                $store = Store::findOrFail($store_id);
-                $amazonAuthService = new AmazonAuthService($store->seller_id, $store->secret_key, $store->api_key);
-                $marketPlaceId[$store_id] = $amazonAuthService->getMarketplaceIDs();
+            if (!empty($store_ids)) {
+                $query->whereIn('id', $store_ids);
             }
-        }
+            $amazon_store_ids = $query->pluck('id');
+            Log::info('Amazon store ids: ' . json_encode($amazon_store_ids));
 
-        $this->updateTrackingRecord(['tags' => 'Amazon']);
-
-
-        ListingItemLink::query()
-            ->with(['listing','listingItem'])
-            ->join('listing_item', 'listing_item_link.item_id', '=', 'listing_item.id')
-            ->join('listing', 'listing_item_link.listing_id', '=', 'listing.id')
-            ->whereIn('listing.store_id', $amazon_store_ids)
-            ->whereNotNull('listing_item.store_sku')
-            ->whereNot('listing_item.status', ListingStatus::Deleted)
-            ->orderBy('listing_item.created_at','asc')
-            ->chunk(20, function ($listingItemLinks) use($marketPlaceId) {
-                $itemSkus = [];
-                foreach ($listingItemLinks as $listingItemLink) {
-                    Log::info('Existing Syncing Amazon listing item: ' . $listingItemLink->item_id);
-                    //$this->syncListingItem($listingItemLink);
-                    $store = $listingItemLink->listing->store;
-                    $store_id = $store->id;
-                    $itemDetail = $listingItemLink->listingItem;
-
-                    Log::info("Existing Amazon Listing Item Sku " . $itemDetail->sku);
-                    $itemSkus[$store_id][] = trim($itemDetail->sku);
+            $marketPlaceId = [];
+            if ($amazon_store_ids) {
+                foreach ($amazon_store_ids as $store_id) {
+                    Log::info('Fetching marketplace ids for store id: ' . $store_id);
+                    $store = Store::findOrFail($store_id);
+                    $amazonAuthService = new AmazonAuthService($store->seller_id, $store->secret_key, $store->api_key);
+                    $marketPlaceId[$store_id] = $amazonAuthService->getMarketplaceIDs();
                 }
+            }
 
-                if($itemSkus) {
-                    Log::info("Syncing Existing Amazon Listing Items for stores :: ");
-                    foreach ($itemSkus as $storeId => $skus) {
-                        foreach (array_chunk($skus, 10) as $chunk) {
-                            $this->syncListingItems($storeId, $chunk, $marketPlaceId);
+            $this->updateTrackingRecord(['tags' => 'Amazon']);
+
+
+            ListingItemLink::query()
+                ->with(['listing', 'listingItem'])
+                ->join('listing_item', 'listing_item_link.item_id', '=', 'listing_item.id')
+                ->join('listing', 'listing_item_link.listing_id', '=', 'listing.id')
+                ->whereIn('listing.store_id', $amazon_store_ids)
+                ->whereNotNull('listing_item.store_sku')
+                ->whereNot('listing_item.status', ListingStatus::Deleted)
+                ->orderBy('listing_item.created_at', 'asc')
+                ->chunk(20, function ($listingItemLinks) use ($marketPlaceId) {
+                    $itemSkus = [];
+                    foreach ($listingItemLinks as $listingItemLink) {
+                        Log::info('Existing Syncing Amazon listing item: ' . $listingItemLink->item_id);
+                        //$this->syncListingItem($listingItemLink);
+                        $store = $listingItemLink->listing->store;
+                        $store_id = $store->id;
+                        $itemDetail = $listingItemLink->listingItem;
+
+                        Log::info("Existing Amazon Listing Item Sku " . $itemDetail->sku);
+                        $itemSkus[$store_id][] = trim($itemDetail->sku);
+                    }
+
+                    if ($itemSkus) {
+                        Log::info("Syncing Existing Amazon Listing Items for stores :: ");
+                        foreach ($itemSkus as $storeId => $skus) {
+                            foreach (array_chunk($skus, 10) as $chunk) {
+                                $this->syncListingItems($storeId, $chunk, $marketPlaceId);
+                            }
                         }
                     }
-                }
-            });
+                });
 
-        $this->updateTrackingRecord([
-            'status' => 'completed',
-            'finished_at' => now()
-        ]);
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
+        } catch (\Exception $e) {
+            \App\Helpers\ErrorLogger::log($e, __METHOD__);
+
+            CriticalErrorService::report('Amazon Existing Listing Item Sync Job Failed', [
+                'marketplace' => 'Amazon',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+
+            Log::error('Error in Amazon Existing Listing Item Sync Job: ' . $e->getMessage());
+        }
     }
 
     private function syncListingItems($store_id, $items, $marketPlaceId)

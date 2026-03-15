@@ -36,44 +36,57 @@ class ExistingListingItemSyncJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now()]);
-        Log::info('WalmartExistingListingItemSyncJob started');
+        try {
+            $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now()]);
+            Log::info('WalmartExistingListingItemSyncJob started');
 
-        $store_ids = Common::getActiveStoreJobs('WalmartListingItemSyncJob','walmart');
+            $store_ids = Common::getActiveStoreJobs('WalmartListingItemSyncJob', 'walmart');
 
-        $query = Store::where('store_type_id', function ($subquery) {
-            return $subquery->select('id')
-                ->from('store_type')
-                ->where('code', 'walmart');
-        })->where('store_status','<>',0);
+            $query = Store::where('store_type_id', function ($subquery) {
+                return $subquery->select('id')
+                    ->from('store_type')
+                    ->where('code', 'walmart');
+            })->where('store_status', '<>', 0);
 
-        if(!empty($store_ids)) {
-            $query->whereIn('id', $store_ids);
+            if (!empty($store_ids)) {
+                $query->whereIn('id', $store_ids);
+            }
+            $walmart_store_ids = $query->pluck('id');
+            Log::info('Walmart store ids: ' . json_encode($walmart_store_ids));
+
+            $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Walmart']);
+
+            ListingItemLink::query()
+                ->with(['listing', 'listingItem'])
+                ->join('listing_item', 'listing_item_link.item_id', '=', 'listing_item.id')
+                ->join('listing', 'listing_item_link.listing_id', '=', 'listing.id')
+                ->whereIn('listing.store_id', $walmart_store_ids)
+                //->whereNot('listing_item.status', ListingStatus::Deleted)
+                ->whereNotNull('listing_item.store_sku')
+                ->orderBy('listing_item.created_at', 'asc')
+                ->chunk(100, function ($listingItemLinks) {
+                    foreach ($listingItemLinks as $listingItemLink) {
+                        Log::info('Syncing Walmart listing item: ' . $listingItemLink->item_id);
+                        $this->syncListingItem($listingItemLink);
+                    }
+                });
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
+        } catch (\Exception $exception) {
+            \App\Helpers\ErrorLogger::log($exception, __METHOD__);
+
+            Log::error('Error in Ebay Existing Listing Item Sync Job: ' . $exception->getMessage(), [
+                'store_id' => $storeId ?? null,
+            ]);
+
+            $this->updateTrackingRecord([
+                'status' => 'failed',
+                'finished_at' => now()
+            ]);
         }
-        $walmart_store_ids = $query->pluck('id');
-        Log::info('Walmart store ids: ' . json_encode($walmart_store_ids));
-
-        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Walmart']);
-
-        ListingItemLink::query()
-            ->with(['listing','listingItem'])
-            ->join('listing_item', 'listing_item_link.item_id', '=', 'listing_item.id')
-            ->join('listing', 'listing_item_link.listing_id', '=', 'listing.id')
-            ->whereIn('listing.store_id', $walmart_store_ids)
-            //->whereNot('listing_item.status', ListingStatus::Deleted)
-            ->whereNotNull('listing_item.store_sku')
-            ->orderBy('listing_item.created_at','asc')
-            ->chunk(100, function ($listingItemLinks) {
-                foreach ($listingItemLinks as $listingItemLink) {
-                    Log::info('Syncing Walmart listing item: ' . $listingItemLink->item_id);
-                    $this->syncListingItem($listingItemLink);
-                }
-            });
-
-        $this->updateTrackingRecord([
-            'status' => 'completed',
-            'finished_at' => now()
-        ]);
     }
 
     private function syncListingItem($listingItemLink)
