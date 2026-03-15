@@ -152,7 +152,7 @@ class ProductSyncJob implements ShouldQueue
                 'oem_generic' => $product->oem_gen_id,
                 //            'product_tags'=> $product->weight_weight_unit,
                 //            'target_aud'=> $product->weight_weight_unit,
-                'product_color' => $productColor->id,
+                'product_color' => $productColor->id ?? null,
                 'product_qty' => $product->total_stock,
                 //            'product_reorder_qty',
                 //            'product_pick_location' => ,
