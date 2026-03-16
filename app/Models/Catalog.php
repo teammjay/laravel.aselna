@@ -63,7 +63,7 @@ class Catalog extends Model
 
     public function productKeyFeatures()
     {
-        return $this->hasMany(ProductKeyFeatures::class, 'product_id', 'product_id');
+        return $this->hasMany(ProductKeyFeatures::class, 'product_id', 'product_id')->orderBy('sort_order');
     }
 
     public function productColor()
