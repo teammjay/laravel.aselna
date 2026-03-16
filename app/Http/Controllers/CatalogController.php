@@ -792,6 +792,8 @@ class CatalogController extends Controller
         $imagedata = [];
         // Store the uploaded image and create a thumbnail
         if ($request->file('images')) {
+            $lastImage = ProductImages::where('product_id', $productId)->max('sort_order');
+            $lastSortOrder = $lastImage ? $lastImage : 0;
 
             foreach ($request->file('images') as $key => $image) {
                 $extension = $image->getClientOriginalExtension();
@@ -817,7 +819,7 @@ class CatalogController extends Controller
                     'product_id' => $productId,
                     'image' => $imageFile->id,
                     //'thumbnail_image' => $imageName,
-                    'sort_order' => (int)$key + 1,
+                    'sort_order' => (int)$lastSortOrder + 1,
                 );
 
                 if ($key == 0) {
