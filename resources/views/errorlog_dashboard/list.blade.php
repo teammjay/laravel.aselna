@@ -357,6 +357,7 @@
             $("#errorLogsTable").dataTable().fnDestroy();
 
             table = $('#errorLogsTable').DataTable({
+                "dom": '<"datatable-top"lfip>rt<"datatable-bottom"ip>',
                 "iDisplayLength": 10,
                 "info": true,
                 "responsive": true,

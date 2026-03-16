@@ -357,6 +357,7 @@
                     $('#pagination').html(response.pagination);
 
                     storetable = $('#storeTable').DataTable({
+                        "dom": '<"datatable-top"lfip>rt<"datatable-bottom"ip>',
                         stateSave:true,
                         stateSaveCallback: function(settings, data) {
                             sessionStorage.setItem(

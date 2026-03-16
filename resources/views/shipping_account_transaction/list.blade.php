@@ -407,6 +407,7 @@
 
 
             accountTransactionTable = $("#transactionsTable").DataTable({
+                "dom": '<"datatable-top"lfip>rt<"datatable-bottom"ip>',
                 processing: true,
                 serverSide: true,
                 searching: false,

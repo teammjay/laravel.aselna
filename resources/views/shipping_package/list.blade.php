@@ -51,6 +51,7 @@
     <script>
         $(document).ready(function () {
             $('#shippingPackageTable').DataTable({
+                "dom": '<"datatable-top"lfip>rt<"datatable-bottom"ip>',
                 stateSave:true,
                 stateSaveCallback: function(settings, data) {
                     sessionStorage.setItem(

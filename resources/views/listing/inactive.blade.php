@@ -1092,6 +1092,7 @@
         $("#inactiveListTable").dataTable().fnDestroy();
 
         var table = $('#inactiveListTable').DataTable({
+            "dom": '<"datatable-top"lfip>rt<"datatable-bottom"ip>',
             "iDisplayLength": 20,
             "info": true,
             "responsive": true,

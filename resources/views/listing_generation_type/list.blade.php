@@ -55,6 +55,7 @@
     <script>
         $(document).ready(function () {
             $('#generationTypeTable').DataTable({
+                "dom": '<"datatable-top"lfip>rt<"datatable-bottom"ip>',
                 stateSave:true,
                 stateSaveCallback: function(settings, data) {
                     sessionStorage.setItem(
