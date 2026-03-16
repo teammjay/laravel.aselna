@@ -116,7 +116,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
                         ->limit(100)
                         ->get();
                     foreach ($products as $product) {
-                        $this->createProduct($product, $store);
+                        //$this->createProduct($product, $store);
                         if (env('APP_ENV') == 'local') {
                             break;
                         }
@@ -914,13 +914,13 @@ class SubmitShopifyProductsJob implements ShouldQueue
         Log::info('No of Media Items: ' . json_encode($media));
         foreach ($media as $mediaItem) {
             if ($mediaItem['mediaContentType'] == 'IMAGE') {
-                if (!isset($mediaItem['preview']['image']['url'])) {
-                    continue;
-                }
+//                if (!isset($mediaItem['preview']['image']['url'])) {
+//                    continue;
+//                }
                 $ImageId = $mediaItem['id'];
                 $imageIdReplaced = str_replace('gid://shopify/MediaImage/', '', $ImageId);
                 Log::info('Media Image: ' . json_encode($mediaItem));
-                $imageUrl = $mediaItem['preview']['image']['url'];
+                $imageUrl = $mediaItem['preview']['image']['url'] ?? null;
 //                if (ListingItemProductImage::where('listing_item_id', $listingItem->id)->where('path', $imageUrl)->exists()) {
 //                    continue;
 //                }
@@ -931,7 +931,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
                     Log::info('Image URL: ' . $imageUrl);
                     $generatedImage = GenerateProductImage::where('product_image_id', $altText)
                         ->first();
-                    if (isset($generatedImage) && !ListingItemProductImage::where('listing_item_id', $listingItem->id)->where('product_image_id', $generatedImage->product_image_id)->exists()) {
+                    if (isset($generatedImage) && !ListingItemProductImage::where('listing_item_id', $listingItem->id)->where('product_image_id', $generatedImage->product_image_id)->whereNotNull('path')->exists()) {
                         ListingItemProductImage::updateOrCreate([
                             'listing_item_id' => $listingItem->id,
                             'product_image_id' => $generatedImage->product_image_id,
