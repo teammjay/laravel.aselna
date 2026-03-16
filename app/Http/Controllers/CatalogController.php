@@ -582,14 +582,16 @@ class CatalogController extends Controller
             try {
                 $data = [];
                 for ($i = 0; $i < count($request->features); $i++) {
-                    $data[] = array(
-                        'id' => (string)Str::uuid(),
-                        'product_id' => $productId,
-                        'value' => $request->features[$i],
-                        'sort_order' => $request->feature_sort_order[$i],
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    );
+                    if($request->features[$i] != '' && $request->feature_sort_order[$i] != '') {
+                        $data[] = array(
+                            'id' => (string)Str::uuid(),
+                            'product_id' => $productId,
+                            'value' => $request->features[$i],
+                            'sort_order' => $request->feature_sort_order[$i],
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        );
+                    }
                 }
                 ProductKeyFeatures::where('product_id', $productId)->delete();
                 ProductKeyFeatures::insert($data);
@@ -826,6 +828,8 @@ class CatalogController extends Controller
                     Catalog::where('product_id', $productId)->update(['product_image_url' => $imageFile->id]);
                 }
 
+
+
                 // Create thumbnail
                 /*$thumbnailPath = public_path('storage/product_images/thumbnails');
                 if (!file_exists($thumbnailPath)) {
@@ -839,6 +843,8 @@ class CatalogController extends Controller
             }
             //print_r($imagedata);die;
             $images = ProductImages::upsert($imagedata, ['product_id', 'image'], ['image']);
+
+            Catalog::where('product_id', $productId)->update(['updated_at' => now()]);
 
             return response()->json([
                 'success' => 'Image uploaded successfully!',
@@ -871,7 +877,7 @@ class CatalogController extends Controller
             ListingItemProductImage::where(['product_image_id' => $imageId])->update(['main_image' => 1]);
 
             $imageDetail = ProductImages::find($imageId);
-            Catalog::where('product_id', $productId)->update(['product_image_url' => $imageDetail->image]);
+            Catalog::where('product_id', $productId)->update(['product_image_url' => $imageDetail->image, 'updated_at' => now()]);
 
             return response()->json(['success' => true, 'message' => 'Image set default successfully']);
 
@@ -890,6 +896,8 @@ class CatalogController extends Controller
         try {
 
             ProductImages::where('id', $imageId)->update(['sort_order' => $sort_order]);
+            $productId = ProductImages::where('id', $imageId)->value('product_id');
+            Catalog::where('product_id', $productId)->update(['updated_at' => now()]);
             return response()->json(['success' => true, 'message' => 'Set order  successfully']);
 
         } catch (QueryException $e) {
@@ -904,8 +912,13 @@ class CatalogController extends Controller
 
         try {
             foreach ($order as $position => $id) {
+                $imageId = $id;
                 ProductImages::where('id', $id)->update(['sort_order' => ($position + 1)]);
             }
+
+            $productId = ProductImages::where('id', $imageId)->value('product_id');
+            Catalog::where('product_id', $productId)->update(['updated_at' => now()]);
+
             return response()->json(['success' => true, 'message' => 'Set order  successfully']);
 
         } catch (QueryException $e) {
