@@ -116,7 +116,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
                         ->limit(100)
                         ->get();
                     foreach ($products as $product) {
-                        //$this->createProduct($product, $store);
+                        $this->createProduct($product, $store);
                         if (env('APP_ENV') == 'local') {
                             break;
                         }
@@ -659,7 +659,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
             $deletedImages = ListingItemProductImage::where('listing_item_id', $listingItem->id)
                 ->where(function ($query) use ($productData, $listingItem) {
                     $query->whereNotIn('product_image_id', function ($subQuery) use ($productData) {
-                        $subQuery->select('product_image_id')
+                        $subQuery->select('id')
                             ->from('product_images')
                             ->where('product_id', $productData->product_id);
                     });
@@ -914,6 +914,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
         Log::info('No of Media Items: ' . json_encode($media));
         foreach ($media as $mediaItem) {
             if ($mediaItem['mediaContentType'] == 'IMAGE') {
+                if (!isset($mediaItem['id'])) continue;
 //                if (!isset($mediaItem['preview']['image']['url'])) {
 //                    continue;
 //                }
