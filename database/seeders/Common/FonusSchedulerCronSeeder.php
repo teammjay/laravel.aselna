@@ -16,7 +16,7 @@ class FonusSchedulerCronSeeder extends Seeder
         $jobs = [
             // Shopify Only Sync - Every 2 hours at 10 minutes past
             [
-                'name' => 'Shopify Only Sync',
+                'name' => 'Fonus Combined Sync',
                 'class_name' => 'App\Jobs\Sync\FonusCombinedSyncJob',
                 'command' => null,
                 'cron_expression' => '10 */2 * * *', // every 2 hours at 10 minutes past
