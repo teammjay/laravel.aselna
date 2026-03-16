@@ -642,4 +642,22 @@ class ShopifyAuthService
         Log::info('Delete Image Response: ' . json_encode($response));
         return $response;
     }
+
+    public function updateMediaImage($marketplace_product_id, $reference_id, array $mediaData)
+    {
+        $variables = [
+            "productId" => $marketplace_product_id,
+            "media" => [
+                [
+                    "id" => "gid://shopify/MediaImage/".$reference_id,
+                    "alt" => $mediaData['alt'] ?? null,
+                    "previewImageSource" => $mediaData['originalSource'] ?? null
+                ]
+            ]
+        ];
+        Log::info('Update Image Variables: ' . json_encode($variables));
+        $response = $this->makeGraphQLRequest(ShopifyQueries::$updateMediaImage, $variables);
+        Log::info('Update Image Response: ' . json_encode($response));
+        return $response;
+    }
 }
