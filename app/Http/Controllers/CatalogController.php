@@ -934,6 +934,11 @@ class CatalogController extends Controller
         try {
             foreach ($order as $position => $id) {
                 $imageId = $id;
+                if($position == 0){
+                    $productId = ProductImages::where('id', $imageId)->value('product_id');
+                    $imageFileId = ProductImages::where('id', $id)->value('image');
+                    Catalog::where('product_id', $productId)->update(['product_image_url' => $imageFileId]);
+                }
                 ProductImages::where('id', $id)->update(['sort_order' => ($position + 1)]);
             }
 
