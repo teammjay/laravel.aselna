@@ -773,7 +773,7 @@
                                                     <td><input type="checkbox" name="main_image" class="set_main_image" value="{{ $images->id }}" {{ $images->main_image == 1 ? 'checked' : '' }}></td>
                                                     {{--<td><input type="text" class="form-control image-sort-order" readonly="" data-id="{{ $images->id }}" name="sort_order" value="{{ $images->sort_order }}"></td>--}}
                                                     <td>{{ $images->sort_order }}</td>
-                                                    <td><button type="button" class="btn btn-danger delete-btn" data-id="{{ $images->id }}"> <i class="fas fa-fw fa-trash"></i></button></td>
+                                                    <td><button type="button" class="btn btn-danger delete-img-btn" data-id="{{ $images->id }}"> <i class="fas fa-fw fa-trash"></i></button></td>
                                                 </tr>
                                             @endforeach
                                         @endif
@@ -2105,7 +2105,8 @@
                 }
             });
 
-            $(document).on('click', '.delete-btn', function() {
+            $(document).on('click', '.delete-img-btn', function(e) {
+                e.preventDefault();
                 var imageId = $(this).data('id');
                 var token = '{{ csrf_token() }}'; // CSRF token for security
 
