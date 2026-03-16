@@ -227,6 +227,11 @@ class EmailMessageUtility
             $remainUIs = [];
             do {
                 Log::info('Page ::' . $page . ' :: Fetching batch of size ' . $batchSize);
+
+                if($totalMessagesCount == 0){
+                    break;
+                }
+
                 $query = $folder->query()
                     ->since($searchDateCriteria)
                     ->before($toDateCriteria)
