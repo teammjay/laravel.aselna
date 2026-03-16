@@ -21,7 +21,7 @@ class ExistingListingItemSyncJob implements ShouldQueue
         Queueable::withChain as queueableWithChain;
     }
 
-    public $timeout = 7200;
+    public $timeout = 14400;
 
     /**
      * Create a new job instance.

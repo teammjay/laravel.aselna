@@ -23,7 +23,7 @@ class ExistingListingItemSyncJob implements ShouldQueue
         Queueable::withChain as queueableWithChain;
     }
 
-    public $timeout = 7200;
+    public $timeout = 14400;
 
     /**
      * Create a new job instance.
@@ -88,12 +88,14 @@ class ExistingListingItemSyncJob implements ShouldQueue
                     }
                     Log::info("Listing Item Sku Array " . json_encode($skuArray));
 
-                    foreach ($skuArray as $storeId => $skus) {
-                        if (count($skuArray[$store->id]) == 0) {
-                            Log::info("No items to sync for store: " . $store->id);
-                            return;
+                    if(!empty($skuArray)) {
+                        foreach ($skuArray as $storeId => $skus) {
+                            if (count($skuArray[$store->id]) == 0) {
+                                Log::info("No items to sync for store: " . $store->id);
+                                return;
+                            }
+                            $this->syncListingItem($skus, $storeId, $minDate);
                         }
-                        $this->syncListingItem($skus, $storeId, $minDate);
                     }
                 });
 
