@@ -773,7 +773,7 @@
                                                     <td><input type="checkbox" name="main_image" class="set_main_image" value="{{ $images->id }}" {{ $images->main_image == 1 ? 'checked' : '' }}></td>
                                                     {{--<td><input type="text" class="form-control image-sort-order" readonly="" data-id="{{ $images->id }}" name="sort_order" value="{{ $images->sort_order }}"></td>--}}
                                                     <td>{{ $images->sort_order }}</td>
-                                                    <td><button class="btn btn-danger delete-btn" data-id="{{ $images->id }}"> <i class="fas fa-fw fa-trash"></i></button></td>
+                                                    <td><button type="button" class="btn btn-danger delete-btn" data-id="{{ $images->id }}"> <i class="fas fa-fw fa-trash"></i></button></td>
                                                 </tr>
                                             @endforeach
                                         @endif
@@ -813,7 +813,7 @@
                                                     @endif
                                                 </td>
                                                 <td>{{ $images->sort_order }}</td>
-                                                <td><button class="btn btn-danger delete-alt-btn" data-id="{{ $images->id }}"> <i class="fas fa-fw fa-trash"></i></button></td>
+                                                <td><button type="button" class="btn btn-danger delete-alt-btn" data-id="{{ $images->id }}"> <i class="fas fa-fw fa-trash"></i></button></td>
                                             </tr>
                                         @endforeach
                                     @endif
@@ -1118,7 +1118,7 @@
                                                     <button type="button" id="edit_channel" data-toggle="modal" data-id="{{ $stype->id }}" data-target="#addChannelModal"  class="btn btn-primary">
                                                         <i class="fas fa-fw fa-pencil-alt"></i>
                                                     </button>
-                                                    <button class="btn btn-danger delete-product-channel" data-id="{{ $stype->id }}"> <i class="fas fa-fw fa-trash"></i></button>
+                                                    <button type="button" class="btn btn-danger delete-product-channel" data-id="{{ $stype->id }}"> <i class="fas fa-fw fa-trash"></i></button>
                                                 </td>
                                             </tr>
                                         @endforeach
