@@ -8,6 +8,7 @@ use App\Models\GenerateProductImage;
 use App\Models\ListingItem;
 use App\Models\ListingItemProductImage;
 use App\Models\ManageMarketplaceProduct;
+use App\Models\StoreProduct;
 use App\Services\Auth\ShopifyAuthService;
 use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -268,6 +269,8 @@ class FetchShopifyProductsJob implements ShouldQueue
                 }
                 Log::info('Media Image: ' . json_encode($mediaItem));
                 $imageUrl = $mediaItem['preview']['image']['url'];
+                $ImageId = $mediaItem['id'];
+                $imageIdReplaced = str_replace('gid://shopify/MediaImage/', '', $ImageId);
                 if (ListingItemProductImage::where('listing_item_id', $listingItem->id)->where('path', $imageUrl)->exists()) {
                     continue;
                 }
@@ -281,13 +284,13 @@ class FetchShopifyProductsJob implements ShouldQueue
                         ListingItemProductImage::updateOrCreate([
                             'listing_item_id' => $listingItem->id,
                             'product_image_id' => $generatedImage->product_image_id,
-                            'reference_id' => $generatedImage->reference_id,
+                            'reference_id' => $imageIdReplaced,
                         ], [
                             'listing_item_id' => $listingItem->id,
                             'product_image_id' => $generatedImage->product_image_id,
                             'main_image' => $generatedImage->main_image,
                             'image_file_system_id' => $generatedImage->image_file_system_id,
-                            'reference_id' => $generatedImage->reference_id,
+                            'reference_id' => $imageIdReplaced,
                             'path' => $imageUrl,
                         ]);
                     }
