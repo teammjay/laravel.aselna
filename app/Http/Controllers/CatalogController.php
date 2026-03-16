@@ -575,6 +575,8 @@ class CatalogController extends Controller
             ProductInterface::where('product_id', $productId)->delete();
             ProductInterface::insert($data);
 
+            $this->updateProductUpdatedDate($productId);
+
             return response()->json(['success' => true, 'message' => 'Data saved successfully!']);
 
         } elseif ($tabId == 5) {
@@ -595,6 +597,8 @@ class CatalogController extends Controller
                 }
                 ProductKeyFeatures::where('product_id', $productId)->delete();
                 ProductKeyFeatures::insert($data);
+
+                $this->updateProductUpdatedDate($productId);
 
                 return response()->json(['success' => true, 'message' => 'Data saved successfully!']);
 
@@ -617,6 +621,8 @@ class CatalogController extends Controller
             ProductSearchTerm::where('product_id', $productId)->delete();
             ProductSearchTerm::insert($data);
 
+            $this->updateProductUpdatedDate($productId);
+
             return response()->json(['success' => true, 'message' => 'Data saved successfully!']);
         } elseif ($tabId == 8) {
             $data = [];
@@ -631,6 +637,8 @@ class CatalogController extends Controller
             }
             //ProductTags::where('product_id', $productId)->delete();
             ProductTags::upsert($data, ['product_id', 'name'], ['name']);
+
+            $this->updateProductUpdatedDate($productId);
 
             return response()->json(['success' => true, 'message' => 'Data saved successfully!']);
         } elseif ($tabId == 9) {
@@ -658,6 +666,8 @@ class CatalogController extends Controller
                 StoreProduct::create($request->all());
             }
 
+            $this->updateProductUpdatedDate($productId);
+
             /*StoreProduct::upsert($request->input(), ['product_id','store_id'], ['store_category_id','title','active','price','msrp','description','sales_count','overwrite_compare_at_price','wholesale_price','compare_at_price','overwrite_wholesale_price','overwrite_description','overwrite_title','overwrite_msrp','overwrite_price','created_by','updated_by']);*/
 
             return response()->json(['success' => true, 'message' => 'Data saved successfully!']);
@@ -683,6 +693,8 @@ class CatalogController extends Controller
                 ProductTitleKeyword::where('product_id', $productId)->delete();
                 ProductTitleKeyword::insert($data);
 
+                $this->updateProductUpdatedDate($productId);
+
                 return response()->json(['success' => true, 'message' => 'Data saved successfully!!']);
 
             } catch (QueryException $e) {
@@ -707,6 +719,8 @@ class CatalogController extends Controller
                 ProductSpecification::where(['product_id' => $productId, 'store_type_id' => $request->specification_store_type_id])->delete();
                 ProductSpecification::insert($data);
 
+                $this->updateProductUpdatedDate($productId);
+
                 return response()->json(['success' => true, 'message' => 'Data saved successfully!']);
 
             } catch (QueryException $e) {
@@ -714,6 +728,13 @@ class CatalogController extends Controller
                 return response()->json(['errors' => $e->getMessage()]);
             }
         }
+
+
+    }
+
+    private function updateProductUpdatedDate($productId){
+
+        return Catalog::where('product_id', $productId)->update(['updated_at' => now()]);
     }
 
     /**
@@ -825,7 +846,7 @@ class CatalogController extends Controller
                 );
 
                 if ($key == 0) {
-                    Catalog::where('product_id', $productId)->update(['product_image_url' => $imageFile->id]);
+//                    Catalog::where('product_id', $productId)->update(['product_image_url' => $imageFile->id]);
                 }
 
 
@@ -844,7 +865,7 @@ class CatalogController extends Controller
             //print_r($imagedata);die;
             $images = ProductImages::upsert($imagedata, ['product_id', 'image'], ['image']);
 
-            Catalog::where('product_id', $productId)->update(['updated_at' => now()]);
+            $this->updateProductUpdatedDate($productId);
 
             return response()->json([
                 'success' => 'Image uploaded successfully!',
@@ -897,7 +918,7 @@ class CatalogController extends Controller
 
             ProductImages::where('id', $imageId)->update(['sort_order' => $sort_order]);
             $productId = ProductImages::where('id', $imageId)->value('product_id');
-            Catalog::where('product_id', $productId)->update(['updated_at' => now()]);
+            $this->updateProductUpdatedDate($productId);
             return response()->json(['success' => true, 'message' => 'Set order  successfully']);
 
         } catch (QueryException $e) {
@@ -913,11 +934,16 @@ class CatalogController extends Controller
         try {
             foreach ($order as $position => $id) {
                 $imageId = $id;
+                if($position == 0){
+                    $productId = ProductImages::where('id', $imageId)->value('product_id');
+                    $imageFileId = ProductImages::where('id', $id)->value('image');
+                    Catalog::where('product_id', $productId)->update(['product_image_url' => $imageFileId]);
+                }
                 ProductImages::where('id', $id)->update(['sort_order' => ($position + 1)]);
             }
 
             $productId = ProductImages::where('id', $imageId)->value('product_id');
-            Catalog::where('product_id', $productId)->update(['updated_at' => now()]);
+            $this->updateProductUpdatedDate($productId);
 
             return response()->json(['success' => true, 'message' => 'Set order  successfully']);
 
@@ -1103,6 +1129,9 @@ class CatalogController extends Controller
             $productImg = ProductImages::findOrFail($image_id);
             $productImg->delete();
 
+            $productId = ProductImages::where('id', $image_id)->value('product_id');
+            $this->updateProductUpdatedDate($productId);
+
             // Return a success response
             return response()->json(['success' => 'Image deleted successfully!']);
         }
@@ -1159,6 +1188,8 @@ class CatalogController extends Controller
             //print_r($imagedata);die;
             $images = ProductImageAlternative::upsert($imagedata, ['product_id', 'image'], ['image']);
 
+            $this->updateProductUpdatedDate($productId);
+
             return response()->json([
                 'success' => 'Image uploaded successfully!',
                 'image_name' => $imageName,
@@ -1177,6 +1208,9 @@ class CatalogController extends Controller
             $productImg = ProductImageAlternative::findOrFail($image_id);
             $productImg->delete();
 
+            $productId = ProductImages::where('id', $image_id)->value('product_id');
+            $this->updateProductUpdatedDate($productId);
+
             // Return a success response
             return response()->json(['success' => 'Image deleted successfully!']);
         }
@@ -1191,8 +1225,13 @@ class CatalogController extends Controller
 
         try {
             foreach ($order as $position => $id) {
+                $image_id = $id;
                 ProductImageAlternative::where('id', $id)->update(['sort_order' => ($position + 1)]);
             }
+
+            $productId = ProductImages::where('id', $image_id)->value('product_id');
+            $this->updateProductUpdatedDate($productId);
+
             return response()->json(['success' => true, 'message' => 'Set order  successfully']);
 
         } catch (QueryException $e) {
