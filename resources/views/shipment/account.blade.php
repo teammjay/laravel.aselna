@@ -171,6 +171,7 @@
         $("#accountTable").dataTable().fnDestroy();
 
         var table = $('#accountTable').DataTable({
+            "dom": '<"datatable-top"lfip>rt<"datatable-bottom"ip>',
             "iDisplayLength": 20,
             "info": true,
             "responsive": true,

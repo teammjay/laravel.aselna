@@ -1975,6 +1975,7 @@
 
                     if(response.totalRecords > 0) {
                         shipmentTable = $('#shipmentTable').DataTable({
+                            "dom": '<"datatable-top"lfip>rt<"datatable-bottom"ip>',
                             "iDisplayLength": 100,
                             "lengthChange": true,
                             "autoWidth": false,

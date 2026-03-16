@@ -503,6 +503,7 @@
             $("#ordersTable").dataTable().fnDestroy();
 
             var table = $('#ordersTable').DataTable({
+                "dom": '<"datatable-top"lfip>rt<"datatable-bottom"ip>',
                 "iDisplayLength": 20,
                 "info": true,
                 "responsive": true,

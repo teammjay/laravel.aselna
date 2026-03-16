@@ -834,5 +834,27 @@ mutation productDeleteMedia(\$mediaIds: [ID!]!, \$productId: ID!) {
   }
 }
 GQL;
+    public static $updateMediaImage = <<<GQL
+    mutation productUpdateMedia(\$media: [UpdateMediaInput!]!, \$productId: ID!) {
+        productUpdateMedia(media: \$media, productId: \$productId) {
+            product {
+                id
+                title
+                media(first: 5) {
+                    nodes {
+                        alt
+                        mediaContentType
+                        status
+                    }
+                }
+            }
+            mediaUserErrors {
+                field
+                message
+            }
+        }
+    }
+    GQL;
+
 
 }

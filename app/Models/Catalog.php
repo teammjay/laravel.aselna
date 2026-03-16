@@ -63,7 +63,7 @@ class Catalog extends Model
 
     public function productKeyFeatures()
     {
-        return $this->hasMany(ProductKeyFeatures::class, 'product_id', 'product_id');
+        return $this->hasMany(ProductKeyFeatures::class, 'product_id', 'product_id')->orderBy('sort_order');
     }
 
     public function productColor()
@@ -79,6 +79,11 @@ class Catalog extends Model
     public function images()
     {
         return $this->hasMany(ProductImages::class, 'product_id', 'product_id');
+    }
+
+    public function additionalimages()
+    {
+        return $this->hasMany(ProductImageAlternative::class, 'product_id', 'product_id');
     }
 
     // siae and material

@@ -49,6 +49,7 @@
     <script>
         $(document).ready(function () {
             $('#shippingCarrierTable').DataTable({
+                "dom": '<"datatable-top"lfip>rt<"datatable-bottom"ip>',
                 stateSave:true,
                 stateSaveCallback: function(settings, data) {
                     sessionStorage.setItem(

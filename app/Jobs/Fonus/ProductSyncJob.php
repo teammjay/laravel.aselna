@@ -102,10 +102,7 @@ class ProductSyncJob implements ShouldQueue
         $manufacturer = Manufacturer::select('id')->where('code', $product->manufacturer_id)->first();
         $productColor = ProductColor::select('id')->where('name', $product->color)->first();
         $productCategory = ProductType::select('id')
-            ->where('code', $product->category_id)
-            ->whereIn('parent_id', function ($subquery) {
-                $subquery->select('id')->from('product_type')->where('code', 'cea');
-            })
+            ->where('code', $product->category_id . '-' . $product->sub_category_id)
             ->first();
         $productCondition = ProductCondition::select('id')->where('code', $product->stock_type_id)->first();
         $mainImage = null;
@@ -155,7 +152,7 @@ class ProductSyncJob implements ShouldQueue
                 'oem_generic' => $product->oem_gen_id,
                 //            'product_tags'=> $product->weight_weight_unit,
                 //            'target_aud'=> $product->weight_weight_unit,
-                'product_color' => $productColor->id,
+                'product_color' => $productColor->id ?? null,
                 'product_qty' => $product->total_stock,
                 //            'product_reorder_qty',
                 //            'product_pick_location' => ,

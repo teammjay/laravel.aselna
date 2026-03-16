@@ -135,6 +135,7 @@
             $(' #listing_store').select2();
 
             var productsTable = $('#productsTable').DataTable({
+                "dom": '<"datatable-top"lfip>rt<"datatable-bottom"ip>',
                 processing: true,
                 serverSide: true,
                 stateSave:true,
