@@ -116,7 +116,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
                         ->limit(100)
                         ->get();
                     foreach ($products as $product) {
-                        $this->createProduct($product, $store);
+                        //$this->createProduct($product, $store);
                         if (env('APP_ENV') == 'local') {
                             break;
                         }
@@ -504,6 +504,10 @@ class SubmitShopifyProductsJob implements ShouldQueue
 
             $this->handleMediaImages($response['data']['productSet']['product'], $listingItem);
 
+            $storeProduct->update([
+                'last_synch_date_time' => date('Y-m-d H:i:s')
+            ]);
+
             $listingItem->update([
                 'store_url' => $handle,
                 'store_sku' => $productIdReplaced . '-' . $variantIdReplaced,
@@ -599,18 +603,19 @@ class SubmitShopifyProductsJob implements ShouldQueue
             'variant' => [$variantData],
         ];
 
-        //$this->handleOldImages($shopifyAuthService, $proDetail->marketplace_product_id, $listingItem);
+        $this->handleOldImages($shopifyAuthService, $proDetail->marketplace_product_id, $listingItem);
 
         $this->generateProductImages($productData, $store);
 
         $images = GenerateProductImage::where('product_id', $productData->product_id)->orderBy('main_image', 'desc')->get();
+        // Add Additional Images.
         $media = [];
         foreach ($images as $key => $image) {
             // check if image exists in shopify already
             $listingItemProductImage = ListingItemProductImage::where('listing_item_id', $listingItem->id)
                 ->where('product_image_id', $image->product_image_id)
                 ->first();
-            if (isset($listingItemProductImage) && $listingItemProductImage->updated_at >= $image->updated_at) {
+            if (isset($listingItemProductImage)) {
                 continue;
             }
 
@@ -650,22 +655,14 @@ class SubmitShopifyProductsJob implements ShouldQueue
             $featuredImageId = $response['data']['productUpdate']['product']['featuredMedia']['id'] ?? null;
             $variantIdReplaced = str_replace('gid://shopify/ProductVariant/', '', $variantId);
 
+            // Deleted Image from Product Image Table. From 659 - 687
             $deletedImages = ListingItemProductImage::where('listing_item_id', $listingItem->id)
                 ->where(function ($query) use ($productData, $listingItem) {
                     $query->whereNotIn('product_image_id', function ($subQuery) use ($productData) {
                         $subQuery->select('product_image_id')
                             ->from('product_images')
                             ->where('product_id', $productData->product_id);
-                    })
-                        ->orWhere(function ($subQuery) use ($productData, $listingItem) {
-                            $subQuery->whereIn('product_image_id', function ($q) use ($productData) {
-                                $q->select('id')
-                                    ->from('product_images')
-                                    ->where('product_id', $productData->product_id);
-                            })
-                                ->whereRaw('listing_item_product_images.updated_at < (SELECT updated_at FROM product_images WHERE listing_item_product_images.product_image_id = product_images.id AND product_id = ? LIMIT 1)', [$productData->product_id])
-                                ->where('listing_item_id', $listingItem->id);
-                        });
+                    });
                 })
                 ->get();
 
@@ -680,8 +677,11 @@ class SubmitShopifyProductsJob implements ShouldQueue
                 $shopifyAuthService->deleteMediaImages($proDetail->marketplace_product_id, $mediaIdsToDelete);
             }
 
+            // Sync the Images Images. From 690
             $this->handleMediaImages($response['data']['productUpdate']['product'], $listingItem);
-//            $this->deleteOldProductImages($shopifyAuthService, $proDetail->marketplace_product_id, []);
+            // Delete Any Image Whose entry is not there in Listing_product_image table
+            $this->deleteOldProductImages($shopifyAuthService, $proDetail->marketplace_product_id, []);
+            //Change the Main Image Order
             $firstImage = ListingItemProductImage::where('listing_item_id', $listingItem->id)->where('main_image', 1)->first();
             if (!isset($firstImage)) {
                 $productImage = ProductImages::select('id')->where('product_id', $productData->product_id)->where('main_image', 1)->first();
@@ -692,7 +692,6 @@ class SubmitShopifyProductsJob implements ShouldQueue
                     ]);
                 }
             }
-
             if (isset($firstImage) && isset($firstImage->reference_id) && !empty($firstImage->reference_id)) {
                 if (isset($featuredImageId)) {
                     Log::info('Featured Image Id: ' . $featuredImageId);
@@ -705,6 +704,37 @@ class SubmitShopifyProductsJob implements ShouldQueue
                     $shopifyAuthService->setFeaturedImage($proDetail->marketplace_product_id, $firstImage->reference_id);
                 }
             }
+
+            // handle The updated Image
+            $updatedImages = ListingItemProductImage::where('listing_item_id', $listingItem->id)
+                ->where(function ($query) use ($productData, $listingItem) {
+                    $query->where(function ($subQuery) use ($productData, $listingItem) {
+                            $subQuery->whereIn('product_image_id', function ($q) use ($productData) {
+                                $q->select('id')
+                                    ->from('product_images')
+                                    ->where('product_id', $productData->product_id);
+                            })
+                                ->whereRaw('listing_item_product_images.updated_at < (SELECT updated_at FROM product_images WHERE listing_item_product_images.product_image_id = product_images.id AND product_id = ? LIMIT 1)', [$productData->product_id])
+                                ->where('listing_item_id', $listingItem->id);
+                        });
+                })
+                ->get();
+
+            foreach ($updatedImages as $image) {
+                $productImage = GenerateProductImage::where('product_image_id', $image->product_image_id)->first();
+                if ($productImage) {
+                    $mediaData = [
+                        'alt' => $image->product_image_id,
+                        'mediaContentType' => 'IMAGE',
+                        'originalSource' => $fileSystem->url_base_path . $productImage->path,
+                    ];
+                    $shopifyAuthService->updateMediaImage($proDetail->marketplace_product_id, $image->reference_id, $mediaData);
+                    $image->update([
+                        'updated_at' => now()
+                    ]);
+                }
+            }
+
 
             $storeProduct->update([
                 'last_synch_date_time' => date('Y-m-d H:i:s')
@@ -884,13 +914,13 @@ class SubmitShopifyProductsJob implements ShouldQueue
         Log::info('No of Media Items: ' . json_encode($media));
         foreach ($media as $mediaItem) {
             if ($mediaItem['mediaContentType'] == 'IMAGE') {
-                if (!isset($mediaItem['preview']['image']['url'])) {
-                    continue;
-                }
+//                if (!isset($mediaItem['preview']['image']['url'])) {
+//                    continue;
+//                }
                 $ImageId = $mediaItem['id'];
                 $imageIdReplaced = str_replace('gid://shopify/MediaImage/', '', $ImageId);
                 Log::info('Media Image: ' . json_encode($mediaItem));
-                $imageUrl = $mediaItem['preview']['image']['url'];
+                $imageUrl = $mediaItem['preview']['image']['url'] ?? null;
 //                if (ListingItemProductImage::where('listing_item_id', $listingItem->id)->where('path', $imageUrl)->exists()) {
 //                    continue;
 //                }
@@ -901,7 +931,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
                     Log::info('Image URL: ' . $imageUrl);
                     $generatedImage = GenerateProductImage::where('product_image_id', $altText)
                         ->first();
-                    if (isset($generatedImage) && !ListingItemProductImage::where('listing_item_id', $listingItem->id)->where('product_image_id', $generatedImage->product_image_id)->exists()) {
+                    if (isset($generatedImage) && !ListingItemProductImage::where('listing_item_id', $listingItem->id)->where('product_image_id', $generatedImage->product_image_id)->whereNotNull('path')->exists()) {
                         ListingItemProductImage::updateOrCreate([
                             'listing_item_id' => $listingItem->id,
                             'product_image_id' => $generatedImage->product_image_id,
@@ -934,7 +964,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
             }
             $mediaId = $image['id'];
             $imageIdReplaced = str_replace('gid://shopify/MediaImage/', '', $mediaId);
-            if (!ListingItemProductImage::where('reference_id',$imageIdReplaced)->exist()) {
+            if (!ListingItemProductImage::where('reference_id',$imageIdReplaced)->exists()) {
                 $mediaIds[] = $mediaId;
             }
 //            $altText = $image['alt'];
