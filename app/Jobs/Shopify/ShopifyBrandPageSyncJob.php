@@ -583,6 +583,34 @@ class ShopifyBrandPageSyncJob implements ShouldQueue
         return $handle;
     }
 
+    function generateCatgeoryHandle($title) {
+        // Convert to lowercase
+        $handle = mb_strtolower($title, 'UTF-8');
+
+        // Normalize accented characters (e.g., é → e)
+        $handle = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $handle);
+
+        // Replace apostrophes
+        $handle = preg_replace("/'/", '', $handle);
+
+        // Replace any non-alphanumeric characters (excluding spaces, dots, and hyphens) with nothing
+        $handle = preg_replace("/[^a-z0-9\s.\-]/", '', $handle);
+
+        // Replace dots with hyphens (e.g., 12.3 → 12-3)
+        $handle = str_replace('.', '-', $handle);
+
+        // Replace whitespace with hyphens
+        $handle = preg_replace("/[\s]+/", '-', $handle);
+
+        // Remove multiple consecutive hyphens
+        $handle = preg_replace("/-+/", '-', $handle);
+
+        // Trim hyphens from beginning and end
+        $handle = trim($handle, '-');
+
+        return $handle;
+    }
+
     private function getPuplications()
     {
         $publications = $this->shopifyAuthService->getPublications();
@@ -660,7 +688,7 @@ class ShopifyBrandPageSyncJob implements ShouldQueue
                 if (!key_exists($childproductType->id, $productTypeMap)) continue;
                 $subCategories[] = [
                     'name' => $childproductType->name,
-                    'tag' => $this->generateShopifyHandle($childproductType->name)
+                    'tag' => $this->generateCatgeoryHandle($childproductType->name)
                 ];
             }
 
@@ -769,7 +797,7 @@ class ShopifyBrandPageSyncJob implements ShouldQueue
         foreach ($shildrenProductTypes as $childproductType) {
             $subCategories[] = [
                 'name' => $childproductType->name,
-                'tag' => $this->generateShopifyHandle($childproductType->name)
+                'tag' => $this->generateCatgeoryHandle($childproductType->name)
             ];
         }
 
