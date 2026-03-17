@@ -983,22 +983,22 @@ class SubmitShopifyProductsJob implements ShouldQueue
     {
         ListingItemProductImage::where('listing_item_id', $listingItem->id)->whereNull('product_image_id')->delete();
 
-        $query = DB::connection('easyesale_db')->table('listing_item_product_image')
-            ->join('product_image', 'product_image.id', '=', 'listing_item_product_image.product_image_id')
-            ->where('product_id', 'd75692a5-d38c-4599-9cc0-25d526a63686')->whereNotNull('reference_id');
+//        $query = DB::connection('easyesale_db')->table('listing_item_product_image')
+//            ->join('product_image', 'product_image.id', '=', 'listing_item_product_image.product_image_id')
+//            ->where('product_id', 'd75692a5-d38c-4599-9cc0-25d526a63686')->whereNotNull('reference_id');
 
 
-        $listingImages = $query->get();
+//        $listingImages = $query->get();
         $AlreadyImages = [];
-        foreach ($listingImages as $listingImage) {
-            $AlreadyImages[$listingImage->path] = [
-                'path' => $listingImage->path,
-                'main_image' => $listingImage->main_image,
-                'listing_item_id' => $listingImage->listing_item_id,
-                'sort_order' => $listingImage->sort_order,
-                'code' => $listingImage->code
-            ];
-        }
+//        foreach ($listingImages as $listingImage) {
+//            $AlreadyImages[$listingImage->path] = [
+//                'path' => $listingImage->path,
+//                'main_image' => $listingImage->main_image,
+//                'listing_item_id' => $listingImage->listing_item_id,
+//                'sort_order' => $listingImage->sort_order,
+//                'code' => $listingImage->code
+//            ];
+//        }
         $oldImages = $shopifyAuthService->getProductImages($marketplace_product_id);
         $this->handleMediaImages($oldImages['data']['product'], $listingItem,$AlreadyImages);
 
