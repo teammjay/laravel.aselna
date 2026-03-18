@@ -64,7 +64,7 @@ class ExistingListingItemSyncJob implements ShouldQueue
                 ->join('listing', 'listing_item_link.listing_id', '=', 'listing.id')
                 ->whereIn('listing.store_id', $ebay_store_ids)
                 ->whereNotNull('listing_item.store_sku')
-                ->orderBy('listing_item.created_at', 'asc')
+                ->orderBy('listing_item.created_at', 'desc')
                 ->chunk(100, function ($listingItemLinks) {
 
                     $skuArray = [];
@@ -155,20 +155,29 @@ class ExistingListingItemSyncJob implements ShouldQueue
                             if (isset($item['ItemID'])) {
                                 $listingStatus = $item['SellingStatus']['ListingStatus'] ?? '';
 
-                                if ($listingStatus === 'Active') {
-                                    // The item is live and active
-                                    $itemDetail->update([
-                                        'status' => ListingStatus::Active,
-                                        'sync_status' => ListingSyncStatus::Synchronized,
-                                    ]);
-                                    $itemSkuArray[] = $item['SKU'];
-                                    Log::info("Updated Active item. SKU: " . $item['SKU'] . " | ItemID: " . $item['ItemID']);
-                                } else {
-                                    // The item is 'Completed', 'Ended', or otherwise inactive
-                                    $itemDetail->update([
-                                        'status' => ListingStatus::Deleted, // Or your specific inactive constant
-                                    ]);
-                                    Log::warning("Item is Inactive (Status: $listingStatus). SKU: " . $item['SKU'] . " | ItemID: " . $item['ItemID']);
+                                if($listingStatus != '') {
+                                    if ($listingStatus === 'Active') {
+                                        // The item is live and active
+                                        $itemDetail->update([
+                                            'status' => ListingStatus::Active,
+                                            'sync_status' => ListingSyncStatus::Synchronized,
+                                        ]);
+                                        $itemSkuArray[] = $item['SKU'];
+                                        Log::info("Updated Active item. SKU: " . $item['SKU'] . " | ItemID: " . $item['ItemID']);
+                                    } else {
+                                        // The item is 'Completed', 'Ended', or otherwise inactive
+                                        $itemDetail->update([
+                                            'status' => ListingStatus::Deleted, // Or your specific inactive constant
+                                        ]);
+                                        Log::warning("Item is Inactive (Status: $listingStatus). SKU: " . $item['SKU'] . " | ItemID: " . $item['ItemID']);
+                                    }
+                                }else{
+                                    $date = \Carbon\Carbon::parse($itemDetail->created_at);
+                                    if ($date->diffInDays(now()) >= 2) {
+                                        $itemDetail->update([
+                                            'status' => ListingStatus::Deleted,
+                                        ]);
+                                    }
                                 }
                             }
                         } else {
@@ -177,15 +186,18 @@ class ExistingListingItemSyncJob implements ShouldQueue
                     }
                 }
 
-                if (isset($response['ReturnedItemCountActual']) && ((int)$response['ReturnedItemCountActual']) < count($skuArray)) {
+                if (isset($response['ReturnedItemCountActual']) && ($response['ReturnedItemCountActual'] > 0 && ((int)$response['ReturnedItemCountActual']) < count($skuArray))) {
                     foreach ($skuArray as $sku) {
                         if (!in_array($sku, $itemSkuArray)) {
                             $itemDetails = ListingItem::where('sku', $sku)->get();
                             foreach ($itemDetails as $item) {
                                 Log::info("Item with SKU: " . $sku . " not found in eBay response, marking as Deleted.");
-                                $item->update([
-                                    'status' => ListingStatus::Deleted,
-                                ]);
+                                $date = \Carbon\Carbon::parse($item->created_at);
+                                if ($date->diffInDays(now()) >= 2) {
+                                    $item->update([
+                                        'status' => ListingStatus::Deleted,
+                                    ]);
+                                }
                             }
                         }
                     }
