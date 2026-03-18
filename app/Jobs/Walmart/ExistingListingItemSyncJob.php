@@ -63,6 +63,7 @@ class ExistingListingItemSyncJob implements ShouldQueue
                 ->whereIn('listing.store_id', $walmart_store_ids)
                 //->whereNot('listing_item.status', ListingStatus::Deleted)
                 ->whereNotNull('listing_item.store_sku')
+                ->where('listing_item.store_sku', '<>', '')
                 ->orderBy('listing_item.created_at', 'asc')
                 ->chunk(100, function ($listingItemLinks) {
                     foreach ($listingItemLinks as $listingItemLink) {
