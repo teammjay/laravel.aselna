@@ -64,6 +64,7 @@ class ExistingListingItemSyncJob implements ShouldQueue
                 ->join('listing', 'listing_item_link.listing_id', '=', 'listing.id')
                 ->whereIn('listing.store_id', $ebay_store_ids)
                 ->whereNotNull('listing_item.store_sku')
+                ->where('listing_item.store_sku', '<>', '')
                 ->orderBy('listing_item.created_at', 'asc')
                 ->chunk(100, function ($listingItemLinks) {
 
