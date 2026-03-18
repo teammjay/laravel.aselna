@@ -703,7 +703,13 @@ class EbayService implements MarketplaceServiceInterface
 
         $authService = new EbayAuthService($clientId, $clientSecret, $redirectUri, $store->user_id);
 
-        $feedInfo = ListingFeed::where('listing_id', $listingId)->first();
+        if (isset($feedId)) {
+            $feedInfo = ListingFeed::where('id', $feedId)->first();
+        } else {
+            $feedInfo = ListingFeed::where('listing_id', $listingId)->first();
+        }
+
+
         //Log::info('Feed Response :: ' . json_encode($feedInfo));
 
         if ($feedInfo) {
