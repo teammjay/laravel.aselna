@@ -62,7 +62,6 @@ class XmlUtility
         if (!File::isDirectory($directory)) {
             File::makeDirectory($directory, 0775, true);
         }
-        File::ensureDirectoryExists(dirname($filePath));
         File::put($filePath, $xmlContent);
     }
 
