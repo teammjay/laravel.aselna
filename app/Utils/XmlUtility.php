@@ -56,11 +56,11 @@ class XmlUtility
      */
     public static function saveToFile(string $filePath, string $xmlContent): void
     {
-        //file_put_contents(feeds/0004477a-c0ad-4492-222e-1c5ec80a442e.xml): Failed to open stream: No such file or directory
-        if (!file_exists($filePath)) {
-            mkdir($filePath, 0775, true);
-            chown($filePath, 'aselna');
-            chgrp($filePath, 'psacln');
+        $directory = dirname($filePath);
+
+        // 2. Ensure the directory exists (Laravel handles recursive creation)
+        if (!File::isDirectory($directory)) {
+            File::makeDirectory($directory, 0775, true);
         }
         File::ensureDirectoryExists(dirname($filePath));
         File::put($filePath, $xmlContent);
