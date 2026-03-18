@@ -173,6 +173,7 @@ class ListingController extends Controller
             'manufacturer'
         ])
             ->whereIn('id', $ids)
+            ->orderBy($sortColumn, $columnSortOrder)
 //            ->orderByRaw('FIELD(id, ' . implode(',', $ids) . ')')
             ->get();
 
