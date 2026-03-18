@@ -180,7 +180,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
                             $query->whereColumn(
                                 'store_product.last_synch_date_time',
                                 '<',
-                                'store_product.updated_at'
+                                DB::raw('GREATEST(store_product.updated_at, products.updated_at)')
                             )->orWhereNull('store_product.last_synch_date_time');
                         })
                         ->orderBy('products.created_at', 'desc')
