@@ -191,27 +191,35 @@ class ProductSyncJob implements ShouldQueue
                         'value' => $value,
                     ]
                 );*/
-
                 if (empty($value)) {
                     continue;
                 }
 
-                $data[] = [
-                    'product_id' => $product_id,
-                    'value' => $value,
-                    'sort_order' => $key,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ];
+                ProductKeyFeatures::updateOrCreate([
+                        'product_id' => $product_id,
+                        'sort_order' => $key,
+                    ], [
+                        'value' => $value,
+                        'updated_at' => now(),
+                    ]
+                );
+
+//                $data[] = [
+//                    'product_id' => $product_id,
+//                    'value' => $value,
+//                    'sort_order' => $key,
+//                    'created_at' => now(),
+//                    'updated_at' => now(),
+//                ];
             }
 
-            if (!empty($data)) {
-                ProductKeyFeatures::upsert(
-                    $data,
-                    ['product_id', 'sort_order'],
-                    ['value', 'updated_at']
-                );
-            }
+//            if (!empty($data)) {
+//                ProductKeyFeatures::upsert(
+//                    $data,
+//                    ['product_id', 'sort_order'],
+//                    ['value', 'updated_at']
+//                );
+//            }
         } catch (Exception $e) {
             Log::info('Key Features Error ::' . $e->getMessage());
         }
