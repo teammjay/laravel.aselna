@@ -365,10 +365,10 @@ class SubmitShopifyProductsJob implements ShouldQueue
         $fileSystem = $store->fileSystem;
         $shopifyAuthService = new ShopifyAuthService($store->secret_key, $store->service_url);
         $product_id = $sku = $upcCode = NULL;
-        $storeProduct = StoreProduct::where('product_id', $productData->product_id)->where('store_id', $store->id)->first();
         $createdHandle = NULL;
 
         $listingItem = $this->addListingItem($productData, $store);
+        $storeProduct = StoreProduct::where('product_id', $productData->product_id)->where('store_id', $store->id)->first();
 
         if (!$listingItem) {
             Log::info('Listing Item not created for product SKU: ' . $productData->product_sku);
