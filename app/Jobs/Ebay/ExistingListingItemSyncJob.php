@@ -65,7 +65,7 @@ class ExistingListingItemSyncJob implements ShouldQueue
                 ->whereIn('listing.store_id', $ebay_store_ids)
                 ->whereNotNull('listing_item.store_sku')
                 ->where('listing_item.store_sku', '<>', '')
-                ->orderBy('listing_item.created_at', 'asc')
+                ->orderBy('listing_item.created_at', 'desc')
                 ->chunk(100, function ($listingItemLinks) {
 
                     $skuArray = [];
