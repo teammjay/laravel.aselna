@@ -57,6 +57,11 @@ class XmlUtility
     public static function saveToFile(string $filePath, string $xmlContent): void
     {
         //file_put_contents(feeds/0004477a-c0ad-4492-222e-1c5ec80a442e.xml): Failed to open stream: No such file or directory
+        if (!file_exists($filePath)) {
+            mkdir($filePath, 0775, true);
+            chown($filePath, 'aselna');
+            chgrp($filePath, 'psacln');
+        }
         File::ensureDirectoryExists(dirname($filePath));
         File::put($filePath, $xmlContent);
     }
