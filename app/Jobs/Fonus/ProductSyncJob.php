@@ -203,7 +203,7 @@ class ProductSyncJob implements ShouldQueue
                         'updated_at' => now(),
                     ]
                 );
-//
+
 //                $data[] = [
 //                    'product_id' => $product_id,
 //                    'value' => $value,
