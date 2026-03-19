@@ -218,6 +218,7 @@ class ShopifyBrandPageSyncJob implements ShouldQueue
                     })->whereIn('device_type_id', $compatibleDeviceTypes)
                         ->orderBy('device.id')->chunk(100, function ($devices) use ($page_type, $template, $request) {
                             foreach ($devices as $device) {
+                                Log::info('Processing device :: ' . $device->name . ' with id :: ' . $device->id);
                                 $handle = null;
                                 $brand = $device->brand;
                                 $title = $brand->name . ' ' . $device->name . ' Accessories';

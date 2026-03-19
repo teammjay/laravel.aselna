@@ -99,6 +99,7 @@ class Navigationutility
                     ->where('store_id', $store_id)
                     ->where('page_type', WebStorePageType::BRAND_DEVICES)
                     ->where('brands.order_no', '<=', 10)
+                    ->where('brands.status', 'active')
                     ->orderBy('brands.order_no', 'asc')
                     ->get();
 
@@ -106,6 +107,7 @@ class Navigationutility
                     ->where('store_id', $store_id)
                     ->where('page_type', WebStorePageType::BRAND_DEVICES)
                     ->where('brands.order_no', '>', 10)
+                    ->where('brands.status', 'active')
                     ->orderBy('brands.name', 'asc')
                     ->get();
 
@@ -155,6 +157,7 @@ class Navigationutility
                     ->where('store_id', $store_id)
                     ->where('page_type', $skipDevicePages ? WebStorePageType::DEVICE : WebStorePageType::BRAND_DEVICE_PRODUCT_TYPES)
                     ->where('device_brand_id', $brand->id)
+                    ->where('device.status', 'active')
                     ->orderBy('device.device_type_id', 'asc')
                     ->orderBy('device.release_date', 'desc')
                     ->get();
@@ -168,6 +171,7 @@ class Navigationutility
                     ->where('store_id', $store_id)
                     ->where('page_type', $skipDevicePages ? WebStorePageType::DEVICE : WebStorePageType::BRAND_DEVICE_PRODUCT_TYPES)
                     ->where('device_brand_id', $brand->id)
+                    ->where('device.status', 'active')
                     ->orderBy('device.name', 'asc')
                     ->get();
 
