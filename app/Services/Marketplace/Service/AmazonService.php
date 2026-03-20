@@ -333,10 +333,6 @@ class AmazonService implements MarketplaceServiceInterface
 
         $feedResultFile = $this->authService->getResultFeed($feedInfo->feed_id, $listingId);
 
-        $feedInfo->update([
-            'status' => FeedStatus::PROCESSED
-        ]);
-
         return $feedResultFile;
     }
 

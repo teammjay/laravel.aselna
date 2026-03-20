@@ -2,8 +2,10 @@
 
 namespace App\Services\Auth;
 
+use App\Constants\FeedStatus;
 use App\Constants\FeedTypes;
 use App\Models\Listing;
+use App\Models\ListingFeed;
 use App\Services\CriticalErrorService;
 use App\Utils\FileUtility;
 use Exception;
@@ -165,6 +167,28 @@ class AmazonAuthService
         ]);
 
         $feedResult = json_decode($response->getBody(), true);
+        $feedInfo = ListingFeed::where('listing_id', $listingId)->first();
+        $feedStatus = null;
+        switch ($feedResult['processingStatus']) {
+            case 'IN_PROGRESS':
+                $feedStatus = FeedStatus::PROCESSING;
+                break;
+            case 'CANCELLED':
+            case 'FATAL':
+                $feedStatus = FeedStatus::FAILED;
+                break;
+            case 'DONE':
+                $feedStatus = FeedStatus::PROCESSED;
+                break;
+        }
+        if ($feedInfo) {
+            $feedInfo->status = $feedStatus;
+            $feedInfo->save();
+        }
+        if ($feedResult['processingStatus'] != 'DONE') {
+            Log::info('Feed is still processing. Status: ' . $feedResult['processingStatus']);
+            return null;
+        }
         Log::info('Feed Result: ' . json_encode($feedResult));
         $feedDocumentId = $feedResult['resultFeedDocumentId'];
 
