@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Constants\FeedStatus;
 use App\Jobs\ProcessFeedGenerationJob;
 use App\Models\Brand;
 use App\Models\Catalog;
@@ -81,16 +82,17 @@ class FeedController extends Controller
                 // Check if feed has parts
                 if ($feed->parts && $feed->parts->count() > 0) {
                     $partCounter = 0;
-                        $action .= '<div class="d-flex flex-wrap" style="width: 300px;">';
-                        foreach ($feed->parts->sortBy('part_number') as $part) {
-                            $action .= '<button class="btn btn-sm btn-default download-feed m-1" style="flex: 0 0 30%;" data-file="' . $part->file_name . '" data-filepath="' . $part->path . '"><i class="fas fa-fw fa-download"></i> Part ' . $part->part_number . '</button>';
-                            $partCounter++;
-                            if ($partCounter % 3 == 0) {
-                                $action .= '<div class="w-100"></div>';
-                            }
+                    $action .= '<div class="d-flex flex-wrap" style="width: 300px;">';
+                    foreach ($feed->parts->sortBy('part_number') as $part) {
+                        $action .= '<button class="btn btn-sm btn-default download-feed m-1" style="flex: 0 0 30%;" data-file="' . $part->file_name . '" data-filepath="' . $part->path . '"><i class="fas fa-fw fa-download"></i> Part ' . $part->part_number . '</button>';
+                        $partCounter++;
+                        if ($partCounter % 3 == 0) {
+                            $action .= '<div class="w-100"></div>';
                         }
-                        $action .= '</div>';
-                } else if ($feed->status) {
+                    }
+                    $action .= '</div>';
+                }
+                else if ($feed->status) {
                     // Fallback for feeds that don't have parts
                     $action = '<button class="btn btn-default download-feed" data-file="' . $feed->file_name . '" data-filepath="' . $feed->path . '"><i class="fas fa-fw fa-download"></i> Download</button>';
                 }
@@ -101,7 +103,8 @@ class FeedController extends Controller
                     "marketplace" => isset($feed->marketplace) ? $feed->marketplace : '',
                     "file_type" => $feed->file_type,
                     "file_name" => $feed->file_name,
-                    "status" => ($feed->status) ? 'Completed' : 'Processing',
+                    "status" => FeedStatus::getStatusName($feed->status),
+                    "error_text" => $feed->error_text ?? '',
                     "created_at" => date('Y-m-d H:i:s', strtotime($feed->created_at)),
                     "action" => $action,
                 );
@@ -122,9 +125,9 @@ class FeedController extends Controller
     {
 
         /*echo '<pre>';
-        echo $query->toSql();die;
-        print_r($products);
-        echo '</pre>';die;*/
+         echo $query->toSql();die;
+         print_r($products);
+         echo '</pre>';die;*/
 
         DB::beginTransaction();
         $store_id = $request->input('store_id');
@@ -185,7 +188,8 @@ class FeedController extends Controller
                     'success' => true
                 ]);
             }
-        } catch (\Exception $e) {
+        }
+        catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error processing feed generation: ' . $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine());
         }
