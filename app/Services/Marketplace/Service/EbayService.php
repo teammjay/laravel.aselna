@@ -643,9 +643,6 @@ class EbayService implements MarketplaceServiceInterface
         $version = $this->version;
         $listingInfo = Listing::where('id', $listingId)->first();
         $store = $listingInfo->store;
-        /*echo '<pre>';
-        print_r($store);
-        echo '</pre>';die;*/
         $clientId = env('EBAY_CLIENT_ID');
         $clientSecret = env('EBAY_CLIENT_SECRET');
         $redirectUri = env('EBAY_REDIRECT_URI');
@@ -654,39 +651,35 @@ class EbayService implements MarketplaceServiceInterface
 
         $fileName = $listingId . '.xml';
         $filePath = public_path('feeds/ebay/' . $fileName);
-        //echo $filePath;die;
         Log::info('Feed Id : ' . $feedId);
         $listingDetail = ListingFeed::where('listing_id', $listingId)->first();
         $feed_id = $listingDetail->id;
 
-//        if ($listingInfo->feed_type == 5) {
-//
-//        } else {
-
+        try {
             $taskID = $authService->createTask($version, $listingInfo);
 
             $feedInfo = ListingFeed::findOrFail($feed_id);
-            $feedInfo->update(['feed_id' => $taskID, 'submit_ts' => now(), 'number_of_attempts' => $feedInfo->number_of_attempts ?? 0 + 1]);
+            $feedInfo->update([
+                'feed_id' => $taskID,
+                'submit_ts' => now(),
+                'number_of_attempts' => ($feedInfo->number_of_attempts ?? 0) + 1,
+                'status' => FeedStatus::PROCESSING,
+                'error_text' => null,
+            ]);
 
             Log::info('File Path : ' . $filePath);
             $response = $authService->uploadFile($taskID, $fileName, $filePath);
-            Log::info('Feed Submitted : ' . $feedId);
+            Log::info('Feed Submitted. Status set to PROCESSING. Feed Id: ' . $feedId);
+        } catch (\Throwable $e) {
+            Log::error('eBay submitFeed failed: ' . $e->getMessage());
+            if (isset($feedInfo) || ($feedInfo = ListingFeed::find($feed_id))) {
+                $feedInfo->update([
+                    'status' => FeedStatus::ERROR,
+                    'error_text' => 'Submit failed: ' . $e->getMessage(),
+                ]);
+            }
+        }
 
-//        }
-        //$this->downloadResultFeed($taskID, $listingId);
-        /*if(isset($response['fileUploadStatus']) && $response['fileUploadStatus'] == 'SUCCESS'){
-            $updateFeedData = [
-                'feed_id' => $taskID,
-                'feed_type' => $response['feedType']
-            ];
-
-            ListingFeed::update($updateFeedData,['id'=>$feedId]);
-
-            return response()->json([
-                'message' => $response['feedId'],
-                'status' => $response['fileUploadStatus'],
-            ]);
-        }*/
         return response()->json([
             'message' => 'success'
         ], 200);
@@ -830,6 +823,10 @@ class EbayService implements MarketplaceServiceInterface
                                             $feedInfo->update([
                                                 'status' => FeedStatus::PROCESSED
                                             ]);
+                                        } elseif ($failCnt > 0) {
+                                            $feedInfo->update([
+                                                'status' => FeedStatus::ERROR
+                                            ]);
                                         }
 
                                         $listing_items = ListingItemLink::select('item_id')->where('listing_id', $listingId)->get();
@@ -931,6 +928,10 @@ class EbayService implements MarketplaceServiceInterface
                                             $feedInfo->update([
                                                 'status' => FeedStatus::PROCESSED
                                             ]);
+                                        } elseif ($failCnt > 0) {
+                                            $feedInfo->update([
+                                                'status' => FeedStatus::ERROR
+                                            ]);
                                         }
                                     }
                                     break;
@@ -1002,6 +1003,10 @@ class EbayService implements MarketplaceServiceInterface
                                         if ($successCnt > 0) {
                                             $feedInfo->update([
                                                 'status' => FeedStatus::PROCESSED
+                                            ]);
+                                        } elseif ($failCnt > 0) {
+                                            $feedInfo->update([
+                                                'status' => FeedStatus::ERROR
                                             ]);
                                         }
                                     }
@@ -1263,7 +1268,7 @@ class EbayService implements MarketplaceServiceInterface
 
             $feedData = array(
                 'listing_id' => $listingId,
-                'status' => 0,
+                'status' => FeedStatus::CREATED,
                 'feed_type' => FeedTypes::RESUBMIT,
                 'store_id' => $listingInfo->store_id,
                 'number_of_items' => count($skuFilter),
