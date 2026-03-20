@@ -72,6 +72,7 @@ class ShopifyBrandPageSyncJob implements ShouldQueue
                 ->where('purpose', 'listing')
                 ->pluck('device_type_id')
                 ->toArray();
+            Log::info('Compatible Device Types :: ' . json_encode($compatibleDeviceTypes));
 
             $page_type = $this->page_type;
             switch ($page_type) {
