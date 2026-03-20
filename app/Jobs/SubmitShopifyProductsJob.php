@@ -910,6 +910,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
 
     private function handleMediaImages($product, $listingItem,$AlreadyImages = null)
     {
+        if (!isset($product['media']['nodes'])) return;
         $media = $product['media']['nodes'];
         Log::info('No of Media Items: ' . json_encode($media));
         foreach ($media as $mediaItem) {
