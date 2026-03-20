@@ -84,14 +84,26 @@ class WalmartService implements MarketplaceServiceInterface
             if ($feedInfo) {
                 $feedInfo->feed_id = $resultFeedId;
                 $feedInfo->submit_ts = now();
-                $feedInfo->number_of_attempts = $feedInfo->number_of_attempts ?? 0 + 1;
+                $feedInfo->number_of_attempts = ($feedInfo->number_of_attempts ?? 0) + 1;
+                $feedInfo->status = FeedStatus::PROCESSING;
+                $feedInfo->error_text = null;
                 $feedInfo->save();
-                Log::info("Feed ID updated successfully.");
+                Log::info("Feed ID updated successfully. Status set to PROCESSING.");
 
             } else {
                 Log::error("No ListingFeed found for listing_id: " . $listingId);
             }
         }catch (\Throwable $e) {
+            Log::error('Walmart submitFeed failed: ' . $e->getMessage());
+
+            $feedInfo = ListingFeed::where('id', $feedId)->first();
+            if ($feedInfo) {
+                $feedInfo->update([
+                    'status' => FeedStatus::ERROR,
+                    'error_text' => 'Submit failed: ' . $e->getMessage(),
+                    'number_of_attempts' => ($feedInfo->number_of_attempts ?? 0) + 1,
+                ]);
+            }
 
             CriticalErrorService::report('Walmart Submit Feed Failed', [
                 'marketplace' => 'Walmart',
@@ -112,7 +124,7 @@ class WalmartService implements MarketplaceServiceInterface
 
         $feedData = array(
             'listing_id' => $listingId,
-            'status' => 0,
+            'status' => FeedStatus::CREATED,
             'feed_type' => FeedTypes::INVENTORY,
             'store_id' => $listingInfo->store_id,
             'number_of_items' => $feedInfo->number_of_items,
@@ -883,7 +895,7 @@ class WalmartService implements MarketplaceServiceInterface
 
                 $feedData = array(
                     'listing_id' => $listingId,
-                    'status' => 0,
+                    'status' => FeedStatus::CREATED,
                     'feed_type' => FeedTypes::RESUBMIT,
                     'store_id' => $listingInfo->store_id,
                     'number_of_items' => count($skuFilter),
