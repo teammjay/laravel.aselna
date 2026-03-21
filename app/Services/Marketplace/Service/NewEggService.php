@@ -217,22 +217,32 @@ class NewEggService implements MarketplaceServiceInterface
         $listingInfo = Listing::where('id', $listingId)->first();
         $store = $listingInfo->store;
 
-
         $authService = new NewEggAuthService($store->seller_id, $store->access_key, $store->secret_key);
 
         $fileName = $listingId . '.json';
         $filePath = public_path('feeds/newegg/' . $fileName);
-        //echo $filePath;die;
         Log::info('Feed Id : ' . $feedId);
-        $listingDetail = ListingFeed::where('listing_id', $listingId)->first();
-        $feed_id = $listingDetail->id;
 
-        $feedInfo = ListingFeed::findOrFail($feed_id);
-        $feedInfo->update(['submit_ts' => now(), 'number_of_attempts' => $feedInfo->number_of_attempts ?? 0 + 1]);
+        $feedInfo = ListingFeed::findOrFail($feedId);
+        $feedInfo->update([
+            'submit_ts'          => now(),
+            'number_of_attempts' => ($feedInfo->number_of_attempts ?? 0) + 1,
+        ]);
 
         Log::info('File Path : ' . $filePath);
-        $response = $authService->submitFeed($filePath);
-        Log::info('Feed Submitted : ' . $feedId);
+
+        try {
+            $response = $authService->submitFeed($filePath);
+            Log::info('Feed Submitted : ' . $feedId);
+
+            $feedInfo->update(['status' => FeedStatus::PROCESSING, 'error_text' => null]);
+        } catch (\Throwable $e) {
+            Log::error('NewEgg submitFeed failed: ' . $e->getMessage());
+            $feedInfo->update([
+                'status'     => FeedStatus::ERROR,
+                'error_text' => 'Submit failed: ' . $e->getMessage(),
+            ]);
+        }
 
         return response()->json([
             'message' => 'success'

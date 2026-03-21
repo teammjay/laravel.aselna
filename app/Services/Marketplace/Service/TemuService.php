@@ -349,7 +349,7 @@ class TemuService implements MarketplaceServiceInterface
 
             FileUtility::saveToFile(public_path('feeds/temu/' . $listingId . '.json'), json_encode($jsonFeed));
 
-        }catch (\Throwable $e){
+        } catch (\Throwable $e) {
 
             CriticalErrorService::report('Temu Generate Create Feed Error', [
                 'marketplace' => 'Temu',
@@ -357,7 +357,8 @@ class TemuService implements MarketplaceServiceInterface
                 'method' => __METHOD__
             ],['listingId'=> $listingId]);
 
-            Log::info('Temu Generate Create Feed Error : ' . $e->getMessage());
+            Log::error('Temu Generate Create Feed Error : ' . $e->getMessage());
+            throw $e; // propagate to FeedGenerationJob to update feed status
         }
     }
 

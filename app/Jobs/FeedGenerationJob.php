@@ -43,6 +43,8 @@ class FeedGenerationJob implements ShouldQueue
         $listingInfo = Listing::where('id', $this->listingId)->first();
         Log::info('Listing : ' . $listingInfo);
 
+        $feedInfo = null;
+
         try {
             // get StoreType froms store that is inside listingfeed
             $store = $listingInfo->store;
@@ -75,7 +77,7 @@ class FeedGenerationJob implements ShouldQueue
             Log::info('Feed Generated');
             $itemCount = ListingItemLink::where('listing_id', $this->listingId)->count();
 
-            ListingFeed::where(['listing_id' => $this->listingId])->update(['number_of_items' => $itemCount]);
+            $feedInfo->update(['number_of_items' => $itemCount]);
             ListingItemLink::where('listing_id', $this->listingId)->update(['feed_id' => $feedInfo->id]);
 
             if (isset($store->auto_submit_listing) && $store->auto_submit_listing == 1) {
@@ -89,13 +91,24 @@ class FeedGenerationJob implements ShouldQueue
                 'status' => 'completed',
                 'finished_at' => now()
             ]);
-        }catch (\Throwable $e) {
+        } catch (\Throwable $e) {
 
             $this->updateTrackingRecord([
                 'status' => 'failed',
                 'output' => $e->getMessage(),
                 'finished_at' => now()
             ]);
+
+            // Mark the ListingFeed as errored so the dashboard reflects the failure
+            if ($feedInfo !== null) {
+                $feedInfo->update([
+                    'status'     => FeedStatus::ERROR,
+                    'error_text' => $e->getMessage(),
+                ]);
+            } else {
+                // feedInfo was never created (updateOrCreate itself failed) — nothing safe to mark
+                Log::error('FeedGenerationJob: feedInfo was null on error, no ListingFeed to update.');
+            }
 
             CriticalErrorService::report('Feed Generation Failed', [
                 'marketplace' => $listingInfo->store->storeType->name.' - '.$listingInfo->store->name,
