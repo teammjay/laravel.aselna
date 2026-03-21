@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Constants\FeedStatus;
 use App\Jobs\Concerns\TrackableJob;
 use App\Models\Listing;
 use App\Models\ListingFeed;
