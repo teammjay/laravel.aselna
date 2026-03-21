@@ -652,13 +652,11 @@ class EbayService implements MarketplaceServiceInterface
         $fileName = $listingId . '.xml';
         $filePath = public_path('feeds/ebay/' . $fileName);
         Log::info('Feed Id : ' . $feedId);
-        $listingDetail = ListingFeed::where('listing_id', $listingId)->first();
-        $feed_id = $listingDetail->id;
 
         try {
             $taskID = $authService->createTask($version, $listingInfo);
 
-            $feedInfo = ListingFeed::findOrFail($feed_id);
+            $feedInfo = ListingFeed::findOrFail($feedId);
             $feedInfo->update([
                 'feed_id' => $taskID,
                 'submit_ts' => now(),
@@ -672,7 +670,7 @@ class EbayService implements MarketplaceServiceInterface
             Log::info('Feed Submitted. Status set to PROCESSING. Feed Id: ' . $feedId);
         } catch (\Throwable $e) {
             Log::error('eBay submitFeed failed: ' . $e->getMessage());
-            if (isset($feedInfo) || ($feedInfo = ListingFeed::find($feed_id))) {
+            if (isset($feedInfo) || ($feedInfo = ListingFeed::find($feedId))) {
                 $feedInfo->update([
                     'status' => FeedStatus::ERROR,
                     'error_text' => 'Submit failed: ' . $e->getMessage(),

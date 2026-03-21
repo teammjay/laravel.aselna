@@ -254,7 +254,7 @@ class AmazonService implements MarketplaceServiceInterface
 
     public function submitFeed($feedId, $listingId)
     {
-        $feedInfo = ListingFeed::where('listing_id', $listingId)->first();
+        $feedInfo = ListingFeed::find($feedId);
 
         try {
             Log::info("Started :: ");
@@ -348,7 +348,7 @@ class AmazonService implements MarketplaceServiceInterface
 
         $this->authService = new AmazonAuthService($store->seller_id, $store->secret_key,$store->api_key);
 
-        $feedInfo = ListingFeed::where('listing_id', $listingId)->first();
+        $feedInfo = $feedId ? ListingFeed::find($feedId) : ListingFeed::where('listing_id', $listingId)->first();
 
         $feedResultFile = $this->authService->getResultFeed($feedInfo->feed_id, $listingId);
 
