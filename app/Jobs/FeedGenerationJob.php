@@ -43,6 +43,8 @@ class FeedGenerationJob implements ShouldQueue
         $listingInfo = Listing::where('id', $this->listingId)->first();
         Log::info('Listing : ' . $listingInfo);
 
+        $feedInfo = null;
+
         try {
             // get StoreType froms store that is inside listingfeed
             $store = $listingInfo->store;
@@ -89,13 +91,28 @@ class FeedGenerationJob implements ShouldQueue
                 'status' => 'completed',
                 'finished_at' => now()
             ]);
-        }catch (\Throwable $e) {
+        } catch (\Throwable $e) {
 
             $this->updateTrackingRecord([
                 'status' => 'failed',
                 'output' => $e->getMessage(),
                 'finished_at' => now()
             ]);
+
+            // Mark the ListingFeed as errored so the dashboard reflects the failure
+            if ($feedInfo !== null) {
+                $feedInfo->update([
+                    'status'     => FeedStatus::ERROR,
+                    'error_text' => $e->getMessage(),
+                ]);
+            } else {
+                // feedInfo was never created — try to mark via listing_id
+                ListingFeed::where('listing_id', $this->listingId)
+                    ->update([
+                        'status'     => FeedStatus::ERROR,
+                        'error_text' => $e->getMessage(),
+                    ]);
+            }
 
             CriticalErrorService::report('Feed Generation Failed', [
                 'marketplace' => $listingInfo->store->storeType->name.' - '.$listingInfo->store->name,

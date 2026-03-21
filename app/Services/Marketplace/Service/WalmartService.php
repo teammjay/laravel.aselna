@@ -431,7 +431,7 @@ class WalmartService implements MarketplaceServiceInterface
             }
 
             FileUtility::saveToFile(public_path('feeds/walmart/' . $listingId . '.json'), json_encode($jsonFeed));
-        }catch (\Throwable $e) {
+        } catch (\Throwable $e) {
 
             CriticalErrorService::report('Walmart Create Feed Failed', [
                 'marketplace' => 'Walmart',
@@ -440,6 +440,7 @@ class WalmartService implements MarketplaceServiceInterface
             ],['listingId'=>$listingId]);
 
             Log::error('Error: ' . $e->getMessage());
+            throw $e; // propagate to FeedGenerationJob to update feed status
 
         }
     }
@@ -470,7 +471,7 @@ class WalmartService implements MarketplaceServiceInterface
             }
 
             FileUtility::saveToFile(public_path('feeds/walmart/' . $listingId . '.json'), json_encode($jsonFeed));
-        }catch (\Throwable $e) {
+        } catch (\Throwable $e) {
 
             CriticalErrorService::report('Walmart Generate Delete Feed Failed', [
                 'marketplace' => 'Walmart',
@@ -479,6 +480,7 @@ class WalmartService implements MarketplaceServiceInterface
             ],['listingId'=> $listingId]);
 
             Log::error('Error: ' . $e->getMessage());
+            throw $e; // propagate to FeedGenerationJob to update feed status
 
         }
     }
@@ -514,7 +516,7 @@ class WalmartService implements MarketplaceServiceInterface
             } else {
                 FileUtility::saveToFile(public_path('feeds/walmart/' . $listingId . '.json'), json_encode($jsonFeed));
             }
-        }catch (\Throwable $e) {
+        } catch (\Throwable $e) {
 
             CriticalErrorService::report('Walmart Generate Inventory Feed Failed', [
                 'marketplace' => 'Walmart',
@@ -523,6 +525,7 @@ class WalmartService implements MarketplaceServiceInterface
             ],['listingId'=>$listingId]);
 
             Log::error('Error: ' . $e->getMessage());
+            throw $e; // propagate to FeedGenerationJob to update feed status
 
         }
     }
@@ -559,7 +562,7 @@ class WalmartService implements MarketplaceServiceInterface
             }
 
             FileUtility::saveToFile(public_path('feeds/walmart/' . $listingId . '.json'), json_encode($jsonFeed));
-        }catch (\Throwable $e) {
+        } catch (\Throwable $e) {
 
             CriticalErrorService::report('Walmart Generate Price Feed Failed', [
                 'marketplace' => 'Walmart',
@@ -568,6 +571,7 @@ class WalmartService implements MarketplaceServiceInterface
             ],['listingId'=>$listingId]);
 
             Log::error('Error: ' . $e->getMessage());
+            throw $e; // propagate to FeedGenerationJob to update feed status
 
         }
     }
