@@ -84,14 +84,26 @@ class WalmartService implements MarketplaceServiceInterface
             if ($feedInfo) {
                 $feedInfo->feed_id = $resultFeedId;
                 $feedInfo->submit_ts = now();
-                $feedInfo->number_of_attempts = $feedInfo->number_of_attempts ?? 0 + 1;
+                $feedInfo->number_of_attempts = ($feedInfo->number_of_attempts ?? 0) + 1;
+                $feedInfo->status = FeedStatus::PROCESSING;
+                $feedInfo->error_text = null;
                 $feedInfo->save();
-                Log::info("Feed ID updated successfully.");
+                Log::info("Feed ID updated successfully. Status set to PROCESSING.");
 
             } else {
                 Log::error("No ListingFeed found for listing_id: " . $listingId);
             }
         }catch (\Throwable $e) {
+            Log::error('Walmart submitFeed failed: ' . $e->getMessage());
+
+            $feedInfo = ListingFeed::where('id', $feedId)->first();
+            if ($feedInfo) {
+                $feedInfo->update([
+                    'status' => FeedStatus::ERROR,
+                    'error_text' => 'Submit failed: ' . $e->getMessage(),
+                    'number_of_attempts' => ($feedInfo->number_of_attempts ?? 0) + 1,
+                ]);
+            }
 
             CriticalErrorService::report('Walmart Submit Feed Failed', [
                 'marketplace' => 'Walmart',
@@ -112,7 +124,7 @@ class WalmartService implements MarketplaceServiceInterface
 
         $feedData = array(
             'listing_id' => $listingId,
-            'status' => 0,
+            'status' => FeedStatus::CREATED,
             'feed_type' => FeedTypes::INVENTORY,
             'store_id' => $listingInfo->store_id,
             'number_of_items' => $feedInfo->number_of_items,
@@ -148,52 +160,83 @@ class WalmartService implements MarketplaceServiceInterface
         $response = $authService->getFeedStatus($feedInfo->feed_id, $feedInfo->number_of_items);
         Log::info('Feed Status: ' . json_encode($response));
 
-        if ($response['feedStatus'] != 'PROCESSED') return null;
-
+        // Always update counts regardless of status
         $feedInfo->update([
-            'success_count' => $response['itemsSucceeded'],
-            'fail_count' => $response['itemsFailed'],
-            'processing_count' => $response['itemsProcessing'],
-            'number_of_items' => $response['itemsReceived'],
+            'success_count' => $response['itemsSucceeded'] ?? 0,
+            'fail_count' => $response['itemsFailed'] ?? 0,
+            'processing_count' => $response['itemsProcessing'] ?? 0,
+            'number_of_items' => $response['itemsReceived'] ?? $feedInfo->number_of_items,
+            'last_status_check_ts' => now(),
         ]);
 
-        if ($feedInfo->feed_type == FeedTypes::CREATE) {
-            foreach ($response['itemDetails']['itemIngestionStatus'] as $item) {
-                $listingItems = ListingItem::where('sku', $item['sku'])->get();
-                foreach ($listingItems as $listingItem) {
-                    if ($item['ingestionStatus'] && isset($item['itemid'])) {
-                        $listingItem->update([
-                            'store_sku' => $item['itemid']
-                        ]);
-                    } else {
+        // If not yet processed, return early (status stays as PROCESSING)
+        if ($response['feedStatus'] != 'PROCESSED') {
+            Log::info('Walmart feed still processing. Status: ' . $response['feedStatus']);
+            return null;
+        }
 
+        // Collect error messages from failed items
+        $errorMessages = [];
+        if (isset($response['itemDetails']['itemIngestionStatus'])) {
+            if ($feedInfo->feed_type == FeedTypes::CREATE) {
+                foreach ($response['itemDetails']['itemIngestionStatus'] as $item) {
+                    $listingItems = ListingItem::where('sku', $item['sku'])->get();
+                    foreach ($listingItems as $listingItem) {
+                        if ($item['ingestionStatus'] && isset($item['itemid'])) {
+                            $listingItem->update([
+                                'store_sku' => $item['itemid']
+                            ]);
+                        }
                     }
-
+                    // Collect errors from failed items
+                    if (isset($item['ingestionErrors']['ingestionError'])) {
+                        foreach ($item['ingestionErrors']['ingestionError'] as $error) {
+                            $errorMessages[] = '[' . ($item['sku'] ?? '') . '] ' . ($error['description'] ?? 'Unknown error');
+                        }
+                    }
                 }
             }
-
-        } else if ($feedInfo->feed_type == FeedTypes::DELETE) {
-            foreach ($response['itemDetails']['itemIngestionStatus'] as $item) {
-                $listingItems = ListingItem::where('sku', $item['sku'])->get();
-                foreach ($listingItems as $listingItem) {
-                    if (($item['ingestionStatus']) && $item['ingestionStatus'] == 'SUCCESS') {
-                        $listingItem->update(['status' => ListingStatus::Deleted]);
+            else if ($feedInfo->feed_type == FeedTypes::DELETE) {
+                foreach ($response['itemDetails']['itemIngestionStatus'] as $item) {
+                    $listingItems = ListingItem::where('sku', $item['sku'])->get();
+                    foreach ($listingItems as $listingItem) {
+                        if (($item['ingestionStatus']) && $item['ingestionStatus'] == 'SUCCESS') {
+                            $listingItem->update(['status' => ListingStatus::Deleted]);
+                        }
+                    }
+                    if (isset($item['ingestionErrors']['ingestionError'])) {
+                        foreach ($item['ingestionErrors']['ingestionError'] as $error) {
+                            $errorMessages[] = '[' . ($item['sku'] ?? '') . '] ' . ($error['description'] ?? 'Unknown error');
+                        }
                     }
                 }
             }
         }
 
         if ($response['feedStatus'] == 'PROCESSED' && intval($response['itemsSucceeded']) > 0
-            && $feedInfo->feed_type == FeedTypes::CREATE) {
+        && $feedInfo->feed_type == FeedTypes::CREATE) {
             $this->submitInventoryFeedAfterCreate($listingId, $listingInfo, $feedInfo);
         }
 
         // save response into folder
         FileUtility::saveToFile(public_path('result-feeds/walmart/' . $feedInfo->id . '.json'), json_encode($response));
 
-        $feedInfo->update([
-            'status' => FeedStatus::PROCESSED
-        ]);
+        // Determine final status
+        $itemsSucceeded = intval($response['itemsSucceeded'] ?? 0);
+        $itemsFailed = intval($response['itemsFailed'] ?? 0);
+
+        if ($itemsSucceeded === 0 && $itemsFailed > 0) {
+            $feedInfo->update([
+                'status' => FeedStatus::ERROR,
+                'error_text' => !empty($errorMessages) ? implode("\n", array_slice($errorMessages, 0, 50)) : 'All items failed',
+            ]);
+        }
+        else {
+            $feedInfo->update([
+                'status' => FeedStatus::PROCESSED,
+                'error_text' => !empty($errorMessages) ? implode("\n", array_slice($errorMessages, 0, 50)) : null,
+            ]);
+        }
 
         /* counting based on store sku*/
         $listing_items = ListingItemLink::select('item_id')->where('listing_id', $listingId)->get();
@@ -388,7 +431,7 @@ class WalmartService implements MarketplaceServiceInterface
             }
 
             FileUtility::saveToFile(public_path('feeds/walmart/' . $listingId . '.json'), json_encode($jsonFeed));
-        }catch (\Throwable $e) {
+        } catch (\Throwable $e) {
 
             CriticalErrorService::report('Walmart Create Feed Failed', [
                 'marketplace' => 'Walmart',
@@ -397,6 +440,7 @@ class WalmartService implements MarketplaceServiceInterface
             ],['listingId'=>$listingId]);
 
             Log::error('Error: ' . $e->getMessage());
+            throw $e; // propagate to FeedGenerationJob to update feed status
 
         }
     }
@@ -427,7 +471,7 @@ class WalmartService implements MarketplaceServiceInterface
             }
 
             FileUtility::saveToFile(public_path('feeds/walmart/' . $listingId . '.json'), json_encode($jsonFeed));
-        }catch (\Throwable $e) {
+        } catch (\Throwable $e) {
 
             CriticalErrorService::report('Walmart Generate Delete Feed Failed', [
                 'marketplace' => 'Walmart',
@@ -436,6 +480,7 @@ class WalmartService implements MarketplaceServiceInterface
             ],['listingId'=> $listingId]);
 
             Log::error('Error: ' . $e->getMessage());
+            throw $e; // propagate to FeedGenerationJob to update feed status
 
         }
     }
@@ -471,7 +516,7 @@ class WalmartService implements MarketplaceServiceInterface
             } else {
                 FileUtility::saveToFile(public_path('feeds/walmart/' . $listingId . '.json'), json_encode($jsonFeed));
             }
-        }catch (\Throwable $e) {
+        } catch (\Throwable $e) {
 
             CriticalErrorService::report('Walmart Generate Inventory Feed Failed', [
                 'marketplace' => 'Walmart',
@@ -480,6 +525,7 @@ class WalmartService implements MarketplaceServiceInterface
             ],['listingId'=>$listingId]);
 
             Log::error('Error: ' . $e->getMessage());
+            throw $e; // propagate to FeedGenerationJob to update feed status
 
         }
     }
@@ -516,7 +562,7 @@ class WalmartService implements MarketplaceServiceInterface
             }
 
             FileUtility::saveToFile(public_path('feeds/walmart/' . $listingId . '.json'), json_encode($jsonFeed));
-        }catch (\Throwable $e) {
+        } catch (\Throwable $e) {
 
             CriticalErrorService::report('Walmart Generate Price Feed Failed', [
                 'marketplace' => 'Walmart',
@@ -525,6 +571,7 @@ class WalmartService implements MarketplaceServiceInterface
             ],['listingId'=>$listingId]);
 
             Log::error('Error: ' . $e->getMessage());
+            throw $e; // propagate to FeedGenerationJob to update feed status
 
         }
     }
@@ -883,7 +930,7 @@ class WalmartService implements MarketplaceServiceInterface
 
                 $feedData = array(
                     'listing_id' => $listingId,
-                    'status' => 0,
+                    'status' => FeedStatus::CREATED,
                     'feed_type' => FeedTypes::RESUBMIT,
                     'store_id' => $listingInfo->store_id,
                     'number_of_items' => count($skuFilter),
