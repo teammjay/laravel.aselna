@@ -58,7 +58,7 @@ class FeedGenerationJob implements ShouldQueue
             $created_by = auth()->user()->name ?? 'admin';
             $feedData = array(
                 'listing_id' => $this->listingId,
-                'status' => 0,
+                'status' => FeedStatus::CREATED,
                 'feed_type' => $listingInfo->feed_type,
                 'store_id' => $listingInfo->store_id,
                 'created_by' => $created_by

@@ -75,6 +75,7 @@ class TemuService implements MarketplaceServiceInterface
 
         $successCount = 0;
         $failedCount = 0;
+        $errorMessages = [];
 
         $allresults = [];
 
@@ -99,22 +100,40 @@ class TemuService implements MarketplaceServiceInterface
                     }
                 } else {
                     $failedCount++;
+                    $errorMsg = $response['errorMessage'] ?? $response['error_msg'] ?? 'Unknown Temu error';
+                    $sku = $individualFeed['skuList'][0]['outSkuSn'] ?? 'unknown';
+                    $errorMessages[] = "[$sku] $errorMsg";
                 }
             } catch (\Exception $e) {
                 Log::info('Temu Feed Submission Error: ' . $e->getMessage());
                 $allresults[] = ['error' => $e->getMessage()];
                 $failedCount++;
+                $errorMessages[] = $e->getMessage();
             }
         }
 
         FileUtility::saveToFile($resultFile, json_encode($allresults));
 
+        // Determine proper status based on results
+        $status = FeedStatus::PROCESSED;
+        $errorText = null;
+        if ($successCount === 0 && $failedCount > 0) {
+            $status = FeedStatus::ERROR;
+            $errorText = implode("\n", array_slice($errorMessages, 0, 50));
+        }
+        elseif ($failedCount > 0 && $successCount > 0) {
+            // Mixed results — still PROCESSED but with errors noted
+            $status = FeedStatus::PROCESSED;
+            $errorText = implode("\n", array_slice($errorMessages, 0, 50));
+        }
+
         $feedInfo->update([
             'success_count' => $successCount,
-            'failed_count' => $failedCount,
+            'fail_count' => $failedCount,
             'submit_ts' => now(),
             'number_of_attempts' => ($feedInfo->number_of_attempts ?? 0) + 1,
-            'status' => FeedStatus::PROCESSED
+            'status' => $status,
+            'error_text' => $errorText,
         ]);
     }
 

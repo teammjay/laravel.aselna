@@ -217,7 +217,7 @@ class AmazonService implements MarketplaceServiceInterface
 
                     if (strlen($combinedDeviceName . ', ' . $deviceName) > 2000) {
                         if ($count < 1000) {
-                            $count++;;
+                            $count++;
                             $compatibleDevices[] = ['value' => ltrim($combinedDeviceName, ', '), 'language_tag' => 'en_US'];
                             $combinedDeviceName = '';
                         } else break;
@@ -254,42 +254,61 @@ class AmazonService implements MarketplaceServiceInterface
 
     public function submitFeed($feedId, $listingId)
     {
-        Log::info("Started :: ");
-        $directory = public_path('feeds/amazon/');
-        Log::info('Directory: ' . $directory);
-        if (is_dir($directory)) {
-            Log::info('Directory exists');
-            foreach (scandir($directory, SCANDIR_SORT_DESCENDING) as $file) {
-                Log::info('File: ' . $file);
-                if (strpos($file, $listingId) === 0 && preg_match('/\.(json|xml)$/', $file)) {
-                    $files[] = 'feeds/amazon/' . $file;
+        $feedInfo = ListingFeed::where('listing_id', $listingId)->first();
+
+        try {
+            Log::info("Started :: ");
+            $directory = public_path('feeds/amazon/');
+            Log::info('Directory: ' . $directory);
+            if (is_dir($directory)) {
+                Log::info('Directory exists');
+                foreach (scandir($directory, SCANDIR_SORT_DESCENDING) as $file) {
+                    Log::info('File: ' . $file);
+                    if (strpos($file, $listingId) === 0 && preg_match('/\.(json|xml)$/', $file)) {
+                        $files[] = 'feeds/amazon/' . $file;
+                    }
+                }
+            }
+            $filePath = public_path($files[0]);
+
+            $content = file_get_contents($filePath);
+            Log::info("Content :: " . $content);
+
+            $listingInfo = Listing::where('id', $listingId)->first();
+            $store = $listingInfo->store;
+
+            $this->authService = new AmazonAuthService($store->seller_id, $store->secret_key, $store->api_key);
+            $generatedFeedId = $this->authService->uploadProductFeed($content);
+            Log::info("Generated Feed ID :: " . $generatedFeedId);
+
+            $feedResponse = $this->authService->submitFeed($generatedFeedId, $listingId);
+
+            if ($feedInfo && $feedResponse) {
+                $feedInfo->feed_id = $feedResponse['feedId'];
+                $feedInfo->submit_ts = now();
+                $feedInfo->number_of_attempts = ($feedInfo->number_of_attempts ?? 0) + 1;
+                $feedInfo->status = FeedStatus::PROCESSING;
+                $feedInfo->error_text = null;
+                $feedInfo->save();
+                Log::info("Feed ID updated successfully. Status set to PROCESSING.");
+            }
+            else {
+                Log::error("No ListingFeed found or no response for listing_id: " . $listingId);
+                if ($feedInfo) {
+                    $feedInfo->status = FeedStatus::ERROR;
+                    $feedInfo->error_text = 'Feed submission returned no response from Amazon';
+                    $feedInfo->save();
                 }
             }
         }
-        $filePath = public_path($files[0]);
-
-        $content = file_get_contents($filePath);
-        Log::info("Content :: " . $content);
-
-        $listingInfo = Listing::where('id', $listingId)->first();
-        $store = $listingInfo->store;
-
-        $this->authService = new AmazonAuthService($store->seller_id, $store->secret_key,$store->api_key);
-        $generatedFeedId = $this->authService->uploadProductFeed($content);
-        Log::info("Generated Feed ID :: " . $generatedFeedId);
-
-        $feedResponse = $this->authService->submitFeed($generatedFeedId, $listingId);
-
-        $feedInfo = ListingFeed::where('listing_id', $listingId)->first();
-
-        if ($feedInfo && $feedResponse) {
-            $feedInfo->feed_id = $feedResponse['feedId'];
-            $feedInfo->submit_ts = now();
-            $feedInfo->number_of_attempts = $feedInfo->number_of_attempts ?? 0 + 1;
-            $feedInfo->save();
-            Log::info("Feed ID updated successfully.");
-        } else {
-            Log::error("No ListingFeed found for listing_id: " . $listingId);
+        catch (\Throwable $e) {
+            Log::error("Amazon submitFeed failed: " . $e->getMessage());
+            if ($feedInfo) {
+                $feedInfo->status = FeedStatus::ERROR;
+                $feedInfo->error_text = 'Submit failed: ' . $e->getMessage();
+                $feedInfo->number_of_attempts = ($feedInfo->number_of_attempts ?? 0) + 1;
+                $feedInfo->save();
+            }
         }
     }
 
@@ -332,10 +351,6 @@ class AmazonService implements MarketplaceServiceInterface
         $feedInfo = ListingFeed::where('listing_id', $listingId)->first();
 
         $feedResultFile = $this->authService->getResultFeed($feedInfo->feed_id, $listingId);
-
-        $feedInfo->update([
-            'status' => FeedStatus::PROCESSED
-        ]);
 
         return $feedResultFile;
     }
