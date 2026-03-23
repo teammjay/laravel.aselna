@@ -191,15 +191,16 @@ class ProductSyncJob implements ShouldQueue
                         'value' => $value,
                     ]
                 );*/
-                if (empty($value)) {
-                    continue;
-                }
+//                $updated_value = $value ?? '';
+//                if (empty($value)) {
+//                    continue;
+//                }
 
                 ProductKeyFeatures::updateOrCreate([
                         'product_id' => $product_id,
                         'sort_order' => $key,
                     ], [
-                        'value' => $value,
+                        'value' => $value ?? '',
                         'updated_at' => now(),
                     ]
                 );
