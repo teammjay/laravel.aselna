@@ -154,6 +154,8 @@ class FetchShopifyOrders implements ShouldQueue
                             ], $customerData);
 
                             /* start - add customer shipping address*/
+
+                            $combined_address = $order['shippingAddress']['address1'] . ' ' . $order['shippingAddress']['address2'];
                             $customer_address_data = [
                                 'customer_id' => $customer_detail->id,
                                 'first_name' => isset($order['shippingAddress']['firstName']) ? $order['shippingAddress']['firstName'] : ' ',
@@ -166,18 +168,19 @@ class FetchShopifyOrders implements ShouldQueue
                                 'zip' => $order['shippingAddress']['zip'],
                                 'country' => $order['shippingAddress']['country'],
                                 'country_code' => $order['shippingAddress']['countryCodeV2'],
-                                'address_combined' => $order['shippingAddress']['address1'] . ' ' . $order['shippingAddress']['address2'],
+                                'address_combined' => $combined_address,
+                                'company' => $order['shippingAddress']['company'] ?? null,
                             ];
 
                             Log::info("Data " . json_encode($customer_address_data));
 
                             CustomerAddress::updateOrCreate([
                                 'customer_id' => $customer_detail->id,
-                                'address_combined' => $order['shippingAddress']['address1'] . ' ' . $order['shippingAddress']['address2'],
+                                'address_combined' => $combined_address,
                             ], $customer_address_data);
 
                             $customer_address = CustomerAddress::where('customer_id', $customer_detail->id)
-                                ->where('address_combined', $order['shippingAddress']['address1'] . ' ' . $order['shippingAddress']['address2'])
+                                ->where('address_combined', $combined_address)
                                 ->first();
 
                             /* end - add customer shipping address*/
