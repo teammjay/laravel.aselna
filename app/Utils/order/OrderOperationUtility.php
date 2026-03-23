@@ -1239,8 +1239,17 @@ class OrderOperationUtility
         if (!isset($orderOperation->order->customerAddress)) {
             return [];
         }
+
+        if(isset($orderOperation->order->customerAddress->company) && $orderOperation->order->customerAddress->company != ''){
+            $name = $orderOperation->order->customerAddress->company;
+        }else if(isset($orderOperation->order->customerAddress->full_name) && $orderOperation->order->customerAddress->full_name != ''){
+            $name = $orderOperation->order->customerAddress->full_name;
+        }else{
+            $name = $orderOperation->order->customerAddress->first_name.''.$orderOperation->order->customerAddress->last_name;
+        }
+
         return [
-            'name' => (isset($orderOperation->order->customerAddress) && $orderOperation->order->customerAddress->full_name != '') ? $orderOperation->order->customerAddress->full_name : $orderOperation->order->customer->full_name,
+            'name' => $name,
             'address1' => $orderOperation->order->customerAddress->address_line_1,
             'address2' => $orderOperation->order->customerAddress->address_line_2 ?? '',
             'address3' => $orderOperation->order->customerAddress->address_line_3 ?? '',
