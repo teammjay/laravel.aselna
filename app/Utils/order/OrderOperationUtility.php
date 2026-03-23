@@ -527,7 +527,7 @@ class OrderOperationUtility
                             //echo "Error: {$error['message']}\n";
                             Log::info('Shopify cancer order error:' . json_encode($error));
                             $data['message'] = isset($error['message']) ? $error['message'] : json_encode($error);
-                            $data['status'] = true;
+                            $data['status'] = false;
                             return $data;
                             //return false;
                         }
@@ -538,7 +538,7 @@ class OrderOperationUtility
                             //echo "Error: {$error['message']}\n";
                             Log::info('Shopify cancer order error:' . json_encode($error));
                             $data['message'] = isset($error['message']) ? $error['message'] : json_encode($error);
-                            $data['status'] = true;
+                            $data['status'] = false;
                             return $data;
                             //return false;
                         }
