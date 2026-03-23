@@ -1140,11 +1140,9 @@ On Fri, 29 Aug 2025 at 23:36, phonil <phonil.ebay@gmail.com> wrote:
 
             $marketplaceService->submitFeed($feedId, $listingId);
 
-            if (strtolower($storeType) !== 'temu') {
-                $feedInfo->update([
-                    'status' => FeedStatus::PROCESSING,
-                ]);
-            }
+            $feedInfo->update([
+                'status' => FeedStatus::PROCESSING,
+            ]);
 
             // $marketplaceService->getResultFeed($listingId);
             return response()->json(['success' => true]);
