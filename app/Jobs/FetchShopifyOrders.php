@@ -153,13 +153,21 @@ class FetchShopifyOrders implements ShouldQueue
                                 'email' => $order['email'],
                             ], $customerData);
 
+                            $first_name = isset($order['shippingAddress']['firstName']) ? $order['shippingAddress']['firstName'] : '';
+                            $last_name = isset($order['shippingAddress']['lastName']) ? $order['shippingAddress']['lastName'] : '';
+                            $full_name = null;
+                            if (!empty($first_name) && !empty($last_name)) {
+                                $full_name = trim($first_name . ' ' . $last_name);
+                            }
+
                             /* start - add customer shipping address*/
 
                             $combined_address = $order['shippingAddress']['address1'] . ' ' . $order['shippingAddress']['address2'];
                             $customer_address_data = [
                                 'customer_id' => $customer_detail->id,
-                                'first_name' => isset($order['shippingAddress']['firstName']) ? $order['shippingAddress']['firstName'] : ' ',
-                                'last_name' => isset($order['shippingAddress']['lastName']) ? $order['shippingAddress']['lastName'] : ' ',
+                                'first_name' => $first_name,
+                                'last_name' => $last_name,
+                                'full_name' => $full_name,
                                 'address_line_1' => $order['shippingAddress']['address1'],
                                 'address_line_2' => $order['shippingAddress']['address2'],
                                 'city' => $order['shippingAddress']['city'],

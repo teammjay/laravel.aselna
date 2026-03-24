@@ -1472,16 +1472,23 @@ class OrderOperationUtility
             return [];
         }
 
-        if(isset($orderOperation->order->customerAddress->company) && $orderOperation->order->customerAddress->company != ''){
-            $name = $orderOperation->order->customerAddress->company;
-        }else if(isset($orderOperation->order->customerAddress->full_name) && $orderOperation->order->customerAddress->full_name != ''){
-            $name = $orderOperation->order->customerAddress->full_name;
-        }else{
-            $name = $orderOperation->order->customerAddress->first_name.''.$orderOperation->order->customerAddress->last_name;
+        $customerAddress = $orderOperation->order->customerAddress;
+        $customerFullName = null;
+        if (!isset($customerFullName) && isset($customerAddress->company)) {
+            $customerFullName = $customerAddress->company;
         }
-
+        if (!isset($customerFullName) && isset($customerAddress->full_name)) {
+            $customerFullName = $customerAddress->full_name;
+        }
+        if (!isset($customerFullName) && isset($customerAddress->first_name) && isset($customerAddress->last_name)) {
+            $customerFullName = $customerAddress->first_name . ' ' . $customerAddress->last_name;
+        }
+        if (!isset($customerFullName) && isset($orderOperation->order->customer)) {
+            $customer = $orderOperation->order->customer;
+            $customerFullName = $customer->full_name ?? ($customer->first_name . ' ' . $customer->last_name);
+        }
         return [
-            'name' => $name,
+            'name' => $customerFullName,
             'address1' => $orderOperation->order->customerAddress->address_line_1,
             'address2' => $orderOperation->order->customerAddress->address_line_2 ?? '',
             'address3' => $orderOperation->order->customerAddress->address_line_3 ?? '',
