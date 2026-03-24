@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Constants\FeedTypes;
 use App\Helpers\Common;
 use App\Jobs\Concerns\TrackableJob;
 use App\Constants\FeedStatus;
@@ -73,6 +74,10 @@ class EbayListingItemSyncJob implements ShouldQueue
                 $listingItemLinks = ListingItemLink::query()
                     ->join('listing_item', 'listing_item_link.item_id', '=', 'listing_item.id')
                     ->join('listing', 'listing_item_link.listing_id', '=', 'listing.id')
+                    ->join('listing_feeds', function ($join) {
+                        $join->on('listing_feeds.listing_id', '=', 'listing.id')
+                            ->where('listing_feeds.feed_type', '=', 1);
+                    })
                     ->whereIn('listing.store_id', [$storeId])
                     ->where(function ($query) {
                         return $query->whereNull('listing_item.store_sku')
@@ -83,10 +88,7 @@ class EbayListingItemSyncJob implements ShouldQueue
 //                    return $query
 //                        ->where('listing_item.creation_retry_count', '<', 5)->orWhereNull('listing_item.creation_retry_count');
 //                })
-                    ->whereNotIn('listing_item.sync_status', [
-                        ListingSyncStatus::CreationError,
-                        ListingSyncStatus::Synchronizing,
-                    ])
+                    ->whereNotIn('listing_feeds.status', [0])
                     ->orderBy('listing_item.created_at', 'asc')
                     ->limit(100)
                     ->get();

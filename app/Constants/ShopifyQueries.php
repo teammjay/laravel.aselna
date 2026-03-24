@@ -139,6 +139,7 @@ GQL;
                         phone
                         province
                         provinceCode
+                        company
                     }
                     lineItems(first: \$first){
                         nodes{

@@ -553,9 +553,66 @@ class OrderOperationUtility
                             $orderItem->update(['canceled_quantity' => $item_qty]);
                         }
                     }
-                    Log::info('Shopify cancer order successful:');
+
                     $data['message'] = 'Shopify cancer order successful';
                     $data['status'] = true;
+
+                    $orderOperations = OrderOperation::with('order', 'order.orderItem')->where('is_merged', true)
+                        ->where('merged_with', $orderOperation->id)
+                        ->get();
+
+                    Log::info('Shopify merged orders:' . json_encode($orderOperations));
+
+                    if($orderOperations) {
+                        foreach ($orderOperations as $oop) {
+
+                            $shipmentDetail = OrderOperation::with('operationItem', 'order', 'order.customerAddress', 'carrierService', 'store', 'operationItem.orderItem', 'operationItem.orderItem.product')->where('order_id', $oop->order_id)->first();
+
+                            $response = $shopifyServie->cancelOrder($shipmentDetail->order->order_id, $reason);
+
+                            if (!empty($response['data']['orderCancel']['orderCancelUserErrors']) || !empty($response['errors'])) {
+                                if(isset($response['data']['orderCancel']['orderCancelUserErrors'])) {
+                                    foreach ($response['data']['orderCancel']['orderCancelUserErrors'] as $error) {
+                                        //echo "Error: {$error['message']}\n";
+                                        Log::info('Shopify cancer order error:' . json_encode($error));
+                                        $data['message'] = isset($error['message']) ? $error['message'] : json_encode($error);
+                                        $data['status'] = false;
+
+                                    }
+                                }
+
+                                if(isset($response['errors'])) {
+                                    foreach ($response['errors'] as $error) {
+                                        //echo "Error: {$error['message']}\n";
+                                        Log::info('Shopify merged cancer order error:' . json_encode($error));
+                                        $data['message'] = isset($error['message']) ? $error['message'] : json_encode($error);
+                                        $data['status'] = false;
+                                    }
+                                }
+                            } else {
+
+                                $oop->update(['status' => OrderOperationStatus::Canceled]);
+                                if (isset($oop->order->id)) {
+                                    $order = Order::findOrFail($oop->order->id);
+                                    $order->update(['order_status' => OrderStatus::Canceled]);
+                                }
+
+                                //echo "Order canceled successfully!";
+                                if (isset($oop->order->orderItem)) {
+                                    foreach ($oop->order->orderItem as $o_item) {
+                                        $item_qty = $o_item->quantity;
+                                        $orderItem = OrderItem::findOrFail($o_item->id);
+                                        $orderItem->update(['canceled_quantity' => $item_qty]);
+                                    }
+
+                                    $data['message'] = 'Shopify cancer order successful';
+                                    $data['status'] = true;
+                                }
+                            }
+                        }
+                    }
+
+                    Log::info('Shopify cancer order successful:');
                     return $data;
                     //return true;
                 }
@@ -605,6 +662,64 @@ class OrderOperationUtility
                         }
 
                         $data['status'] = true;
+
+                        $orderOperations = OrderOperation::where('is_merged', true)
+                            ->where('merged_with', $orderOperation->id)
+                            ->get();
+
+                        if($orderOperations) {
+                            foreach ($orderOperations as $o_item) {
+
+                                $final2Data = [];
+                                $count2 = 1;
+                                foreach ($o_item->operationItem as $item) {
+                                    $orderLine = [
+                                        'lineNumber' => $count2,
+                                        'orderLineStatuses' => [
+                                            'orderLineStatus' => [
+                                                [
+                                                    'status' => 'Cancelled',
+                                                    'cancellationReason' => $reason,
+                                                    'statusQuantity' => [
+                                                        'unitOfMeasurement' => 'EACH',
+                                                        'amount' => $item->quantity
+                                                    ]
+                                                ]
+                                            ]
+                                        ]
+                                    ];
+
+                                    $final2Data['orderCancellation']['orderLines']['orderLine'][] = $orderLine;
+                                    $count2++;
+                                }
+
+                                $response2 = $authService->cancelOrder($o_item->order->purchase_order_id, $final2Data);
+
+                                if (isset($response2['order']) && isset($response2['order']['purchaseOrderId']) && $response2['order']['purchaseOrderId'] == $o_item->order->purchase_order_id) {
+                                    Log::info('Walmart merged cancel order successful: ' . json_encode($response2['order']));
+                                    $o_item->update(['status' => OrderOperationStatus::Canceled]);
+                                    if (isset($o_item->order_id)) {
+                                        $order = Order::findOrFail($o_item->order_id);
+                                        $order->update(['order_status' => OrderStatus::Canceled]);
+                                    }
+                                    if (isset($o_item->order->orderItem)) {
+                                        foreach ($o_item->order->orderItem as $od_item) {
+                                            $item_qty = $od_item->quantity;
+                                            $orderItem = OrderItem::findOrFail($od_item->id);
+                                            $orderItem->update(['canceled_quantity' => $item_qty]);
+                                        }
+                                    }
+                                    $data['message'] = 'Walmart cancel order error';
+                                    $data['status'] = true;
+                                }else{
+                                    Log::info('Walmart merged cancel order error: ' . json_encode($response2));
+                                    $data['message'] = 'Walmart cancel order error';
+                                    $data['status'] = false;
+                                }
+                            }
+                        }
+
+
                         return $data;
                         //return true;
                     } else {
@@ -658,6 +773,17 @@ class OrderOperationUtility
 
                     if (!isset($response['cancelId'])) {
 
+                        Log::info('eBay cancer order error:' . json_encode($response['warnings']));
+                        $data['message'] = json_encode($response['warnings']);
+                        $data['status'] = false;
+                    } else {
+
+                        $orderOperation->update(['status' => OrderOperationStatus::Canceled]);
+                        if (isset($orderOperation->order->id)) {
+                            $order = Order::findOrFail($orderOperation->order->id);
+                            $order->update(['order_status' => OrderStatus::Canceled]);
+                        }
+
                         if (isset($orderOperation->order->orderItem)) {
                             foreach ($orderOperation->order->orderItem as $o_item) {
                                 $item_qty = $o_item->quantity;
@@ -665,18 +791,49 @@ class OrderOperationUtility
                                 $orderItem->update(['canceled_quantity' => $item_qty]);
                             }
                         }
-                        Log::info('eBay cancer order error:' . json_encode($response['warnings']));
-                        $data['message'] = json_encode($response['warnings']);
-                        $data['status'] = false;
-                        return $data;
-                        //return false;
-                    } else {
+
                         //echo "Order canceled successfully!";
-                        Log::info('Shopify cancer order successful:');
+                        Log::info('eBay cancer order successful:');
                         $data['status'] = true;
-                        return $data;
-                        //return true;
+
+                        $orderOperations = OrderOperation::where('is_merged', true)
+                            ->where('merged_with', $orderOperation->id)
+                            ->get();
+
+                        if($orderOperations) {
+                            foreach ($orderOperations as $o_item) {
+                                $payload2 = [
+                                    'cancelReason' => ($reason != '') ? $reason : 'BUYER_ASKED_CANCEL',
+                                    'legacyOrderId' => $o_item->order->order_id,
+                                ];
+                                $response2 = $authService->cancelOrder($payload2);
+
+                                if (isset($response2['cancelId'])) {
+
+                                    $o_item->update(['status' => OrderOperationStatus::Canceled]);
+                                    if (isset($o_item->order->id)) {
+                                        $order = Order::findOrFail($o_item->order->id);
+                                        $order->update(['order_status' => OrderStatus::Canceled]);
+                                    }
+
+                                    if (isset($o_item->order->orderItem)) {
+                                        foreach ($o_item->order->orderItem as $od_item) {
+                                            $item_qty = $od_item->quantity;
+                                            $orderItem = OrderItem::findOrFail($od_item->id);
+                                            $orderItem->update(['canceled_quantity' => $item_qty]);
+                                        }
+                                        Log::info('eBay merged cancer order successful:');
+                                    }else{
+                                        Log::info('eBay merged cancer order error:' . json_encode($response2['warnings']));
+                                        $data['message'] = json_encode($response2['warnings']);
+                                        $data['status'] = false;
+                                    }
+                                }
+                            }
+                        }
                     }
+
+                    return $data;
                 }
 
                 break;
@@ -685,12 +842,50 @@ class OrderOperationUtility
                 $response = $amazonService->cancelOrder($orderOperation, $store);
 
                 if (isset($orderOperation->order->orderItem) && isset($response['status']) && $response['status'] == 'Success') {
+
+                    $orderOperation->update(['status' => OrderOperationStatus::Canceled]);
+                    if (isset($orderOperation->order->id)) {
+                        $order = Order::findOrFail($orderOperation->order->id);
+                        $order->update(['order_status' => OrderStatus::Canceled]);
+                    }
+
                     foreach ($orderOperation->order->orderItem as $o_item) {
                         $item_qty = $o_item->quantity;
                         $orderItem = OrderItem::findOrFail($o_item->id);
                         $orderItem->update(['canceled_quantity' => $item_qty]);
                     }
+
                     $data['status'] = true;
+
+                    $orderOperations = OrderOperation::where('is_merged', true)
+                        ->where('merged_with', $orderOperation->id)
+                        ->get();
+
+                    if($orderOperations) {
+                        foreach ($orderOperations as $o_item2) {
+                            $response2 = $amazonService->cancelOrder($o_item2, $store);
+
+                            if (isset($o_item2->order->orderItem) && isset($response2['status']) && $response2['status'] == 'Success') {
+
+                                $o_item2->update(['status' => OrderOperationStatus::Canceled]);
+                                if (isset($o_item2->order->id)) {
+                                    $order = Order::findOrFail($o_item2->order->id);
+                                    $order->update(['order_status' => OrderStatus::Canceled]);
+                                }
+
+                                foreach ($o_item2->order->orderItem as $od_item) {
+                                    $item_qty = $od_item->quantity;
+                                    $orderItem = OrderItem::findOrFail($od_item->id);
+                                    $orderItem->update(['canceled_quantity' => $item_qty]);
+                                }
+                                $data['status'] = true;
+                            }else{
+                                $data['status'] = false;
+                                $data['message'] = $response['message'] ?? 'Cancellation not working from API End';
+                            }
+                        }
+                    }
+
                     return $data;
                 } else {
                     $data['status'] = false;
@@ -706,12 +901,49 @@ class OrderOperationUtility
                 $response = $temuService->cancelOrder($order_id, $store);
 
                 if (isset($orderOperation->order->orderItem) && isset($response['success']) && $response['success']) {
+
+                    $orderOperation->update(['status' => OrderOperationStatus::Canceled]);
+                    if (isset($orderOperation->order->id)) {
+                        $order = Order::findOrFail($orderOperation->order->id);
+                        $order->update(['order_status' => OrderStatus::Canceled]);
+                    }
+
                     foreach ($orderOperation->order->orderItem as $o_item) {
                         $item_qty = $o_item->quantity;
                         $orderItem = OrderItem::findOrFail($o_item->id);
                         $orderItem->update(['canceled_quantity' => $item_qty]);
                     }
                     $data['status'] = true;
+
+                    $orderOperations = OrderOperation::where('is_merged', true)
+                        ->where('merged_with', $orderOperation->id)
+                        ->get();
+
+                    if($orderOperations) {
+                        foreach ($orderOperations as $o_item2) {
+                            $response2 = $temuService->cancelOrder($o_item2->order_id, $store);
+
+                            if (isset($o_item2->order->orderItem) && isset($response2['success']) && $response2['success']) {
+
+                                $o_item2->update(['status' => OrderOperationStatus::Canceled]);
+                                if (isset($o_item2->order->id)) {
+                                    $order = Order::findOrFail($o_item2->order->id);
+                                    $order->update(['order_status' => OrderStatus::Canceled]);
+                                }
+
+                                foreach ($o_item2->order->orderItem as $od_item) {
+                                    $item_qty = $od_item->quantity;
+                                    $orderItem = OrderItem::findOrFail($od_item->id);
+                                    $orderItem->update(['canceled_quantity' => $item_qty]);
+                                }
+                                $data['status'] = true;
+                            }else{
+                                $data['status'] = false;
+                                $data['message'] = $response['message'] ?? 'Cancellation not working from API End';
+                            }
+                        }
+                    }
+
                     return $data;
                 } else {
                     $data['status'] = false;
@@ -1239,8 +1471,24 @@ class OrderOperationUtility
         if (!isset($orderOperation->order->customerAddress)) {
             return [];
         }
+
+        $customerAddress = $orderOperation->order->customerAddress;
+        $customerFullName = null;
+        if (!isset($customerFullName) && isset($customerAddress->company)) {
+            $customerFullName = $customerAddress->company;
+        }
+        if (!isset($customerFullName) && isset($customerAddress->full_name)) {
+            $customerFullName = $customerAddress->full_name;
+        }
+        if (!isset($customerFullName) && isset($customerAddress->first_name) && isset($customerAddress->last_name)) {
+            $customerFullName = $customerAddress->first_name . ' ' . $customerAddress->last_name;
+        }
+        if (!isset($customerFullName) && isset($orderOperation->order->customer)) {
+            $customer = $orderOperation->order->customer;
+            $customerFullName = $customer->full_name ?? ($customer->first_name . ' ' . $customer->last_name);
+        }
         return [
-            'name' => (isset($orderOperation->order->customerAddress) && $orderOperation->order->customerAddress->full_name != '') ? $orderOperation->order->customerAddress->full_name : $orderOperation->order->customer->full_name,
+            'name' => $customerFullName,
             'address1' => $orderOperation->order->customerAddress->address_line_1,
             'address2' => $orderOperation->order->customerAddress->address_line_2 ?? '',
             'address3' => $orderOperation->order->customerAddress->address_line_3 ?? '',

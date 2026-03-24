@@ -607,7 +607,13 @@ class SubmitShopifyProductsJob implements ShouldQueue
 
         $this->generateProductImages($productData, $store);
 
-        $images = GenerateProductImage::where('product_id', $productData->product_id)->orderBy('main_image', 'desc')->get();
+        $images = GenerateProductImage::where('product_id', $productData->product_id)
+            ->whereIn('product_image_id', function ($subQuery) use ($productData) {
+                $subQuery->select('id')
+                    ->from('product_images')
+                    ->where('product_id', $productData->product_id);
+            })
+            ->orderBy('main_image', 'desc')->get();
         // Add Additional Images.
         $media = [];
         foreach ($images as $key => $image) {
