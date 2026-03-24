@@ -620,6 +620,11 @@ class SubmitShopifyProductsJob implements ShouldQueue
             // check if image exists in shopify already
             $listingItemProductImage = ListingItemProductImage::where('listing_item_id', $listingItem->id)
                 ->where('product_image_id', $image->product_image_id)
+                ->whereIn('product_image_id', function ($subQuery) use ($productData) {
+                    $subQuery->select('id')
+                        ->from('product_images')
+                        ->where('product_id', $productData->product_id);
+                })
                 ->first();
             if (isset($listingItemProductImage)) {
                 continue;
