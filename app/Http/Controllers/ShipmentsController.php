@@ -830,6 +830,7 @@ class ShipmentsController extends Controller
         $id = $request->input('id');
         try {
             $address = CustomerAddress::with('customer')->where('id', $id)->first();
+
             $request['address_combined'] = $address_combined = $request['address_line_1'] . ' ' . $request['address_line_2'];
             $fullname = $address1 = $address2 = '';
             if (isset($address->customer)) {
@@ -852,9 +853,9 @@ class ShipmentsController extends Controller
             }
 
             $address_combined = $fullname . $address1 . $address2 . $request['city'] . ', ' . $request['state'] . ' ' . $request['zip'];
-            $address->update($request->except(['phone', 'id']));
+            //$address->update($request->except(['phone', 'id']));
 
-            if(isset($address->customer_id) && $address->customer_id != ''){
+            /*if(isset($address->customer_id) && $address->customer_id != ''){
                 $customer = Customer::findOrFail($address->customer_id);
                 $customerData = [
                     'first_name' => $request['first_name'],
@@ -862,8 +863,79 @@ class ShipmentsController extends Controller
                     'full_name' => (isset($request['full_name']) && $request['full_name'] != '') ? $request['full_name'] : $request['first_name'].' '.$request['last_name'],
                 ];
 
-                $customer->update($customerData);
+                //$customer->update($customerData);
+            }*/
+
+            $singleAddressChange = true;
+
+            /* get customer active orders and update address*/
+            if($request->has('same_address') && $request->same_address == 1) {
+                $active_orders = Order::with('customerAddress')->where('shipping_address_id', $id)->where('customer_id', $address->customer->id)->where('order_status', OrderStatus::Synchronizing)->get();
+
+                Log::info('Same address count : '.count($active_orders ?? []));
+
+                if(count($active_orders ?? []) > 1){
+                    $singleAddressChange = false;
+                    foreach($active_orders as $order){
+                        $order_address = $order->customerAddress;
+                        Log::info('order address: '.json_encode($order_address));
+                        $order_address->update($request->except(['phone', 'id']));
+                    }
+                }
+            }else if($request->has('same_address') && $request->same_address == 0){
+                /* check any other order has same address*/
+                if($request->has('op_id') && $request->op_id != '') {
+                    $operation = OrderOperation::select('order_id')->where('id',$request->op_id)->first();
+                    Log::info('order Operation: '.json_encode($operation));
+                    $orderinfo = Order::where('id', $operation->order_id)->first();
+                    Log::info('order deail: '.json_encode($orderinfo));
+                    $other_order = Order::with('customerAddress')->where('id','!=',$orderinfo->id)->where('shipping_address_id', $orderinfo->shipping_address_id)->count();
+
+                    Log::info('other order: '.json_encode($other_order));
+
+                    if($orderinfo && $other_order > 0){
+                        $customer_address_data = [
+                            'customer_id' => $address->customer_id,
+                            'first_name' => isset($request['first_name']) ? $request['first_name'] : ' ',
+                            'last_name' => isset($request['last_name']) ? $request['last_name'] : ' ',
+                            'full_name' => (isset($request['full_name']) && $request['full_name'] != '') ? $request['full_name'] : $request['first_name'].' '.$request['last_name'],
+                            'address_line_1' => $request['address_line_1'],
+                            'address_line_2' => $request['address_line_2'] ?? '',
+                            'city' => $request['city'],
+                            'state' => $request['state'],
+                            'state_code' => $request['state_code'],
+                            'zip' => $request['zip'],
+                            'country' => $request['country'],
+                            'country_code' => $request['country_code'],
+                            'address_combined' => $address_combined
+                        ];
+
+                        Log::info("New address created for seperate order " . json_encode($customer_address_data));
+
+                        $newCustomerAddress = CustomerAddress::create($customer_address_data);
+                        $orderinfo->update(['shipping_address_id' => $newCustomerAddress->id]);
+                        $singleAddressChange = false;
+                    }
+                }
             }
+
+            if($singleAddressChange){
+
+                $address->update($request->except(['phone', 'id']));
+
+                if(isset($address->customer_id) && $address->customer_id != ''){
+                    $customer = Customer::findOrFail($address->customer_id);
+                    $customerData = [
+                        'first_name' => $request['first_name'],
+                        'last_name' => $request['last_name'],
+                        'full_name' => (isset($request['full_name']) && $request['full_name'] != '') ? $request['full_name'] : $request['first_name'].' '.$request['last_name'],
+                    ];
+
+                    $customer->update($customerData);
+                }
+            }
+            /* get customer active orders and update address*/
+
             return response()->json(['success' => true, 'address' => $address_combined, 'message' => 'Data saved successfully!']);
 
         } catch (QueryException $e) {
@@ -971,11 +1043,11 @@ class ShipmentsController extends Controller
                 $response = OrderOperationUtility::cancelOrder($orderOperation, strtoupper($reason));
 
                 if (!empty($response) && $response['status']) {
-                    $orderOperation->update(['status' => OrderOperationStatus::Canceled]);
+                    /*$orderOperation->update(['status' => OrderOperationStatus::Canceled]);
                     if (isset($orderOperation->order->id)) {
                         $order = Order::findOrFail($orderOperation->order->id);
                         $order->update(['order_status' => OrderStatus::Canceled]);
-                    }
+                    }*/
                     return response()->json([
                         'success' => true,
                         'message' => 'Order Cancelled Successfully',

@@ -1030,6 +1030,16 @@
 
             const form = document.querySelector("#frmEditAddress");
             let formData = new FormData(form);
+            var same_address;
+            if($('#same_address').is(':checked')) {
+                same_address = 1;
+            }else{
+                same_address = 0;
+            }
+            formData.append('same_address',same_address);
+
+            formData.append('op_id',$('#op_id').val());
+
             $.ajax({
                 url: "{{ route('shipment.saveaddress') }}",
                 type: 'POST',
