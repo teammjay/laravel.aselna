@@ -1043,11 +1043,11 @@ class ShipmentsController extends Controller
                 $response = OrderOperationUtility::cancelOrder($orderOperation, strtoupper($reason));
 
                 if (!empty($response) && $response['status']) {
-                    $orderOperation->update(['status' => OrderOperationStatus::Canceled]);
+                    /*$orderOperation->update(['status' => OrderOperationStatus::Canceled]);
                     if (isset($orderOperation->order->id)) {
                         $order = Order::findOrFail($orderOperation->order->id);
                         $order->update(['order_status' => OrderStatus::Canceled]);
-                    }
+                    }*/
                     return response()->json([
                         'success' => true,
                         'message' => 'Order Cancelled Successfully',
