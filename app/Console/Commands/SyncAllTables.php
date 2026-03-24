@@ -43,6 +43,7 @@ use App\Jobs\LogisticCentreSyncJob;
 use App\Jobs\Magento\MagentoProductsSyncJob;
 use App\Jobs\MagnetoAttributesSyncJob;
 use App\Jobs\ManufacturerSyncJob;
+use App\Jobs\OdemobileListingItemSyncJob;
 use App\Jobs\OldOrderSyncJob;
 use App\Jobs\ProcessFeedGenerationJob;
 use App\Jobs\ProductAlternativeImagesSyncJob;
@@ -199,7 +200,7 @@ class SyncAllTables extends Command
 //        FetchMagentoCategoriesJob::dispatch();
 //        MagnetoAttributesSyncJob::dispatch();
 //        ShopifyPagesSyncJob::dispatch();
-        SubmitShopifyProductsJob::dispatch();
+//        SubmitShopifyProductsJob::dispatch();
 //        ShopifyListingProductsSyncJob::dispatch();
 //        ShopifyStoreProductsSyncJob::dispatch();
 //        ProcessFeedGenerationJob::dispatch(json_decode('{"store_id":"3fab8878-e036-58c7-db30-addd3058875c","feed_type":"Google","fileType":"csv","product_code":["J14"],"device":null,"interface":null,"device_series":null,"fileName":"google_shopping_feed_2025-08-26-09-15-19.csv","filePath":"feeds\/google-shopping\/google_shopping_feed_2025-08-26-09-15-19.csv"}',true), 'fd066ad3-7059-4a87-a6e7-a18e5823f016');
@@ -240,6 +241,7 @@ class SyncAllTables extends Command
 //        StorePagesJobSync::dispatch();
 //        FonusCombinedSyncJob::dispatch();
 //        ShopifyOnlySyncJob::dispatch();
+        OdemobileListingItemSyncJob::dispatch();
 
         $transactionIds = [
 ////            '9400150105798006163885',
