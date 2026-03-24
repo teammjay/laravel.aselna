@@ -184,7 +184,7 @@ class OdemobileListingItemSyncJob implements ShouldQueue
             'device_carrier_id' => $oyderaItem->device_carrier_id,
             'color_id' => $oyderaItem->color_id,
             'size_id' => $oyderaItem->size_id,
-            'status' => $oyderaItem->status,
+            'status' => 1,
             'client' => $oyderaItem->client,
             'upc' => $oyderaItem->upc,
             'brand_combo' => $oyderaItem->brand_combo,

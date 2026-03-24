@@ -161,6 +161,7 @@ class ListingController extends Controller
         ];
         $sortColumn = $sortableColumns[$columnName] ?? 'listing_item.' . $columnName;
         $shadowQuery->orderBy($sortColumn, $columnSortOrder);
+        //Log::info("SQL "  . $shadowQuery->toRawSql());
 
         // Get only the IDs and total count
         $paginator = $shadowQuery->paginate($perPage, ['listing_item.id'], 'page', floor($start / $perPage) + 1);
