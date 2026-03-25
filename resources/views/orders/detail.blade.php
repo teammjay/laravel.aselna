@@ -341,6 +341,7 @@
                                 <th></th>
                                 <th>Thumbnail</th>
                                 <th>Sku</th>
+                                <th>Printed Sku</th>
                                 <th>Store Sku</th>
                                 <th>Code</th>
                                 <th>Quantity</th>
@@ -387,6 +388,7 @@
                                             @endif
                                         </td>
                                         <td>{{ $item->sku }}</td>
+                                        <td>{{ $item->printed_sku }}</td>
                                         <td>
                                             @if(isset($item->listingItem->store_sku) && $item->listingItem->store_sku != '')
                                                 {{ $item->listingItem->store_sku }}
