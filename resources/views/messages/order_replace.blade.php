@@ -189,7 +189,7 @@
                                     @if(isset($shipmentDetail->order->customerAddress))
                                         <a href="javascript:void(0);" class="text-blue edit_address" id="edit_address"
                                            data-id="{{ $shipmentDetail->order->customerAddress->id }}">
-                                            {{ $shipmentDetail->order->customer->first_name }} {{ $shipmentDetail->order->customer->last_name }}<br>
+                                            {{ $shipmentDetail->order->customerAddress->first_name }} {{ $shipmentDetail->order->customerAddress->last_name }}<br>
                                             {{ $shipmentDetail->order->customerAddress->address_line_1 }},<br>
                                             @if($shipmentDetail->order->customerAddress->address_line_2 != '')
                                                 {{ $shipmentDetail->order->customerAddress->address_line_2 }},<br>
