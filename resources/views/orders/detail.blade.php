@@ -208,7 +208,7 @@
                                             @if(isset($orderDetail->customerAddress->full_name) && $orderDetail->customerAddress->full_name != null)
                                                 {{ $orderDetail->customerAddress->full_name }}<br>
                                             @else
-                                                {{ $orderDetail->customer->first_name }} {{ $orderDetail->customer->last_name }}<br>
+                                                {{ $orderDetail->customerAddress->first_name }} {{ $orderDetail->customerAddress->last_name }}<br>
                                             @endif
 
                                             {{ $orderDetail->customerAddress->address_line_1 }},<br>
@@ -304,7 +304,7 @@
                                     </div>
                                     <div class="row pt-3">
                                         <div class="col-md-12">
-                                            {{ $orderDetail->customer->first_name }} {{ $orderDetail->customer->last_name }}<br>
+                                            {{ $orderDetail->customerAddress->first_name }} {{ $orderDetail->customerAddress->last_name }}<br>
                                             {{ $orderDetail->customerAddress->address_line_1 }},<br>
                                             @if($orderDetail->customerAddress->address_line_2 != '')
                                                 {{ $orderDetail->customerAddress->address_line_2 }},<br>

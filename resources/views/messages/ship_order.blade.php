@@ -171,7 +171,7 @@
                                             @if(isset($shipmentDetail->order->customerAddress->full_name) && $shipmentDetail->order->customerAddress->full_name != null)
                                                 {{ $shipmentDetail->order->customerAddress->full_name }}<br>
                                             @else
-                                                {{ $shipmentDetail->order->customer->first_name }} {{ $shipmentDetail->order->customer->last_name }}<br>
+                                                {{ $shipmentDetail->order->customerAddress->first_name }} {{ $shipmentDetail->order->customerAddress->last_name }}<br>
                                             @endif
                                             {{ $shipmentDetail->order->customerAddress->address_line_1 }},<br>
                                             @if($shipmentDetail->order->customerAddress->address_line_2 != '')
