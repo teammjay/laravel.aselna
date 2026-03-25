@@ -886,23 +886,24 @@ class WalmartService implements MarketplaceServiceInterface
         }
     }
 
-    private function getVisibleAttributes($categoryName, $store)
+    private function getVisibleAttributes($categoryNames, $store)
     {
         $authService = new WalmartAuthService($store->seller_id, $store->secret_key);
-        $specifications = $authService->getProductSpecifications('MP_ITEM', '5.0.20250828-17_32_59-api', $categoryName);
+        $specifications = $authService->getProductSpecifications('MP_ITEM', '5.0.20250828-17_32_59-api', $categoryNames);
+        $resultMap = [];
         if (isset($specifications)) {
             $specMap = $specifications['schema']['properties']['MPItem']['items']['properties']['Visible']['properties'] ?? [];
-            foreach ($specMap as $key => $specification) {
+            foreach ($specMap as $categoryKey => $specification) {
                 $allProperties = [];
                 if (isset($specification['properties'])) {
                     foreach ($specification['properties'] as $propKey => $property) {
                         $allProperties[] = $propKey;
                     }
-                    return $allProperties;
+                    $resultMap[$categoryKey] = $allProperties;
                 }
             }
         }
-        return [];
+        return $resultMap;
     }
 
     private function getProductSpecifications($listingItem)
