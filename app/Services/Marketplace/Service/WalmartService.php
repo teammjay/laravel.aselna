@@ -274,9 +274,26 @@ class WalmartService implements MarketplaceServiceInterface
     private function generateCreateFeed($listingInfo, $listingId, $skuFilter = [])
     {
         try {
-            $listingItems = ListingItemLink::where('listing_id', $listingId)->cursor();
             $fileSystem = $listingInfo->store->fileSystem;
             $store = $listingInfo->store;
+
+            $uniqueCategoryNames = ListingItemLink::join('listing_item', 'listing_item_link.item_id', '=', 'listing_item.id')
+                ->join('store_product', 'listing_item.store_product_id', '=', 'store_product.id')
+                ->join('store_type_category', 'store_product.store_type_category_id', '=', 'store_type_category.id')
+                ->where('listing_item_link.listing_id', $listingId)
+                ->when(!empty($skuFilter), function ($query) use ($skuFilter) {
+                    return $query->whereIn('listing_item.sku', $skuFilter);
+                })
+                ->distinct()
+                ->pluck('store_type_category.name')
+                ->filter();
+
+            $categoryAttributesMap = [];
+            foreach ($uniqueCategoryNames->chunk(20) as $chunk) {
+                $categoryAttributesMap = array_merge($categoryAttributesMap, $this->getVisibleAttributes($chunk->toArray(), $store));
+            }
+
+            $listingItems = ListingItemLink::where('listing_id', $listingId)->cursor();
 
             $jsonFeed = [
                 'MPItemFeedHeader' => [
@@ -303,8 +320,14 @@ class WalmartService implements MarketplaceServiceInterface
                     continue;
                 }
 
+                if (!$item->storeProduct || !$item->storeProduct->storeTypeCategory) {
+                    continue;
+                }
                 $storeTypeCategory = $item->storeProduct->storeTypeCategory;
                 $productObj = $item->storeProduct->product;
+                if (!$productObj) {
+                    continue;
+                }
                 $productColor = $productObj->productColor;
                 $price = $item->price;
                 if (!isset($price)) {
@@ -368,7 +391,7 @@ class WalmartService implements MarketplaceServiceInterface
                     }
                 }
 
-                $requiredAttributes = $this->getVisibleAttributes($storeTypeCategory->name, $store);
+                $requiredAttributes = $categoryAttributesMap[$storeTypeCategory->name ?? ''] ?? [];
 
                 // skip only the first one for the secondary image
                 $visibleAttributes = [
@@ -863,23 +886,24 @@ class WalmartService implements MarketplaceServiceInterface
         }
     }
 
-    private function getVisibleAttributes($categoryName, $store)
+    private function getVisibleAttributes($categoryNames, $store)
     {
         $authService = new WalmartAuthService($store->seller_id, $store->secret_key);
-        $specifications = $authService->getProductSpecifications('MP_ITEM', '5.0.20250828-17_32_59-api', $categoryName);
+        $specifications = $authService->getProductSpecifications('MP_ITEM', '5.0.20250828-17_32_59-api', $categoryNames);
+        $resultMap = [];
         if (isset($specifications)) {
             $specMap = $specifications['schema']['properties']['MPItem']['items']['properties']['Visible']['properties'] ?? [];
-            foreach ($specMap as $key => $specification) {
+            foreach ($specMap as $categoryKey => $specification) {
                 $allProperties = [];
                 if (isset($specification['properties'])) {
                     foreach ($specification['properties'] as $propKey => $property) {
                         $allProperties[] = $propKey;
                     }
-                    return $allProperties;
+                    $resultMap[$categoryKey] = $allProperties;
                 }
             }
         }
-        return [];
+        return $resultMap;
     }
 
     private function getProductSpecifications($listingItem)

@@ -88,7 +88,7 @@ class EbayListingItemSyncJob implements ShouldQueue
 //                    return $query
 //                        ->where('listing_item.creation_retry_count', '<', 5)->orWhereNull('listing_item.creation_retry_count');
 //                })
-                    ->whereNotIn('listing_feeds.status', [0])
+                    //->whereNotIn('listing_feeds.status', [0])
                     ->orderBy('listing_item.created_at', 'asc')
                     ->limit(100)
                     ->get();
