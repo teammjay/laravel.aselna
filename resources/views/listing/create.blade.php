@@ -1029,17 +1029,30 @@
 
                     }else if(currentIndex == 3){
                         //$('.bd-example').show();
-                        var flag = false;
+                        let flag = false;
+                        let errorpro;
                         $('.titleLength').each(function () {
-                            var len =  $(this).data('length');
-                            var maxlen =  $(this).data('maxlength');
+                            let el = $(this);
+                            //let len =  el.attr('data-length');
+                            let len =  el.parent().find('.pro-list-title').val().length;
+                            let maxlen =  el.attr('data-maxlength');
                             if(len > maxlen){
                                 flag = true;
+                                console.log(el);
+                                errorpro = el;
+                                return false;
                             }
                         });
                         //console.log(flag);
                         if(flag){
                             alert('The title length is greater than maximum length so product can not generated');
+                            let el2 = errorpro.parent().find('.pro-list-title');
+
+                            $('html, body').animate({
+                                scrollTop: el2.offset().top - 100
+                            }, 400);
+
+                            el2.focus();
                             return false;
                         }else {
                             const form = document.querySelector("#frmFinalListingProducts");
