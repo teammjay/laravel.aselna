@@ -12,8 +12,8 @@
             <td>
                 {{ (isset($productDeviceCounts[$product->product_id])) ? $productDeviceCounts[$product->product_id] : 0 }}
             </td>
-            <td>0</td>
-            <td></td>
+            <td>{{ isset($product->listed_count) ? $product->listed_count : 0 }}</td>
+            <td>{{ isset($product->listed_device_count) ? $product->listed_device_count : 0 }}</td>
             <td>{{ isset($product->total_alt_images) ? $product->total_alt_images : 0 }}</td>
 
         </tr>

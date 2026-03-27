@@ -1347,6 +1347,11 @@
                 ///loadListingProduct(0);
             });
 
+            $(document).on('click', 'input[name="listing_type"]', function() {
+                loadSelectedProducts();
+                ///loadListingProduct(0);
+            });
+
             $(document).on('click', 'input[name="include_carrier"]', function() {
 
                 if($(this).is(':checked')){
@@ -3262,6 +3267,8 @@
                     is_selected:is_selected,
                     include_carrier:include_carrier,
                     generate_type_name:generate_type_name,
+                    generate_type:$('input[name="generate_type"]:checked').val(),
+                    listing_type:$('input[name="listing_type"]:checked').val(),
                     step:3
                 },
                 headers: {
@@ -3270,6 +3277,7 @@
                 success: function (response) {
                     if (response.html) {
                         $('#product-list-3').html(response.html);
+                        $('.total_product').html('(<b>'+response.totalproduct+'</b> item)');
                         var selected_template = $('#title_template').val();
                         $('input[name="product_title_template[]"]').val(selected_template);
                         loadListingProduct(0);
