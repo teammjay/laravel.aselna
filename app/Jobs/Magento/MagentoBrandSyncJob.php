@@ -81,12 +81,15 @@ class MagentoBrandSyncJob implements ShouldQueue
                     'status' => $brand->status == 'active' ? 1 : 0,
                 ];
 
+                Log::info('Brand Data Prepared for Magento :: ' . json_encode($brandData));
                 if (isset($storePage) && $storePage->page_id) {
                     Log::info("Brand already synced: " . $brand->name . " Magento ID: " . $storePage->page_id . ". Updating...");
                     $response = $magentoAuthService->updateBrand($storePage->page_id, $brandData);
                 } else {
                     $response = $magentoAuthService->createBrand($brandData);
                 }
+
+                Log::info('Brand Response :: ' . json_encode($response));
 
                 if (isset($response['id'])) {
                     $magentoBrandId = $response['id'];
