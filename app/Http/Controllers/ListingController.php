@@ -940,6 +940,8 @@ class ListingController extends Controller
             $product_ids = $request->input('product_ids');
             $product_details = $request->input('product_detail');
             $store_id = $request->input('store_id');
+            $listing_type = $request->input('listing_type');
+            $generation_type_id = $request->input('generate_type');
             $store = null;
             $step = $request->input('step');
             $view = '';
@@ -975,10 +977,84 @@ class ListingController extends Controller
                         ->selectRaw('COUNT(*)')
                         ->whereColumn('product_image_alternatives.product_id', 'store_product.product_id')
                 ]);
+
+                //Count of listings for this generation type
+                if($generation_type_id != '') {
+                    //$listing_gen_type = ListingGenerationType::findOrFail($generation_type_id);
+                    $query->addSelect([
+                        'listed_count' => DB::table('listing_item')
+                            ->selectRaw('COUNT(*)')
+                            ->whereColumn('listing_item.store_product_id', 'store_product.id')
+                            ->where('listing_item.status', ListingStatus::Active)
+                            ->where('listing_item.generation_type_id', $generation_type_id)
+                    ]);
+
+                    $query->addSelect([
+                        'listed_device_count' => DB::table('listing_item')
+                            ->join('listing_item_detail', 'listing_item_detail.listing_item_id', '=', 'listing_item.id')
+                            ->selectRaw('COUNT(DISTINCT listing_item_detail.device_id)')
+                            ->whereColumn('listing_item.store_product_id', 'store_product.id')
+                            ->where('listing_item.status', ListingStatus::Active)
+                            ->where('listing_item.generation_type_id', $generation_type_id)
+                    ]);
+
+                }
+
+
+
                 $query->leftJoin('products', 'products.product_id', '=', 'store_product.product_id');
                 $query->leftJoin('product_type', 'products.product_type', '=', 'product_type.id');
                 $query->whereIn('store_product.product_id', $product_ids);
                 $query->where('store_product.store_id', $store_id);
+
+                $deviceIds = [];
+
+                // From device_series
+                if ($request->has('device_series') && !empty($request->device_series)) {
+                    $seriesDeviceIds = DevicesLinkedDevice::whereIn('device_series_id', $request->device_series)
+                        ->pluck('device_id')
+                        ->toArray();
+
+                    $deviceIds = array_merge($deviceIds, $seriesDeviceIds);
+                }
+
+                // From direct device_id filter
+                if ($request->has('device_id') && !empty($request->device_id)) {
+                    $deviceIds = array_merge($deviceIds, (array) $request->device_id);
+                }
+
+                /* never listed product */
+                if($request->has('listing_type') && $request->input('listing_type') == 'neverlisted') {
+                    $query->whereNotExists(function ($q) use ($deviceIds){
+                        $q->select(DB::raw(1))
+                            ->from('listing_item')
+                            ->join('listing_item_detail', 'listing_item_detail.listing_item_id', '=', 'listing_item.id')
+                            ->whereColumn('listing_item.store_product_id', 'store_product.id')
+                            ->where('listing_item.status', ListingStatus::Active);
+
+                        if (!empty($deviceIds)) {
+                            $q->whereIn('listing_item_detail.device_id', $deviceIds);
+                        }
+                    });
+                }
+
+                /* never listed for type */
+                if($request->has('listing_type') && $request->input('listing_type') == 'Neverlistedfortype') {
+                    if ($request->has('generate_type') && $request->input('generate_type') != '') {
+                        $query->whereNotExists(function ($q) use ($deviceIds, $generation_type_id) {
+                            $q->select(DB::raw(1))
+                                ->from('listing_item')
+                                ->join('listing_item_detail', 'listing_item_detail.listing_item_id', '=', 'listing_item.id')
+                                ->whereColumn('listing_item.store_product_id', 'store_product.id')
+                                ->where('listing_item.status', ListingStatus::Active)
+                                ->where('listing_item.generation_type_id', $generation_type_id);
+                            if (!empty($deviceIds)) {
+                                $q->whereIn('listing_item_detail.device_id', $deviceIds);
+                            }
+                        });
+                    }
+                }
+
                 $products = $query->get();
 
                 $storeTypeName = Store::select('store_type.name as storeTypeName')
@@ -1129,6 +1205,7 @@ class ListingController extends Controller
                 if ($request->ajax()) {
                     return response()->json([
                         'success' => true,
+                        'totalproduct' => count($products),
                         'html' => $view,
                         'storeCategories' => $cat_option,
                     ]);
