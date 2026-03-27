@@ -22,6 +22,8 @@ class MagentoDeviceSyncJob implements ShouldQueue
         Queueable::withChain as queueableWithChain;
     }
 
+    public $timeout = 6000;
+
     protected $storeId;
 
     public function __construct($storeId)
