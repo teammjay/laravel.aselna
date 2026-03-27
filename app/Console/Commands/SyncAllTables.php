@@ -236,12 +236,12 @@ class SyncAllTables extends Command
 //        FetchShopifyOrders::dispatch();
 //        FonusCombinedSyncJob::dispatch();
 //        ProductInterfacesSyncJob::dispatch();
-//        MagentoSyncJob::dispatch();
+        MagentoSyncJob::dispatch();
 //        MagentoProductsSyncJob::dispatch();
 //        StorePagesJobSync::dispatch();
 //        FonusCombinedSyncJob::dispatch();
 //        ShopifyOnlySyncJob::dispatch();
-        OdemobileListingItemSyncJob::dispatch();
+//        OdemobileListingItemSyncJob::dispatch();
 
         $transactionIds = [
 ////            '9400150105798006163885',
