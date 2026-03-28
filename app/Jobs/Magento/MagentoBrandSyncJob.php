@@ -9,6 +9,7 @@ use App\Models\Store;
 use App\Models\StoreNavigationPage;
 use App\Services\Auth\MagentoAuthService;
 use App\Services\CriticalErrorService;
+use App\Utils\FileUtility;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
@@ -21,6 +22,8 @@ class MagentoBrandSyncJob implements ShouldQueue
     }
 
     protected $storeId;
+
+    public $timeout = 6000;
 
     public function __construct($storeId)
     {
@@ -42,19 +45,53 @@ class MagentoBrandSyncJob implements ShouldQueue
                     ->where('device_brand_id', $brand->id)
                     ->first();
 
-                if (isset($storePage) && $storePage->page_id) {
-                    Log::info("Brand already synced: " . $brand->name . " Magento ID: " . $storePage->page_id);
-                    continue;
-                }
-
                 Log::info("Syncing Brand: " . $brand->name);
                 $handle = $this->generateHandle($brand->name);
+
+                $imagePath = '';
+                if ($brand->image) {
+                    $ext = pathinfo($brand->image, PATHINFO_EXTENSION) ?: 'jpg';
+                    $remotePath = '/store-images/' . $this->storeId . '/brands/' . $handle . '.' . $ext;
+                    try {
+                        $imagePath = FileUtility::uploadImage($store, 'app/public/brand_images/' . $brand->image, $remotePath);
+                    } catch (\Exception $e) {
+                        Log::error("Image upload failed for brand {$brand->name}: " . $e->getMessage());
+                    }
+                }
+
+                $thumbnailPath = '';
+                if ($brand->thumbnail_image) {
+                    $ext = pathinfo($brand->thumbnail_image, PATHINFO_EXTENSION) ?: 'jpg';
+                    $remotePath = '/store-images/' . $this->storeId . '/brands/thumb_' . $handle . '.' . $ext;
+                    try {
+                        $thumbnailPath = FileUtility::uploadImage($store, 'app/public/brand_images/' . $brand->thumbnail_image, $remotePath);
+                    } catch (\Exception $e) {
+                        Log::error("Thumbnail upload failed for brand {$brand->name}: " . $e->getMessage());
+                    }
+                }
 
                 $brandData = [
                     'name' => $brand->name,
                     'url_key' => $handle,
+                    'image' => $imagePath,
+                    'thumbnail_image' => $thumbnailPath,
+                    'notes1' => $brand->notes1,
+                    'notes2' => $brand->notes2,
+                    'notes3' => $brand->notes3,
+                    'order_no' => $brand->order_no,
+                    'code' => $brand->code,
+                    'status' => $brand->status == 'active' ? 1 : 0,
                 ];
-                $response = $magentoAuthService->createBrand($brandData);
+
+                Log::info('Brand Data Prepared for Magento :: ' . json_encode($brandData));
+                if (isset($storePage) && $storePage->page_id) {
+                    Log::info("Brand already synced: " . $brand->name . " Magento ID: " . $storePage->page_id . ". Updating...");
+                    $response = $magentoAuthService->updateBrand($storePage->page_id, $brandData);
+                } else {
+                    $response = $magentoAuthService->createBrand($brandData);
+                }
+
+                Log::info('Brand Response :: ' . json_encode($response));
 
                 if (isset($response['id'])) {
                     $magentoBrandId = $response['id'];

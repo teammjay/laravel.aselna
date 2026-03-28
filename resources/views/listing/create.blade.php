@@ -1029,17 +1029,30 @@
 
                     }else if(currentIndex == 3){
                         //$('.bd-example').show();
-                        var flag = false;
+                        let flag = false;
+                        let errorpro;
                         $('.titleLength').each(function () {
-                            var len =  $(this).data('length');
-                            var maxlen =  $(this).data('maxlength');
+                            let el = $(this);
+                            //let len =  el.attr('data-length');
+                            let len =  el.parent().find('.pro-list-title').val().length;
+                            let maxlen =  el.attr('data-maxlength');
                             if(len > maxlen){
                                 flag = true;
+                                console.log(el);
+                                errorpro = el;
+                                return false;
                             }
                         });
                         //console.log(flag);
                         if(flag){
                             alert('The title length is greater than maximum length so product can not generated');
+                            let el2 = errorpro.parent().find('.pro-list-title');
+
+                            $('html, body').animate({
+                                scrollTop: el2.offset().top - 100
+                            }, 400);
+
+                            el2.focus();
                             return false;
                         }else {
                             const form = document.querySelector("#frmFinalListingProducts");
@@ -1330,6 +1343,11 @@
             });
 
             $(document).on('click', 'input[name="device_type[]"]', function() {
+                loadSelectedProducts();
+                ///loadListingProduct(0);
+            });
+
+            $(document).on('click', 'input[name="listing_type"]', function() {
                 loadSelectedProducts();
                 ///loadListingProduct(0);
             });
@@ -3249,6 +3267,8 @@
                     is_selected:is_selected,
                     include_carrier:include_carrier,
                     generate_type_name:generate_type_name,
+                    generate_type:$('input[name="generate_type"]:checked').val(),
+                    listing_type:$('input[name="listing_type"]:checked').val(),
                     step:3
                 },
                 headers: {
@@ -3257,6 +3277,7 @@
                 success: function (response) {
                     if (response.html) {
                         $('#product-list-3').html(response.html);
+                        $('.total_product').html('(<b>'+response.totalproduct+'</b> item)');
                         var selected_template = $('#title_template').val();
                         $('input[name="product_title_template[]"]').val(selected_template);
                         loadListingProduct(0);

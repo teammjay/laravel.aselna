@@ -260,6 +260,27 @@ class MagentoAuthService
         return json_decode($response->getBody(), true);
     }
 
+    public function updateBrand($brandId, $brandData)
+    {
+        $accessToken = $this->authenticate();
+        Log::info('Access Token Created ' . $accessToken);
+
+        $headers = [
+            'Content-Type' => 'application/json',
+            'Accept' => 'application/json',
+            'Authorization' => 'Bearer ' . $accessToken,
+        ];
+
+        $body = ['brand' => $brandData];
+
+        Log::info('Request: ' . json_encode($body));
+
+        $request = new Request('PUT', $this->endpoint . '/rest/V1/mjailabs/brands/' . $brandId, $headers);
+        $response = $this->client->sendAsync($request, ['json' => $body])->wait();
+
+        return json_decode($response->getBody(), true);
+    }
+
     public function createDevice($deviceData)
     {
         $accessToken = $this->authenticate();
@@ -276,6 +297,27 @@ class MagentoAuthService
         Log::info('Request: ' . json_encode($body));
 
         $request = new Request('POST', $this->endpoint . '/rest/V1/mjailabs/devices', $headers);
+        $response = $this->client->sendAsync($request, ['json' => $body])->wait();
+
+        return json_decode($response->getBody(), true);
+    }
+
+    public function updateDevice($deviceId, $deviceData)
+    {
+        $accessToken = $this->authenticate();
+        Log::info('Access Token Created ' . $accessToken);
+
+        $headers = [
+            'Content-Type' => 'application/json',
+            'Accept' => 'application/json',
+            'Authorization' => 'Bearer ' . $accessToken,
+        ];
+
+        $body = ['device' => $deviceData];
+
+        Log::info('Request: ' . json_encode($body));
+
+        $request = new Request('PUT', $this->endpoint . '/rest/V1/mjailabs/devices/' . $deviceId, $headers);
         $response = $this->client->sendAsync($request, ['json' => $body])->wait();
 
         return json_decode($response->getBody(), true);
