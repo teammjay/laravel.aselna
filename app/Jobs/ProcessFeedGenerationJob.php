@@ -803,7 +803,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
             $category = $parentCategory;
         }
 
-        return $categorycode ? $categorycode->code : '';
+        return $categorycode ? $categorycode->code : null;
     }
 
     private function can_add_device_to_title($productTitle, mixed $device)

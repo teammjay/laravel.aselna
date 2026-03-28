@@ -29,6 +29,7 @@ use App\Jobs\FetchTemuOrders;
 use App\Jobs\FetchWalmartOrdersJob;
 use App\Jobs\FileSystemSyncJob;
 use App\Jobs\Fonus\ProductInterfacesSyncJob;
+use App\Jobs\Fonus\ProductSyncJob;
 use App\Jobs\GenerationTypeAndTemplateSync;
 use App\Jobs\InterfaceSyncJob;
 use App\Jobs\ListingFeedSyncJob;
@@ -57,7 +58,6 @@ use App\Jobs\ProductMaterialSyncJob;
 use App\Jobs\ProductSearchTermSyncJob;
 use App\Jobs\ProductSizeSyncJob;
 use App\Jobs\ProductSpecificationSyncJob;
-use App\Jobs\ProductSyncJob;
 use App\Jobs\ProductTagSyncJob;
 use App\Jobs\ProductTypeKeywordSyncJob;
 use App\Jobs\SendNotificationEmailSyncFailJob;
@@ -235,6 +235,8 @@ class SyncAllTables extends Command
 //        ExistingListingItemSyncJob::dispatch();
 //        FetchShopifyOrders::dispatch();
 //        FonusCombinedSyncJob::dispatch();
+        CategorySyncJob::dispatch();
+
 //        ProductInterfacesSyncJob::dispatch();
         MagentoSyncJob::dispatch();
 //        MagentoProductsSyncJob::dispatch();
