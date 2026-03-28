@@ -107,7 +107,7 @@ class JobScheduler extends Seeder
             [
                 'name' => 'Product Sync',
                 'description' => 'Sync all products',
-                'class_name' => 'App\Jobs\ProductSyncJob',
+                'class_name' => 'App\Jobs\Fonus\ProductSyncJob',
             ],
             [
                 'name' => 'Product Channel Detail Sync',

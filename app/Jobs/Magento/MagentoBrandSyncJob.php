@@ -23,6 +23,8 @@ class MagentoBrandSyncJob implements ShouldQueue
 
     protected $storeId;
 
+    public $timeout = 6000;
+
     public function __construct($storeId)
     {
         $this->storeId = $storeId;
