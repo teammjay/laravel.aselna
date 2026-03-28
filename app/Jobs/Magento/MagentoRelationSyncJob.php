@@ -23,6 +23,7 @@ class MagentoRelationSyncJob implements ShouldQueue
     }
 
     protected $storeId;
+    public $timeout = 60000;
 
     public function __construct($storeId)
     {
@@ -45,11 +46,54 @@ class MagentoRelationSyncJob implements ShouldQueue
 
             Log::info("Optimized Sync: Checking relations for " . count($syncedProducts) . " products in store: " . $store->name);
 
+            $allToAdd = [];
+            $allToDelete = [];
+
             foreach ($syncedProducts as $manageProduct) {
-                $this->syncProductRelations($manageProduct, $magentoAuthService);
+                $relations = $this->prepareProductRelations($manageProduct, $magentoAuthService);
+                $allToAdd = array_merge($allToAdd, $relations['toAdd']);
+                $allToDelete = array_merge($allToDelete, $relations['toDelete']);
             }
 
+            Log::info("Total additions to process: " . count($allToAdd));
+            Log::info("Total deletions to process: " . count($allToDelete));
+
+            // Execute additions in bulk
+            if (!empty($allToAdd)) {
+                $chunks = array_chunk($allToAdd, 1000);
+                foreach ($chunks as $chunk) {
+                    try {
+                        Log::info("Sending bulk relations chunk of " . count($chunk));
+                        $magentoAuthService->createRelationsBulk($chunk);
+                    } catch (\Exception $e) {
+                        Log::error("Failed to send bulk relations chunk: " . $e->getMessage());
+                    }
+                }
+            }
+
+            // Execute deletions (individual as Magento lacks bulk delete for relations)
+            if (!empty($allToDelete)) {
+                foreach ($allToDelete as $relationId) {
+                    try {
+                        $magentoAuthService->deleteRelation($relationId);
+                    } catch (\Exception $e) {
+                        Log::error("Failed to delete relation $relationId: " . $e->getMessage());
+                    }
+                }
+            }
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
+
         } catch (\Throwable $e) {
+            $this->updateTrackingRecord([
+                'status' => 'failed',
+                'output' => $e->getMessage(),
+                'finished_at' => now()
+            ]);
+
             CriticalErrorService::report('Magento Relation Sync Job Failed', [
                 'marketplace' => 'Magento',
                 'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
@@ -58,7 +102,7 @@ class MagentoRelationSyncJob implements ShouldQueue
         }
     }
 
-    private function syncProductRelations($manageProduct, $magentoAuthService)
+    private function prepareProductRelations($manageProduct, $magentoAuthService)
     {
         $productId = $manageProduct->product_id;
         $magentoProductId = $manageProduct->marketplace_product_id;
@@ -100,42 +144,34 @@ class MagentoRelationSyncJob implements ShouldQueue
 
         $currentMagentoDeviceToRelationId = [];
         foreach ($magentoItems as $item) {
-            $currentMagentoDeviceToRelationId[$item['device_id']] = $item['entity_id'];
+            // Relation object typically has id, product_id, device_id
+            $currentMagentoDeviceToRelationId[$item['device_id']] = $item['id'];
         }
 
         $currentlyLinkedMagentoDeviceIds = array_keys($currentMagentoDeviceToRelationId);
 
         // 4. Diffing
-        $toAdd = array_diff($shouldHaveMagentoDeviceIds, $currentlyLinkedMagentoDeviceIds);
-        $toDelete = array_diff($currentlyLinkedMagentoDeviceIds, $shouldHaveMagentoDeviceIds);
+        $toAddIds = array_diff($shouldHaveMagentoDeviceIds, $currentlyLinkedMagentoDeviceIds);
+        $toDeleteIds = array_diff($currentlyLinkedMagentoDeviceIds, $shouldHaveMagentoDeviceIds);
 
-        if (empty($toAdd) && empty($toDelete)) {
-            // Log::info("Product $productId is already in sync.");
-            return;
-        }
-
-        Log::info("Syncing Product $magentoProductId: Adding " . count($toAdd) . " relations, Deleting " . count($toDelete));
-
-        // 5. Execute Additions
-        foreach ($toAdd as $magentoDeviceId) {
-            try {
-                $magentoAuthService->createRelation([
+        $toAdd = [];
+        foreach ($toAddIds as $magentoDeviceId) {
+            $toAdd[] = [
+                'relation' => [
                     'product_id' => $magentoProductId,
                     'device_id' => $magentoDeviceId
-                ]);
-            } catch (\Exception $e) {
-                Log::error("Failed to create relation for Product $magentoProductId and Device $magentoDeviceId: " . $e->getMessage());
-            }
+                ]
+            ];
         }
 
-        // 6. Execute Deletions
-        foreach ($toDelete as $magentoDeviceId) {
-            try {
-                $relationId = $currentMagentoDeviceToRelationId[$magentoDeviceId];
-                $magentoAuthService->deleteRelation($relationId);
-            } catch (\Exception $e) {
-                Log::error("Failed to delete relation $relationId: " . $e->getMessage());
-            }
+        $toDelete = [];
+        foreach ($toDeleteIds as $magentoDeviceId) {
+            $toDelete[] = $currentMagentoDeviceToRelationId[$magentoDeviceId];
         }
+
+        return [
+            'toAdd' => $toAdd,
+            'toDelete' => $toDelete
+        ];
     }
 }
