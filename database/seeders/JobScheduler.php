@@ -107,7 +107,7 @@ class JobScheduler extends Seeder
             [
                 'name' => 'Product Sync',
                 'description' => 'Sync all products',
-                'class_name' => 'App\Jobs\ProductSyncJob',
+                'class_name' => 'App\Jobs\Fonus\ProductSyncJob',
             ],
             [
                 'name' => 'Product Channel Detail Sync',
@@ -280,19 +280,9 @@ class JobScheduler extends Seeder
                 'class_name' => 'App\Jobs\SubmitShopifyProductsJob',
             ],
             [
-                'name' => 'Magento Attributes Sync',
-                'description' => 'Sync all Magento attributes',
-                'class_name' => 'App\Jobs\MagnetoAttributesSyncJob',
-            ],
-            [
                 'name' => 'Magento Products Sync',
                 'description' => 'Sync all Magento products',
                 'class_name' => 'App\Jobs\Magento\MagentoProductsSyncJob',
-            ],
-            [
-                'name' => 'Magento Relation Sync',
-                'description' => 'Sync all Magento device-product relations',
-                'class_name' => 'App\Jobs\Magento\MagentoRelationSyncJob',
             ],
             [
                 //FetchShopifyProductsJob

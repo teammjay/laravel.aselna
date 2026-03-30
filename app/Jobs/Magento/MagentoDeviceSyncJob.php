@@ -22,6 +22,8 @@ class MagentoDeviceSyncJob implements ShouldQueue
         Queueable::withChain as queueableWithChain;
     }
 
+    public $timeout = 6000;
+
     protected $storeId;
 
     public function __construct($storeId)
@@ -50,6 +52,7 @@ class MagentoDeviceSyncJob implements ShouldQueue
                     ->where('page_type', WebStorePageType::BRAND)
                     ->where('device_brand_id', $device->brand_id)
                     ->first();
+                if (!isset($brand->page_id)) continue;
 
                 $handle = $this->generateHandle($device->name);
 
@@ -93,12 +96,15 @@ class MagentoDeviceSyncJob implements ShouldQueue
                     'status' => $device->status == 'active' ? 1 : 0,
                 ];
 
+                Log::info('Magento Device create Data :: ' .  json_encode($deviceData));
                 if (isset($storePage) && $storePage->page_id) {
                     Log::info("Device already synced: " . $device->name . " Magento ID: " . $storePage->page_id . ". Updating...");
                     $response = $magentoAuthService->updateDevice($storePage->page_id, $deviceData);
                 } else {
                     $response = $magentoAuthService->createDevice($deviceData);
                 }
+
+                Log::info('Magento Device Response :: ' .  json_encode($response));
 
                 if (isset($response['id'])) {
                     $magentoDeviceId = $response['id'];

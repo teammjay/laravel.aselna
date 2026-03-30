@@ -132,20 +132,14 @@ class CategorySyncJob implements ShouldQueue
 //            }
 //        }
 
-        $createdCategory = ProductType::updateOrCreate(
-            ['id' => $category->id],
-            [
-                'id' => $category->id,
-                'name' => $category->name,
-                'code' => $category->code,
-                'image_id' => $imageDetail->id ?? null,
-                'parent_id' => $category->parent_id ?? null,
-                'singular_name' => $category->singular_name,
-                'sort_order' => $category->sort_order,
-            ]
-        );
+        $productType = ProductType::where('code',$category->code)->first();
 
-        Log::info('Category Created :: ' . $createdCategory);
+        if ($productType) {
+            $productType->update([
+                'singular_name' => $category->singular_name,
+            ]);
+        }
+
     }
 
     private function createStoreTypeCategories(mixed $storeTypeCategory)

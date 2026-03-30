@@ -112,7 +112,6 @@ class CategorySyncJob implements ShouldQueue
                     'code' => $fonusCategory->category_id,
                     'image_id' => $imageDetail->id ?? null,
                     'parent_id' => $this->parentProductTypeId,
-                    'singular_name' => $fonusCategory->category,
                     'sort_order' => $fonusCategory->order_no,
                 ]
             );
@@ -136,7 +135,6 @@ class CategorySyncJob implements ShouldQueue
                 'code' => $subCategory->category_id . '-' . $subCategory->sub_category_id,
                 'image_id' => null,
                 'parent_id' => $category->id,
-                'singular_name' => $subCategory->sub_category,
                 'sort_order' => $subCategory->order_no,
             ]
         );
