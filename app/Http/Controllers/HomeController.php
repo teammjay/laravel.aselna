@@ -1103,10 +1103,21 @@ On Fri, 29 Aug 2025 at 23:36, phonil <phonil.ebay@gmail.com> wrote:
         Log::info('Directory: ' . $directory);
         if (is_dir($directory)) {
             Log::info('Directory exists');
-            foreach (scandir($directory) as $file) {
-                Log::info('File: ' . $file);
-                if (strpos($file, $listingId) === 0 && preg_match('/\.(json|xml)$/', $file)) {
+            $scannedFiles = scandir($directory);
+            
+            // First check for listingId (backward compatibility)
+            foreach ($scannedFiles as $file) {
+                if (strpos($file, $listingId) === 0 && preg_match('/\.(json|xml|csv)$/', $file)) {
                     $files[] = 'feeds/' . strtolower($storeType) . '/' . $file;
+                }
+            }
+            
+            // Then check for feedId
+            if (empty($files) && $feedId) {
+                foreach ($scannedFiles as $file) {
+                    if (strpos($file, $feedId) === 0 && preg_match('/\.(json|xml|csv)$/', $file)) {
+                        $files[] = 'feeds/' . strtolower($storeType) . '/' . $file;
+                    }
                 }
             }
         }
@@ -1197,7 +1208,7 @@ On Fri, 29 Aug 2025 at 23:36, phonil <phonil.ebay@gmail.com> wrote:
 
             $storeType = $listingFeed->store->storeType->name;
 
-            $fileId = strtolower($storeType) == 'walmart' ? $feedID : $listingId;
+            $fileId = $feedID ?: $listingId;
 
             $directory = public_path('result-feeds/' . strtolower($storeType) . '/');
             $files = [];

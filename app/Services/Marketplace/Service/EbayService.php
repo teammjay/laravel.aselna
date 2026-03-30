@@ -43,41 +43,39 @@ class EbayService implements MarketplaceServiceInterface
     public function generateFeed($listingId, $feedId = null)
     {
         $listingInfo = Listing::where('id', $listingId)->first();
-        /*echo '<pre>';
-        print_r($listingInfo);
-        echo '</pre>';die;*/
+        $identifier = $feedId ?: $listingId;
 
         // Generate feed for eBay
         switch ($listingInfo->feed_type) {
             case FeedTypes::CREATE:
-                $this->generateCreateFeed($listingInfo, $listingId);
+                $this->generateCreateFeed($listingInfo, $identifier);
                 break;
             case FeedTypes::SHIPMENT_UPDATE:
-                $this->generateShipmentUpdateFeed($listingInfo, $listingId);
+                $this->generateShipmentUpdateFeed($listingInfo, $identifier);
                 break;
             case FeedTypes::DELETE:
-                $this->generateDeleteFeed($listingInfo, $listingId);
+                $this->generateDeleteFeed($listingInfo, $identifier);
                 break;
             case FeedTypes::INVENTORY:
-                $this->generatePriceFeed($listingInfo, $listingId);
+                $this->generatePriceFeed($listingInfo, $identifier);
                 break;
             case FeedTypes::PRICE:
-                $this->generatePriceFeed($listingInfo, $listingId);
+                $this->generatePriceFeed($listingInfo, $identifier);
                 break;
             default:
                 break;
         }
 
         // create entry for file
-        $filePath = public_path('feeds/ebay/' . $listingId . '.xml');
+        $filePath = public_path('feeds/ebay/' . $identifier . '.xml');
         /* create listing feed */
         return $filePath;
     }
 
-    public function generateCreateFeed($listingInfo, $listingId, $skuFilter = [])
+    public function generateCreateFeed($listingInfo, $identifier, $skuFilter = [])
     {
         // Generate feed for Ebay
-        $listingItems = ListingItemLink::with('listingItem', 'listingItem.brand', 'listingItem.devices', 'listingItem.devices.device', 'listingItem.storeProduct', 'listingItem.storeProduct.product', 'listingItem.storeProduct.product.color', 'listingItem.storeProduct.store', 'listingItem.storeProduct.StoreTypeCategory', 'listingItem.storeProduct.productImages')->where('listing_id', $listingId)->get();
+        $listingItems = ListingItemLink::with('listingItem', 'listingItem.brand', 'listingItem.devices', 'listingItem.devices.device', 'listingItem.storeProduct', 'listingItem.storeProduct.product', 'listingItem.storeProduct.product.color', 'listingItem.storeProduct.store', 'listingItem.storeProduct.StoreTypeCategory', 'listingItem.storeProduct.productImages')->where('listing_id', $listingInfo->id)->get();
         $fileSystem = $listingInfo->store->fileSystem;
         $version = $this->version;
 
@@ -470,7 +468,7 @@ class EbayService implements MarketplaceServiceInterface
 
         $xmlContent = $xml->asXML();
 
-        XmlUtility::saveToFile(public_path('feeds/ebay/' . $listingId . '.xml'), $xmlContent);
+        XmlUtility::saveToFile(public_path('feeds/ebay/' . $identifier . '.xml'), $xmlContent);
     }
 
     private function generateSiteHostedImages($imagepath)
@@ -517,9 +515,9 @@ class EbayService implements MarketplaceServiceInterface
         return $title;
     }
 
-    public function generatePriceFeed($listingInfo, $listingId)
+    public function generatePriceFeed($listingInfo, $identifier)
     {
-
+        $listingId = $listingInfo->id;
         $listingItems = ListingItemLink::with('listingItem', 'listingItem.brand', 'listingItem.storeProduct', 'listingItem.storeProduct.product', 'listingItem.storeProduct.productImages')->where('listing_id', $listingId)->cursor();
         $version = $this->version;
 
@@ -567,13 +565,13 @@ class EbayService implements MarketplaceServiceInterface
 
         $xmlContent = $xml->asXML();
 
-        XmlUtility::saveToFile(public_path('feeds/ebay/' . $listingId . '.xml'), $xmlContent);
+        XmlUtility::saveToFile(public_path('feeds/ebay/' . $identifier . '.xml'), $xmlContent);
 
     }
 
-    public function generateDeleteFeed($listingInfo, $listingId)
+    public function generateDeleteFeed($listingInfo, $identifier)
     {
-
+        $listingId = $listingInfo->id;
         $listingItems = ListingItemLink::with('listingItem', 'listingItem.brand', 'listingItem.storeProduct', 'listingItem.storeProduct.product', 'listingItem.storeProduct.productImages')->where('listing_id', $listingId)->cursor();
         $version = $this->version;
 
@@ -599,13 +597,13 @@ class EbayService implements MarketplaceServiceInterface
 
         $xmlContent = $xml->asXML();
 
-        XmlUtility::saveToFile(public_path('feeds/ebay/' . $listingId . '.xml'), $xmlContent);
+        XmlUtility::saveToFile(public_path('feeds/ebay/' . $identifier . '.xml'), $xmlContent);
 
     }
 
-    public function generateShipmentUpdateFeed($listingInfo, $listingId)
+    public function generateShipmentUpdateFeed($listingInfo, $identifier)
     {
-
+        $listingId = $listingInfo->id;
         $listingItems = ListingItemLink::with('listingItem', 'listingItem.brand', 'listingItem.storeProduct', 'listingItem.storeProduct.product', 'listingItem.storeProduct.productImages')->where('listing_id', $listingId)->cursor();
         $version = $this->version;
 
@@ -635,7 +633,7 @@ class EbayService implements MarketplaceServiceInterface
 
         $xmlContent = $xml->asXML();
 
-        XmlUtility::saveToFile(public_path('feeds/ebay/' . $listingId . '.xml'), $xmlContent);
+        XmlUtility::saveToFile(public_path('feeds/ebay/' . $identifier . '.xml'), $xmlContent);
     }
 
     public function submitFeed($feedId, $listingId)
@@ -649,8 +647,18 @@ class EbayService implements MarketplaceServiceInterface
 
         $authService = new EbayAuthService($clientId, $clientSecret, $redirectUri, $store->user_id);
 
-        $fileName = $listingId . '.xml';
+        // New way: check for feedId first
+        $identifier = $feedId;
+        $fileName = $feedId . '.xml';
         $filePath = public_path('feeds/ebay/' . $fileName);
+
+        // Backward compatibility: check for listingId if feedId file doesn't exist
+        if (!file_exists($filePath)) {
+             $identifier = $listingId;
+             $fileName = $listingId . '.xml';
+             $filePath = public_path('feeds/ebay/' . $fileName);
+        }
+        
         Log::info('Feed Id : ' . $feedId);
 
         try {
@@ -666,6 +674,9 @@ class EbayService implements MarketplaceServiceInterface
             ]);
 
             Log::info('File Path : ' . $filePath);
+            if (!file_exists($filePath)) {
+                throw new \Exception("Feed file not found: " . $filePath);
+            }
             $response = $authService->uploadFile($taskID, $fileName, $filePath);
             Log::info('Feed Submitted. Status set to PROCESSING. Feed Id: ' . $feedId);
         } catch (\Throwable $e) {
@@ -694,6 +705,7 @@ class EbayService implements MarketplaceServiceInterface
 
         $authService = new EbayAuthService($clientId, $clientSecret, $redirectUri, $store->user_id);
 
+        $feedInfo = null;
         if (isset($feedId)) {
             $feedInfo = ListingFeed::where('id', $feedId)->first();
         } else {
@@ -741,6 +753,7 @@ class EbayService implements MarketplaceServiceInterface
 
                             $feedType = $listingInfo->feed_type;
                             switch ($feedType) {
+                                case FeedTypes::RESUBMIT:
                                 case FeedTypes::CREATE:
                                     $successSku = array();
                                     if (isset($xml->AddFixedPriceItemResponse)) {
@@ -1278,7 +1291,7 @@ class EbayService implements MarketplaceServiceInterface
                 'feed_type' => FeedTypes::RESUBMIT
             ], $feedData);
 
-            $xmlContent = $this->generateCreateFeed($listingInfo, $listingId, $skuFilter);
+            $this->generateCreateFeed($listingInfo, $newFeed->id, $skuFilter);
 
             if (isset($store->auto_submit_listing) && $store->auto_submit_listing == 1) {
                 $this->submitFeed($newFeed->id, $listingId);

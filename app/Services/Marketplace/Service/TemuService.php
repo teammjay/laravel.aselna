@@ -31,19 +31,20 @@ class TemuService implements MarketplaceServiceInterface
     {
         $listingInfo = Listing::where('id', $listingId)->first();
         $feedInfo = ListingFeed::where('id', $feedId)->first();
+        $identifier = $feedId ?: $listingId;
 
         switch ($feedInfo->feed_type) {
             case FeedTypes::CREATE:
-                $this->generateCreateFeed($listingInfo, $listingId);
+                $this->generateCreateFeed($listingInfo, $identifier);
                 break;
 //            case FeedTypes::IMAGE_UPDATE:
-//                $this->generateImageUpdateFeed($listingInfo, $listingId);
+//                $this->generateImageUpdateFeed($listingInfo, $identifier);
 //                break;
 //            case FeedTypes::DELETE:
-//                $this->generateDeleteFeed($listingInfo, $listingId);
+//                $this->generateDeleteFeed($listingInfo, $identifier);
 //                break;
 //            case FeedTypes::INVENTORY:
-//                $this->generateInventoryFeed($listingInfo, $listingId, $feedInfo);
+//                $this->generateInventoryFeed($listingInfo, $identifier, $feedInfo);
 //                break;
 //            case FeedTypes::SHIPMENT_UPDATE:
 //                $this->callShipmentUpdateFeed($feedId);
@@ -52,13 +53,13 @@ class TemuService implements MarketplaceServiceInterface
 //                $this->callOrderCancelFeed($feedId);
 //                break;
 //            case FeedTypes::PRICE:
-//                $this->generatePriceFeed($listingInfo, $listingId);
+//                $this->generatePriceFeed($listingInfo, $identifier);
 //                break;
             default:
                 break;
         }
 
-        return 'feeds/temu/' . $listingId . '.json';
+        return 'feeds/temu/' . $identifier . '.json';
     }
 
     public function submitFeed($feedId, $listingId)
@@ -68,9 +69,19 @@ class TemuService implements MarketplaceServiceInterface
         $store = $listingInfo->store;
 
         $temuAuthService = new TemuAuthService();
+        
+        // Backward compatibility
         $file = public_path('feeds/temu/' . $listingId . '.json');
-        $resultFile = public_path('result-feeds/temu/' . $listingId . '.json');
+        if (!file_exists($file) && $feedId) {
+            $file = public_path('feeds/temu/' . $feedId . '.json');
+        }
+        
+        $resultFile = public_path('result-feeds/temu/' . ($feedId ?: $listingId) . '.json');
         // json content
+        if (!file_exists($file)) {
+             Log::error("Temu feed file not found: $file");
+             return;
+        }
         $allfeedContent = file_get_contents($file);
 
         $successCount = 0;
@@ -183,9 +194,10 @@ class TemuService implements MarketplaceServiceInterface
         // TODO: Implement syncAttributes() method.
     }
 
-    private function generateCreateFeed($listingInfo, $listingId)
+    private function generateCreateFeed($listingInfo, $identifier)
     {
         try {
+            $listingId = $listingInfo->id;
             $temuAuthService = new TemuAuthService();
             $listingItems = ListingItemLink::where('listing_id', $listingId)->cursor();
             $fileSystem = $listingInfo->store->fileSystem;
@@ -347,7 +359,7 @@ class TemuService implements MarketplaceServiceInterface
 
             Log::info('Json Feed :: ' . json_encode($jsonFeed));
 
-            FileUtility::saveToFile(public_path('feeds/temu/' . $listingId . '.json'), json_encode($jsonFeed));
+            FileUtility::saveToFile(public_path('feeds/temu/' . $identifier . '.json'), json_encode($jsonFeed));
 
         } catch (\Throwable $e) {
 
