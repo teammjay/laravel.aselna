@@ -203,9 +203,10 @@ class EbayAuthService
         }
     }
 
-    public function getResultFeed(string $taskId, string $listingId) {
+    public function getResultFeed(string $taskId, string $listingId, string $feedId = null) {
 
-        $savePath = public_path('result-feeds/ebay/'.$listingId.'.zip');
+        $identifier = $feedId ?: $listingId;
+        $savePath = public_path('result-feeds/ebay/'.$identifier.'.zip');
         try {
             $accessToken = $this->refreshToken();
             $response = $this->client->get('sell/feed/v1/task/' . $taskId . '/download_result_file', [
@@ -218,20 +219,20 @@ class EbayAuthService
                 'sink' => $savePath,
             ]);
 
-            $errorResponse = json_decode($response->getBody()->getContents(), true);
+            // $errorResponse = json_decode($response->getBody()->getContents(), true);
 
-            Log::info('Feed Response: ' . json_encode($errorResponse));
+            // Log::info('Feed Response: ' . json_encode($errorResponse));
 
             $headerValue = $response->getHeaders();
 
             Log::info('Feed Status: ' . json_encode($headerValue));
 
             if (file_exists($savePath)) {
-                response()->download($savePath);
-                return 'result-feeds/ebay/'.$listingId.'.zip';
+                // response()->download($savePath);
+                return 'result-feeds/ebay/'.$identifier.'.zip';
             }
 
-            return $response->getStatusCode() === 200 ? 'result-feeds/ebay/'.$listingId.'.zip' : false;
+            return $response->getStatusCode() === 200 ? 'result-feeds/ebay/'.$identifier.'.zip' : false;
 
         }catch (RequestException $e) {
 
@@ -253,9 +254,10 @@ class EbayAuthService
 
     }
 
-    public function downloadInputFeed(string $taskId, string $listingId) {
+    public function downloadInputFeed(string $taskId, string $listingId, string $feedId = null) {
 
-        $savePath = public_path('input-feeds/ebay/'.$listingId.'.xml');
+        $identifier = $feedId ?: $listingId;
+        $savePath = public_path('input-feeds/ebay/'.$identifier.'.xml');
         try {
             $accessToken = $this->refreshToken();
             $response = $this->client->get('sell/feed/v1/task/' . $taskId . '/download_input_file', [

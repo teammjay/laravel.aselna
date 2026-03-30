@@ -36,38 +36,45 @@ class AmazonService implements MarketplaceServiceInterface
     public function generateFeed($listingId, $feedId = null)
     {
         $listingInfo = Listing::where('id', $listingId)->first();
+        $identifier = $feedId ?: $listingId;
 
+        $extension = 'xml';
         // Generate feed for Amazon
         switch ($listingInfo->feed_type) {
             case FeedTypes::CREATE:
-                $this->generateCreateFeed($listingInfo, $listingId);
+                $this->generateCreateFeed($listingInfo, $identifier);
+                $extension = 'json';
                 break;
             case FeedTypes::IMAGE_UPDATE:
-                $this->generateImageUpdateFeed($listingInfo, $listingId);
+                $this->generateImageUpdateFeed($listingInfo, $identifier);
+                $extension = 'xml';
                 break;
             case FeedTypes::DELETE:
-                $this->generateDeleteFeed($listingInfo, $listingId);
+                $this->generateDeleteFeed($listingInfo, $identifier);
+                $extension = 'json';
                 break;
             case FeedTypes::INVENTORY:
-                $this->generateInventoryFeed($listingInfo, $listingId);
+                $this->generateInventoryFeed($listingInfo, $identifier);
+                $extension = 'xml';
                 break;
             case FeedTypes::PRICE:
-                $this->generatePriceFeed($listingInfo, $listingId);
+                $this->generatePriceFeed($listingInfo, $identifier);
+                $extension = 'json';
                 break;
             default:
                 break;
         }
 
         //return the file path so that it can be downloaded
-        return 'feeds/amazon/' . $listingId . '.xml';
+        return 'feeds/amazon/' . $identifier . '.' . $extension;
     }
 
-    public function generateCreateFeed($listingInfo, $listingId)
+    public function generateCreateFeed($listingInfo, $identifier)
     {
         $fileSystem = $listingInfo->store->fileSystem;
         $userIdentifier = $listingInfo->store->user_id;
         //Log::info('User Identifier: ' . json_encode($listingInfo->store));
-        $listingItems = ListingItemLink::where('listing_id', $listingId)->cursor();
+        $listingItems = ListingItemLink::where('listing_id', $listingInfo->id)->cursor();
 
         $store = $listingInfo->store;
         $this->authService = new AmazonAuthService($store->seller_id, $store->secret_key,$store->api_key);
@@ -246,7 +253,7 @@ class AmazonService implements MarketplaceServiceInterface
 
 
         FileUtility::saveToFile(
-            public_path('feeds/amazon/' . $listingId . '.json'),
+            public_path('feeds/amazon/' . $identifier . '.json'),
             json_encode($feed, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)
         );
     }
@@ -260,15 +267,32 @@ class AmazonService implements MarketplaceServiceInterface
             Log::info("Started :: ");
             $directory = public_path('feeds/amazon/');
             Log::info('Directory: ' . $directory);
+            $files = [];
             if (is_dir($directory)) {
                 Log::info('Directory exists');
-                foreach (scandir($directory, SCANDIR_SORT_DESCENDING) as $file) {
-                    Log::info('File: ' . $file);
+                $scannedFiles = scandir($directory, SCANDIR_SORT_DESCENDING);
+                
+                // First check for listingId (backward compatibility)
+                foreach ($scannedFiles as $file) {
                     if (strpos($file, $listingId) === 0 && preg_match('/\.(json|xml)$/', $file)) {
                         $files[] = 'feeds/amazon/' . $file;
                     }
                 }
+                
+                // Then check for feedId
+                if (empty($files) && $feedId) {
+                    foreach ($scannedFiles as $file) {
+                        if (strpos($file, $feedId) === 0 && preg_match('/\.(json|xml)$/', $file)) {
+                            $files[] = 'feeds/amazon/' . $file;
+                        }
+                    }
+                }
             }
+            
+            if (empty($files)) {
+                throw new \Exception("Feed file not found for listingId: $listingId or feedId: $feedId");
+            }
+            
             $filePath = public_path($files[0]);
 
             $content = file_get_contents($filePath);
@@ -317,15 +341,33 @@ class AmazonService implements MarketplaceServiceInterface
         Log::info("Started :: ");
         $directory = public_path('feeds/amazon/');
         Log::info('Directory: ' . $directory);
+        $files = [];
         if (is_dir($directory)) {
             Log::info('Directory exists');
-            foreach (scandir($directory, SCANDIR_SORT_DESCENDING) as $file) {
-                Log::info('File: ' . $file);
+            $scannedFiles = scandir($directory, SCANDIR_SORT_DESCENDING);
+            
+            // First check for listingId (backward compatibility)
+            foreach ($scannedFiles as $file) {
                 if (strpos($file, $listingId) === 0 && preg_match('/\.(json|xml)$/', $file)) {
                     $files[] = 'feeds/amazon/' . $file;
                 }
             }
+            
+            // Then check for feedId
+            if (empty($files) && $feedId) {
+                foreach ($scannedFiles as $file) {
+                    if (strpos($file, $feedId) === 0 && preg_match('/\.(json|xml)$/', $file)) {
+                        $files[] = 'feeds/amazon/' . $file;
+                    }
+                }
+            }
         }
+        
+        if (empty($files)) {
+             Log::error("Feed file not found for validation. listingId: $listingId, feedId: $feedId");
+             return;
+        }
+        
         $filePath = public_path($files[0]);
 
         $content = file_get_contents($filePath);
@@ -355,10 +397,10 @@ class AmazonService implements MarketplaceServiceInterface
         return $feedResultFile;
     }
 
-    private function generateImageUpdateFeed($listingInfo, $listingId)
+    private function generateImageUpdateFeed($listingInfo, $identifier)
     {
         $userIdentifier = $listingInfo->store->user_id;
-        $listingItems = ListingItemLink::where('listing_id', $listingId)->cursor();
+        $listingItems = ListingItemLink::where('listing_id', $listingInfo->id)->cursor();
 
         $xml = new SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?><AmazonEnvelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"></AmazonEnvelope>');
 
@@ -384,13 +426,13 @@ class AmazonService implements MarketplaceServiceInterface
 
         $xmlContent = $xml->asXML();
 
-        XmlUtility::saveToFile(public_path('feeds/amazon/' . $listingId . '.xml'), $xmlContent);
+        XmlUtility::saveToFile(public_path('feeds/amazon/' . $identifier . '.xml'), $xmlContent);
     }
 
-    private function generateDeleteFeed($listingInfo, $listingId)
+    private function generateDeleteFeed($listingInfo, $identifier)
     {
         $userIdentifier = $listingInfo->store->user_id;
-        $listingItems = ListingItemLink::where('listing_id', $listingId)->cursor();
+        $listingItems = ListingItemLink::where('listing_id', $listingInfo->id)->cursor();
 
         $feed = [
             'header' => [
@@ -417,15 +459,15 @@ class AmazonService implements MarketplaceServiceInterface
         }
 
         FileUtility::saveToFile(
-            public_path('feeds/amazon/' . $listingId . '.json'),
+            public_path('feeds/amazon/' . $identifier . '.json'),
             json_encode($feed, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)
         );
     }
 
-    private function generateInventoryFeed($listingInfo, $listingId)
+    private function generateInventoryFeed($listingInfo, $identifier)
     {
         $userIdentifier = $listingInfo->store->user_id;
-        $listingItems = ListingItemLink::where('listing_id', $listingId)->cursor();
+        $listingItems = ListingItemLink::where('listing_id', $listingInfo->id)->cursor();
 
         $xml = new SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?><AmazonEnvelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"></AmazonEnvelope>');
 
@@ -450,13 +492,13 @@ class AmazonService implements MarketplaceServiceInterface
 
         $xmlContent = $xml->asXML();
 
-        XmlUtility::saveToFile(public_path('feeds/amazon/' . $listingId . '.xml'), $xmlContent);
+        XmlUtility::saveToFile(public_path('feeds/amazon/' . $identifier . '.xml'), $xmlContent);
     }
 
-    private function generatePriceFeed($listingInfo, $listingId)
+    private function generatePriceFeed($listingInfo, $identifier)
     {
         $userIdentifier = $listingInfo->store->user_id;
-        $listingItems = ListingItemLink::where('listing_id', $listingId)->cursor();
+        $listingItems = ListingItemLink::where('listing_id', $listingInfo->id)->cursor();
 
         $feed = [
             'header' => [
@@ -495,7 +537,7 @@ class AmazonService implements MarketplaceServiceInterface
         }
 
         FileUtility::saveToFile(
-            public_path('feeds/amazon/' . $listingId . '.json'),
+            public_path('feeds/amazon/' . $identifier . '.json'),
             json_encode($feed, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)
         );
     }
