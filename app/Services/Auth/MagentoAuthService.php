@@ -344,6 +344,27 @@ class MagentoAuthService
         return json_decode($response->getBody(), true);
     }
 
+    public function createRelationsBulk($relationsData)
+    {
+        $accessToken = $this->authenticate();
+        Log::info('Access Token Created ' . $accessToken);
+
+        $headers = [
+            'Content-Type' => 'application/json',
+            'Accept' => 'application/json',
+            'Authorization' => 'Bearer ' . $accessToken,
+        ];
+
+        $body = $relationsData;
+
+        Log::info('Bulk Relation Request: ' . count($body) . ' items');
+
+        $request = new Request('POST', $this->endpoint . '/rest/async/bulk/V1/mjailabs/relations', $headers);
+        $response = $this->client->sendAsync($request, ['json' => $body])->wait();
+
+        return json_decode($response->getBody(), true);
+    }
+
     public function searchRelations($searchCriteria = [])
     {
         $accessToken = $this->authenticate();

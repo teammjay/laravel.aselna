@@ -235,7 +235,7 @@ class SyncAllTables extends Command
 //        ExistingListingItemSyncJob::dispatch();
 //        FetchShopifyOrders::dispatch();
 //        FonusCombinedSyncJob::dispatch();
-        CategorySyncJob::dispatch();
+//        CategorySyncJob::dispatch();
 
 //        ProductInterfacesSyncJob::dispatch();
         MagentoSyncJob::dispatch();

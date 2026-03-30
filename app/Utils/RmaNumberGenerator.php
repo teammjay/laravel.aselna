@@ -33,7 +33,9 @@ class RmaNumberGenerator
     }
 
     function getNextRMANumberForStore($store) {
-        $key = 'rma_' . str_replace('-', '', $store->short_code);
+        //$key = 'rma_' . str_replace('-', '', $store->id);
+
+        $key = 'rma_global';
 
         return DB::transaction(function () use ($key) {
             $sequence = Sequence::lockForUpdate()->find($key);
@@ -45,6 +47,7 @@ class RmaNumberGenerator
                 ]);
             } else {
                 $sequence->increment('number');
+                $sequence->refresh();
             }
 
             return $sequence->number;

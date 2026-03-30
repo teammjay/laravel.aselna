@@ -382,7 +382,21 @@ class SyncAllOrderStatusJob implements ShouldQueue
                                     break;
                             }
                         }
+
+                        if (isset($temuOrder['parentOrderMap']['parentOrderLabel'])) {
+                            foreach ($temuOrder['parentOrderMap']['parentOrderLabel'] as $label) {
+                                if ($label['value'] == 1) {
+                                    switch ($label['name']) {
+                                        case 'pending_buyer_cancellation':
+                                            $order->order_status = OrderStatus::CanceledRequested;
+                                            $operation->status = OrderOperationStatus::CanceledRequested;
+                                            break;
+                                    }
+                                }
+                            }
+                        }
                     }
+
                     $order->save();
                     $operation->save();
                 }
