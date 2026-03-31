@@ -32,19 +32,20 @@ class WalmartService implements MarketplaceServiceInterface
     {
         $listingInfo = Listing::where('id', $listingId)->first();
         $feedInfo = ListingFeed::where('id', $feedId)->first();
+        $identifier = $feedId ?: $listingId;
 
         switch ($feedInfo->feed_type) {
             case FeedTypes::CREATE:
-                $this->generateCreateFeed($listingInfo, $listingId);
+                $this->generateCreateFeed($listingInfo, $identifier);
                 break;
             case FeedTypes::IMAGE_UPDATE:
-                $this->generateImageUpdateFeed($listingInfo, $listingId);
+                $this->generateImageUpdateFeed($listingInfo, $identifier);
                 break;
             case FeedTypes::DELETE:
-                $this->generateDeleteFeed($listingInfo, $listingId);
+                $this->generateDeleteFeed($listingInfo, $identifier);
                 break;
             case FeedTypes::INVENTORY:
-                $this->generateInventoryFeed($listingInfo, $listingId, $feedInfo);
+                $this->generateInventoryFeed($listingInfo, $identifier, $feedInfo);
                 break;
             case FeedTypes::SHIPMENT_UPDATE:
                 $this->callShipmentUpdateFeed($feedId);
@@ -53,13 +54,13 @@ class WalmartService implements MarketplaceServiceInterface
                 $this->callOrderCancelFeed($feedId);
                 break;
             case FeedTypes::PRICE:
-                $this->generatePriceFeed($listingInfo, $listingId);
+                $this->generatePriceFeed($listingInfo, $identifier);
                 break;
             default:
                 break;
         }
 
-        return 'feeds/walmart/' . $listingId . '.json';
+        return 'feeds/walmart/' . $identifier . '.json';
     }
 
     public function submitFeed($feedId, $listingId)
@@ -72,7 +73,25 @@ class WalmartService implements MarketplaceServiceInterface
             $feedType = $this->getfeedType($feedInfo->feed_type);
 
             $authService = new WalmartAuthService($store->seller_id, $store->secret_key);
+            
+            // Backward compatibility
             $file = public_path('feeds/walmart/' . $listingId . '.json');
+            if (!file_exists($file) && $feedId) {
+                $file = public_path('feeds/walmart/' . $feedId . '.json');
+            }
+            
+            if (!file_exists($file)) {
+                 // Special case for Inventory feed created during CREATE
+                 $invFile = public_path('feeds/walmart/I_' . $listingId . '.json');
+                 if (file_exists($invFile)) {
+                     $file = $invFile;
+                 } else if ($feedId) {
+                     $invFile = public_path('feeds/walmart/I_' . $feedId . '.json');
+                     if (file_exists($invFile)) {
+                         $file = $invFile;
+                     }
+                 }
+            }
 
             $response = $authService->submitFeed($file, $feedType);
             //Log::info('Response ::' . json_encode($response));
@@ -271,11 +290,12 @@ class WalmartService implements MarketplaceServiceInterface
         return 'result-feeds/walmart/' . $feedInfo->id . '.json';
     }
 
-    private function generateCreateFeed($listingInfo, $listingId, $skuFilter = [])
+    private function generateCreateFeed($listingInfo, $identifier, $skuFilter = [])
     {
         try {
             $fileSystem = $listingInfo->store->fileSystem;
             $store = $listingInfo->store;
+            $listingId = $listingInfo->id;
 
             $uniqueCategoryNames = ListingItemLink::join('listing_item', 'listing_item_link.item_id', '=', 'listing_item.id')
                 ->join('store_product', 'listing_item.store_product_id', '=', 'store_product.id')
@@ -453,7 +473,7 @@ class WalmartService implements MarketplaceServiceInterface
                 $jsonFeed['MPItem'][] = $product;
             }
 
-            FileUtility::saveToFile(public_path('feeds/walmart/' . $listingId . '.json'), json_encode($jsonFeed));
+            FileUtility::saveToFile(public_path('feeds/walmart/' . $identifier . '.json'), json_encode($jsonFeed));
         } catch (\Throwable $e) {
 
             CriticalErrorService::report('Walmart Create Feed Failed', [
@@ -468,13 +488,14 @@ class WalmartService implements MarketplaceServiceInterface
         }
     }
 
-    private function generateImageUpdateFeed($listingInfo, $listingId)
+    private function generateImageUpdateFeed($listingInfo, $identifier)
     {
     }
 
-    private function generateDeleteFeed($listingInfo, $listingId)
+    private function generateDeleteFeed($listingInfo, $identifier)
     {
         try {
+            $listingId = $listingInfo->id;
             $listingItems = ListingItemLink::where('listing_id', $listingId)->cursor();
 
             $jsonFeed = [
@@ -493,7 +514,7 @@ class WalmartService implements MarketplaceServiceInterface
                 $jsonFeed['RetireItem'][] = $product;
             }
 
-            FileUtility::saveToFile(public_path('feeds/walmart/' . $listingId . '.json'), json_encode($jsonFeed));
+            FileUtility::saveToFile(public_path('feeds/walmart/' . $identifier . '.json'), json_encode($jsonFeed));
         } catch (\Throwable $e) {
 
             CriticalErrorService::report('Walmart Generate Delete Feed Failed', [
@@ -508,9 +529,10 @@ class WalmartService implements MarketplaceServiceInterface
         }
     }
 
-    private function generateInventoryFeed($listingInfo, $listingId, $feedInfo)
+    private function generateInventoryFeed($listingInfo, $identifier, $feedInfo)
     {
         try {
+            $listingId = $listingInfo->id;
             //create afeed like this {"InventoryHeader":{"version":"1.4"},"Inventory":[{"sku":"Z41-LARWJD","quantity":{"unit":"EACH","amount":500}}]}
             $listingItems = ListingItemLink::where('listing_id', $listingId)->cursor();
 
@@ -535,9 +557,9 @@ class WalmartService implements MarketplaceServiceInterface
 
             Log::info('Listing Feed Type: ' . $feedInfo->feed_type);
             if ($feedInfo->feed_type == FeedTypes::CREATE) {
-                FileUtility::saveToFile(public_path('feeds/walmart/I_' . $listingId . '.json'), json_encode($jsonFeed));
+                FileUtility::saveToFile(public_path('feeds/walmart/I_' . $identifier . '.json'), json_encode($jsonFeed));
             } else {
-                FileUtility::saveToFile(public_path('feeds/walmart/' . $listingId . '.json'), json_encode($jsonFeed));
+                FileUtility::saveToFile(public_path('feeds/walmart/' . $identifier . '.json'), json_encode($jsonFeed));
             }
         } catch (\Throwable $e) {
 
@@ -553,11 +575,12 @@ class WalmartService implements MarketplaceServiceInterface
         }
     }
 
-    private function generatePriceFeed($listingInfo, $listingId)
+    private function generatePriceFeed($listingInfo, $identifier)
     {
         // create a feed like this {"PriceHeader":{"version":"1.7"},"Price":[{"sku":"D93-JNRVJY","pricing":[{"currentPrice":{"currency":"USD","amount":11.99},"currentPriceType":"BASE"}]}]}
 
         try {
+            $listingId = $listingInfo->id;
             $listingItems = ListingItemLink::where('listing_id', $listingId)->cursor();
 
             $jsonFeed = [
@@ -584,7 +607,7 @@ class WalmartService implements MarketplaceServiceInterface
                 $jsonFeed['Price'][] = $product;
             }
 
-            FileUtility::saveToFile(public_path('feeds/walmart/' . $listingId . '.json'), json_encode($jsonFeed));
+            FileUtility::saveToFile(public_path('feeds/walmart/' . $identifier . '.json'), json_encode($jsonFeed));
         } catch (\Throwable $e) {
 
             CriticalErrorService::report('Walmart Generate Price Feed Failed', [
