@@ -982,7 +982,7 @@ class ListingController extends Controller
                 if($generation_type_id != '') {
                     //$listing_gen_type = ListingGenerationType::findOrFail($generation_type_id);
                     $query->addSelect([
-                        'listed_count' => DB::table('listing_item')
+                        'listed_device_count' => DB::table('listing_item')
                             ->selectRaw('COUNT(*)')
                             ->whereColumn('listing_item.store_product_id', 'store_product.id')
                             ->where('listing_item.status', ListingStatus::Active)
@@ -990,7 +990,7 @@ class ListingController extends Controller
                     ]);
 
                     $query->addSelect([
-                        'listed_device_count' => DB::table('listing_item')
+                        'listed_count' => DB::table('listing_item')
                             ->join('listing_item_detail', 'listing_item_detail.listing_item_id', '=', 'listing_item.id')
                             ->selectRaw('COUNT(DISTINCT listing_item_detail.device_id)')
                             ->whereColumn('listing_item.store_product_id', 'store_product.id')
