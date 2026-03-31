@@ -658,7 +658,7 @@ class EbayService implements MarketplaceServiceInterface
              $fileName = $listingId . '.xml';
              $filePath = public_path('feeds/ebay/' . $fileName);
         }
-        
+
         Log::info('Feed Id : ' . $feedId);
 
         try {
@@ -717,36 +717,65 @@ class EbayService implements MarketplaceServiceInterface
 
         if ($feedInfo) {
             Log::info('Feed Id : ' . $feedInfo->feed_id);
+            $identifier = $feedId ?: $listingId;
             $response = $authService->getResultFeed($feedInfo->feed_id, $listingId);
             //Log::info('Feed Response :: ' . json_encode($response));
             if ($response) {
                 $zipPath = public_path($response);
-                $extractPath = public_path('result-feeds/ebay/' . $listingId);
-                Log::info("get_current_user() : " . get_current_user());
-                Log::info("extract Path : " . $extractPath);
+                $extractPath = public_path('result-feeds/ebay/' . $identifier);
 
-                if (!file_exists($extractPath)) {
-                    mkdir($extractPath, 0775, true);
-                    chown($extractPath, 'aselna');
-                    chgrp($extractPath, 'psacln');
-                    chown($zipPath, 'aselna');
-                    chgrp($zipPath, 'psacln');
+                $parentPath = dirname($extractPath);
+                if (!file_exists($parentPath)) {
+                    mkdir($parentPath, 0777, true);
+                    @chmod($parentPath, 0777);
                 }
 
+                if (!file_exists($extractPath)) {
+                    mkdir($extractPath, 0777, true);
+                    @chmod($extractPath, 0777);
+                    try {
+                        @chown($extractPath, 'aselna');
+                        @chgrp($extractPath, 'psacln');
+                    } catch (\Exception $e) {
+                        Log::warning("Could not change ownership of $extractPath: " . $e->getMessage());
+                    }
+                } else {
+                    @chmod($extractPath, 0777);
+                }
+
+                try {
+                    @chown($zipPath, 'aselna');
+                    @chgrp($zipPath, 'psacln');
+                    @chmod($zipPath, 0777);
+                } catch (\Exception $e) {
+                    Log::warning("Could not change ownership of $zipPath: " . $e->getMessage());
+                }
 
                 $zip = new \ZipArchive;
                 if ($zip->open($zipPath) === true) {
                     $zip->extractTo($extractPath);
                     $zip->close();
 
-                    //$files = scandir($extractPath);
+                    // Ensure extracted files are readable/writable
+                    $files = scandir($extractPath);
+                    foreach ($files as $file) {
+                        if ($file != '.' && $file != '..') {
+                            @chmod($extractPath . '/' . $file, 0777);
+                        }
+                    }
+
                     $files = scandir($extractPath, SCANDIR_SORT_DESCENDING);
                     foreach ($files as $key => $file) {
                         if (pathinfo($file, PATHINFO_EXTENSION) === 'xml' && $key == 0) {
                             $filePath = 'result-feeds/ebay/' . $listingId . '/' . $file;
                             $filePath = public_path($filePath);
-                            chown($filePath, 'aselna');
-                            chgrp($filePath, 'psacln');
+                            try {
+                                @chown($filePath, 'aselna');
+                                @chgrp($filePath, 'psacln');
+                            } catch (\Exception $e) {
+                                // Log if necessary
+                            }
+                            @chmod($filePath, 0777);
 
                             $xmlContent = file_get_contents($extractPath . '/' . $file);
                             $xml = simplexml_load_string($xmlContent);
