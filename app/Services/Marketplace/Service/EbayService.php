@@ -767,7 +767,7 @@ class EbayService implements MarketplaceServiceInterface
                     $files = scandir($extractPath, SCANDIR_SORT_DESCENDING);
                     foreach ($files as $key => $file) {
                         if (pathinfo($file, PATHINFO_EXTENSION) === 'xml' && $key == 0) {
-                            $filePath = 'result-feeds/ebay/' . $listingId . '/' . $file;
+                            $filePath = 'result-feeds/ebay/' . $identifier . '/' . $file;
                             $filePath = public_path($filePath);
                             try {
                                 @chown($filePath, 'aselna');
@@ -780,7 +780,7 @@ class EbayService implements MarketplaceServiceInterface
                             $xmlContent = file_get_contents($extractPath . '/' . $file);
                             $xml = simplexml_load_string($xmlContent);
 
-                            $feedType = $listingInfo->feed_type;
+                            $feedType = $feedInfo->feed_type;
                             switch ($feedType) {
                                 case FeedTypes::RESUBMIT:
                                 case FeedTypes::CREATE:
@@ -850,6 +850,11 @@ class EbayService implements MarketplaceServiceInterface
                                             }
                                         }
 
+                                        Log::info('Success Count: ' . $successCnt);
+                                        Log::info('Failed Count: ' . $failCnt);
+                                        Log::info('Warning Cnt: ' . $warningCnt);
+                                        Log::info('Error Msg: ' . $errorMsg);
+
                                         $feedInfo->update([
                                             'success_count' => $successCnt,
                                             'warning_count' => $warningCnt,
@@ -869,31 +874,33 @@ class EbayService implements MarketplaceServiceInterface
                                             ]);
                                         }
 
-                                        $listing_items = ListingItemLink::select('item_id')->where('listing_id', $listingId)->get();
-                                        if (count($listing_items ?? []) > 0) {
-                                            $successCnt = $failCnt = 0;
-                                            foreach ($listing_items as $item) {
+                                        if ($feedType == FeedTypes::CREATE) {
+                                            $listing_items = ListingItemLink::select('item_id')->where('listing_id', $listingId)->get();
+                                            if (count($listing_items ?? []) > 0) {
+                                                $successCnt = $failCnt = 0;
+                                                foreach ($listing_items as $item) {
 
-                                                $listingItem = ListingItem::findOrFail($item->item_id);
-                                                if ($listingItem->store_sku != '') {
-                                                    $listingItem->update([
-                                                        'sync_status' => ListingSyncStatus::Synchronized
-                                                    ]);
-                                                    $successCnt++;
-                                                } else {
-                                                    $listingItem->update([
-                                                        'sync_status' => ListingSyncStatus::Unsynchronize
-                                                    ]);
-                                                    $failCnt++;
+                                                    $listingItem = ListingItem::findOrFail($item->item_id);
+                                                    if ($listingItem->store_sku != '') {
+                                                        $listingItem->update([
+                                                            'sync_status' => ListingSyncStatus::Synchronized
+                                                        ]);
+                                                        $successCnt++;
+                                                    } else {
+                                                        $listingItem->update([
+                                                            'sync_status' => ListingSyncStatus::Unsynchronize
+                                                        ]);
+                                                        $failCnt++;
+                                                    }
                                                 }
-                                            }
-                                            $feedInfo->update([
-                                                'success_count' => $successCnt,
-                                                'fail_count' => $failCnt
-                                            ]);
+                                                $feedInfo->update([
+                                                    'success_count' => $successCnt,
+                                                    'fail_count' => $failCnt
+                                                ]);
 
-                                            if($failCnt > 0){
-                                                $this->resubmitFailedItems($listingId);
+                                                if ($failCnt > 0) {
+                                                    $this->resubmitFailedItems($listingId);
+                                                }
                                             }
                                         }
                                     }
@@ -1082,7 +1089,7 @@ class EbayService implements MarketplaceServiceInterface
                             }*/
                             /* counting based on store sku*/
 
-                            return 'result-feeds/ebay/' . $listingId . '/' . $file;
+                            return 'result-feeds/ebay/' . $identifier . '/' . $file;
                         }
                     }
                 }
