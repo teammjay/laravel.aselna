@@ -4351,7 +4351,7 @@ class ListingController extends Controller
         $results = $this->groupDeviceModels($devices, $device_seperator);
         $deviceSeries = $results['compressedDevices'];
         $modelSeries = $results['modelSeries'];
-        Log::info('Device Series :: ' . json_encode($deviceSeries));
+        //Log::info('Device Series :: ' . json_encode($deviceSeries));
 
         // Add the last title
         if (!empty($currentTitle)) {
@@ -5710,7 +5710,7 @@ class ListingController extends Controller
                 $results = array_merge($results, $childPaths);
             }
         }
-        Log::info('Temu Categories Path :: ' . json_encode($results));
+        //Log::info('Temu Categories Path :: ' . json_encode($results));
 
         return $results;
     }
