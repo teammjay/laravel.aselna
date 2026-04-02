@@ -942,6 +942,7 @@ class ListingController extends Controller
             $store_id = $request->input('store_id');
             $listing_type = $request->input('listing_type');
             $generation_type_id = $request->input('generate_type');
+            $include_carrier = $request->input('include_carrier');
             $store = null;
             $step = $request->input('step');
             $view = '';
@@ -981,22 +982,47 @@ class ListingController extends Controller
                 //Count of listings for this generation type
                 if($generation_type_id != '') {
                     //$listing_gen_type = ListingGenerationType::findOrFail($generation_type_id);
-                    $query->addSelect([
-                        'listed_count' => DB::table('listing_item')
-                            ->selectRaw('COUNT(*)')
-                            ->whereColumn('listing_item.store_product_id', 'store_product.id')
-                            ->where('listing_item.status', ListingStatus::Active)
-                            ->where('listing_item.generation_type_id', $generation_type_id)
-                    ]);
+                    if ($include_carrier){
 
-                    $query->addSelect([
-                        'listed_device_count' => DB::table('listing_item')
-                            ->join('listing_item_detail', 'listing_item_detail.listing_item_id', '=', 'listing_item.id')
-                            ->selectRaw('COUNT(DISTINCT listing_item_detail.device_id)')
-                            ->whereColumn('listing_item.store_product_id', 'store_product.id')
-                            ->where('listing_item.status', ListingStatus::Active)
-                            ->where('listing_item.generation_type_id', $generation_type_id)
-                    ]);
+                        $query->addSelect([
+                            'listed_count' => DB::table('listing_item')
+                                ->join('listing_item_detail', 'listing_item_detail.listing_item_id', '=', 'listing_item.id')
+                                ->selectRaw('COUNT(*)')
+                                ->whereColumn('listing_item.store_product_id', 'store_product.id')
+                                ->where('listing_item.status', ListingStatus::Active)
+                                //->where('listing_item.generation_type_id', $generation_type_id)
+                                ->whereNotNull('listing_item_detail.device_carrier_id')
+                        ]);
+
+                        $query->addSelect([
+                            'listed_device_count' => DB::table('listing_item')
+                                ->join('listing_item_detail', 'listing_item_detail.listing_item_id', '=', 'listing_item.id')
+                                ->selectRaw('COUNT(DISTINCT listing_item_detail.device_id)')
+                                ->whereColumn('listing_item.store_product_id', 'store_product.id')
+                                ->where('listing_item.status', ListingStatus::Active)
+                                ->where('listing_item.generation_type_id', $generation_type_id)
+                                ->whereNotNull('listing_item_detail.device_carrier_id')
+                        ]);
+
+                    }else {
+                        $query->addSelect([
+                            'listed_count' => DB::table('listing_item')
+                                ->selectRaw('COUNT(*)')
+                                ->whereColumn('listing_item.store_product_id', 'store_product.id')
+                                ->where('listing_item.status', ListingStatus::Active)
+                                //->where('listing_item.generation_type_id', $generation_type_id)
+                        ]);
+
+                        $query->addSelect([
+                            'listed_device_count' => DB::table('listing_item')
+                                ->join('listing_item_detail', 'listing_item_detail.listing_item_id', '=', 'listing_item.id')
+                                ->selectRaw('COUNT(DISTINCT listing_item_detail.device_id)')
+                                ->whereColumn('listing_item.store_product_id', 'store_product.id')
+                                ->where('listing_item.status', ListingStatus::Active)
+                                ->where('listing_item.generation_type_id', $generation_type_id)
+                                ->whereNotNull('listing_item_detail.device_id')
+                        ]);
+                    }
 
                 }
 

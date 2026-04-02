@@ -3289,7 +3289,7 @@
                     }*/
                 },
                 complete: function () {
-                    $("#ajax-preloader").hide();
+                    //$("#ajax-preloader").hide();
                 }
             });
         }
