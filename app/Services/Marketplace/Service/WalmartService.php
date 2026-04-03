@@ -23,6 +23,7 @@ use App\Services\CriticalErrorService;
 use App\Services\Marketplace\Contracts\MarketplaceServiceInterface;
 use App\Utils\FileUtility;
 use App\Utils\order\OrderUtility;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class WalmartService implements MarketplaceServiceInterface
