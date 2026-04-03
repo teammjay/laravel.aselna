@@ -74,13 +74,13 @@ class WalmartService implements MarketplaceServiceInterface
             $feedType = $this->getfeedType($feedInfo->feed_type);
 
             $authService = new WalmartAuthService($store->seller_id, $store->secret_key);
-            
+
             // Backward compatibility
             $file = public_path('feeds/walmart/' . $listingId . '.json');
             if (!file_exists($file) && $feedId) {
                 $file = public_path('feeds/walmart/' . $feedId . '.json');
             }
-            
+
             if (!file_exists($file)) {
                  // Special case for Inventory feed created during CREATE
                  $invFile = public_path('feeds/walmart/I_' . $listingId . '.json');
@@ -424,12 +424,11 @@ class WalmartService implements MarketplaceServiceInterface
                     'productSecondaryImageURL' => $imagesPath,
                     'manufacturerPartNumber' => '' . $item->sku,
                     'modelNumber' => $item->sku,
-//                'msrp' => floatval($productObj->product_mrsp),
-                    'color' => $productColor->name ?? '',
                 ];
 
                 $specifications = $this->getProductSpecifications($listingItem);
 
+                if (in_array('color', $requiredAttributes)) $visibleAttributes['color'] = $productColor->name;
                 if (in_array('compatibleModels', $requiredAttributes)) $visibleAttributes['compatibleModels'] = $compatibleDevices;
                 if (in_array('has_written_warranty', $requiredAttributes)) $visibleAttributes['has_written_warranty'] = $specifications['has_written_warranty'] ?? 'No';
                 if (in_array('has_nrtl_listing_certification', $requiredAttributes)) $visibleAttributes['has_nrtl_listing_certification'] = $specifications['has_nrtl_listing_certification'] ?? 'No';
@@ -459,9 +458,16 @@ class WalmartService implements MarketplaceServiceInterface
                         'unit' => 'in',
                         'measure' => $productObj->package_dimensions_length ?? 0,
                     ];
+                if (in_array('assembledProductWeight', $requiredAttributes))
+                    $visibleAttributes['assembledProductWeight'] = [
+                        'unit' => 'oz',
+                        'measure' => $productObj->product_package_weight ?? 0,
+                    ];
                 if (in_array('compatibleBrands', $requiredAttributes)) $visibleAttributes['compatibleBrands'] = $compatibleBrands;
                 if (in_array('cell_phone_case_type', $requiredAttributes))
                     $visibleAttributes['cell_phone_case_type'] = $specifications['cell_phone_case_type'] ?? 'Holster';
+                if (in_array('number_of_ports', $requiredAttributes))
+                    $visibleAttributes['number_of_ports'] = intval($specifications['number_of_ports'] ?? 0);
                 if (in_array('msrp', $requiredAttributes)) $visibleAttributes['msrp'] = floatval($productObj->product_mrsp);
                 foreach ($requiredAttributes as $attribute) {
                     if (!isset($visibleAttributes[$attribute]) && isset($specifications[$attribute])) {

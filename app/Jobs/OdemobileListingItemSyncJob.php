@@ -41,7 +41,7 @@ class OdemobileListingItemSyncJob implements ShouldQueue
             // Find all local stores with "odemobile" in their name (case-insensitive)
             $odemobileStores = Store::join('store_type', 'store_type.id', '=', 'store.store_type_id')
                 ->where('store_type.code', 'shopify')
-                ->whereIn('store.name',['OdeMobile'])
+                ->whereIn('store.name',['AccessoryChoice'])
                 ->select('store.id', 'store.name')
                 ->get();
 
