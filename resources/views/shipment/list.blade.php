@@ -739,6 +739,11 @@
 
             if(confirm) {
                 var shipment_id = $('input[name="shipment_id[]"]:checked').val();
+                var shipment_hold = $('input[name="shipment_id[]"]:checked').data('onhold');
+                if(shipment_hold){
+                    alert('This shipment is in hold.')
+                    return false;
+                }
                 if (shipment_id != '' && shipment_id != null) {
                     $.ajax({
                         url: "{{ route('shipment.getcancelshipmentdetail') }}",
