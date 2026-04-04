@@ -77,7 +77,7 @@ class AddProductSpecificationInfo extends Seeder
                                     'field_name' => $required,
                                 ]);
 
-                                foreach ($property['enum'] as $value) {
+                                foreach ($enumData as $value) {
                                     ProductSpecificationValue::updateOrCreate([
                                         'product_specification_id' => $productSpecification->id,
                                         'field_value' => $value,
