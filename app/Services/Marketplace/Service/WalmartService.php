@@ -461,7 +461,7 @@ class WalmartService implements MarketplaceServiceInterface
                 if (in_array('assembledProductWeight', $requiredAttributes))
                     $visibleAttributes['assembledProductWeight'] = [
                         'unit' => 'oz',
-                        'measure' => $productObj->product_package_weight ?? 0,
+                        'measure' => floatval($productObj->product_package_weight ?? 0),
                     ];
                 if (in_array('compatibleBrands', $requiredAttributes)) $visibleAttributes['compatibleBrands'] = $compatibleBrands;
                 if (in_array('cell_phone_case_type', $requiredAttributes))
@@ -469,6 +469,7 @@ class WalmartService implements MarketplaceServiceInterface
                 if (in_array('number_of_ports', $requiredAttributes))
                     $visibleAttributes['number_of_ports'] = intval($specifications['number_of_ports'] ?? 0);
                 if (in_array('msrp', $requiredAttributes)) $visibleAttributes['msrp'] = floatval($productObj->product_mrsp);
+                if (in_array('powerType', $requiredAttributes)) $visibleAttributes['powerType'] = [$specifications['powerType'] ?? ''];
                 foreach ($requiredAttributes as $attribute) {
                     if (!isset($visibleAttributes[$attribute]) && isset($specifications[$attribute])) {
                         $visibleAttributes[$attribute] = $specifications[$attribute] ?? '';
