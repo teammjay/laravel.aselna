@@ -14,10 +14,12 @@ use App\Models\ListingFeed;
 use App\Models\ListingItem;
 use App\Models\ListingItemLink;
 use App\Models\ListingItemProductImage;
+use App\Models\ListingRequirement;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\OrderSynchronization;
 use App\Models\ProductSpecification;
+use App\Models\ProductSpecificationInfo;
 use App\Services\Auth\WalmartAuthService;
 use App\Services\CriticalErrorService;
 use App\Services\Marketplace\Contracts\MarketplaceServiceInterface;
@@ -316,6 +318,10 @@ class WalmartService implements MarketplaceServiceInterface
 
             $listingItems = ListingItemLink::where('listing_id', $listingId)->cursor();
 
+            // Pre-fetch field types for casting
+            $specInfoMap = ProductSpecificationInfo::where('store_type_id', $store->store_type_id)
+                ->pluck('field_type', 'field_name');
+
             $jsonFeed = [
                 'MPItemFeedHeader' => [
 //                'subset' => 'EXTERNAL',
@@ -426,55 +432,65 @@ class WalmartService implements MarketplaceServiceInterface
                     'modelNumber' => $item->sku,
                 ];
 
+                // Fetch all required attributes dynamically from ListingRequirement
+                $requirements = ListingRequirement::where('category', $storeTypeCategory->name)
+                    ->where('store_type_id', $store->store_type_id)
+                    ->get();
+
                 $specifications = $this->getProductSpecifications($listingItem);
 
-                if (in_array('color', $requiredAttributes)) $visibleAttributes['color'] = $productColor->name;
-                if (in_array('compatibleModels', $requiredAttributes)) $visibleAttributes['compatibleModels'] = $compatibleDevices;
-                if (in_array('has_written_warranty', $requiredAttributes)) $visibleAttributes['has_written_warranty'] = $specifications['has_written_warranty'] ?? 'No';
-                if (in_array('has_nrtl_listing_certification', $requiredAttributes)) $visibleAttributes['has_nrtl_listing_certification'] = $specifications['has_nrtl_listing_certification'] ?? 'No';
-                if (in_array('condition', $requiredAttributes)) $visibleAttributes['condition'] = $specifications['condition'] ?? 'New';
-                if (in_array('isProp65WarningRequired', $requiredAttributes)) $visibleAttributes['isProp65WarningRequired'] = $specifications['isProp65WarningRequired'] ?? 'No';
-                if (in_array('smallPartsWarnings', $requiredAttributes))
-                    $visibleAttributes['smallPartsWarnings'] = [
-                        $specifications['smallPartsWarnings'] ?? '0 - No warning applicable'
-                    ];
-                if (in_array('netContent', $requiredAttributes))
-                    $visibleAttributes['netContent'] = [
-                        'productNetContentUnit' => 'Each',
-                        'productNetContentMeasure' => 1,
-                    ];
-                if (in_array('assembledProductWidth', $requiredAttributes))
-                    $visibleAttributes['assembledProductWidth'] = [
-                        'unit' => 'in',
-                        'measure' => $productObj->package_dimensions_width ?? 0,
-                    ];
-                if (in_array('assembledProductHeight', $requiredAttributes))
-                    $visibleAttributes['assembledProductHeight'] = [
-                        'unit' => 'in',
-                        'measure' => $productObj->package_dimensions_height ?? 0,
-                    ];
-                if (in_array('assembledProductLength', $requiredAttributes))
-                    $visibleAttributes['assembledProductLength'] = [
-                        'unit' => 'in',
-                        'measure' => $productObj->package_dimensions_length ?? 0,
-                    ];
-                if (in_array('assembledProductWeight', $requiredAttributes))
-                    $visibleAttributes['assembledProductWeight'] = [
-                        'unit' => 'oz',
-                        'measure' => floatval($productObj->product_package_weight ?? 0),
-                    ];
-                if (in_array('compatibleBrands', $requiredAttributes)) $visibleAttributes['compatibleBrands'] = $compatibleBrands;
-                if (in_array('cell_phone_case_type', $requiredAttributes))
-                    $visibleAttributes['cell_phone_case_type'] = $specifications['cell_phone_case_type'] ?? 'Holster';
-                if (in_array('number_of_ports', $requiredAttributes))
-                    $visibleAttributes['number_of_ports'] = intval($specifications['number_of_ports'] ?? 0);
-                if (in_array('msrp', $requiredAttributes)) $visibleAttributes['msrp'] = floatval($productObj->product_mrsp);
-                if (in_array('powerType', $requiredAttributes)) $visibleAttributes['powerType'] = [$specifications['powerType'] ?? ''];
-                foreach ($requiredAttributes as $attribute) {
-                    if (!isset($visibleAttributes[$attribute]) && isset($specifications[$attribute])) {
-                        $visibleAttributes[$attribute] = $specifications[$attribute] ?? '';
+                // 1. Process explicit column-to-attribute mappings from products table
+                foreach ($requirements as $requirement) {
+                    if ($requirement->type === 'column' && $requirement->table === 'products') {
+                        $attrName = $requirement->key_value;
+                        $colValue = $productObj->{$requirement->column};
+
+                        if ($colValue !== null && $colValue !== '') {
+                            $value = null;
+                            switch ($attrName) {
+                                case 'assembledProductWidth':
+                                case 'assembledProductHeight':
+                                case 'assembledProductLength':
+                                    $value = ['unit' => 'in', 'measure' => floatval($colValue)];
+                                    break;
+                                case 'assembledProductWeight':
+                                    $value = ['unit' => 'oz', 'measure' => floatval($colValue)];
+                                    break;
+                                case 'color':
+                                    $value = $productColor ? $productColor->name : $colValue;
+                                    break;
+                                default:
+                                    $value = $colValue;
+                            }
+
+                            if ($value !== null) {
+                                data_set($visibleAttributes, $attrName, $value);
+                            }
+                        }
                     }
                 }
+
+                // 2. Process ALL available specifications for this product
+                // This includes both required and optional fields from the specification table
+                foreach ($specifications as $attrName => $value) {
+                    if ($value !== null && $value !== '') {
+                        // Cast value based on Walmart schema requirement
+                        $type = $specInfoMap[$attrName] ?? 'string';
+                        if ($type === 'integer') {
+                            $value = (int)$value;
+                        } elseif ($type === 'number') {
+                            $value = (float)$value;
+                        } elseif ($type === 'boolean') {
+                            $value = filter_var($value, FILTER_VALIDATE_BOOLEAN);
+                        }
+
+                        // Support for nested attributes using dot notation and data_set
+                        data_set($visibleAttributes, $attrName, $value);
+                    }
+                }
+
+                if (in_array('compatibleModels', $requiredAttributes)) $visibleAttributes['compatibleModels'] = $compatibleDevices;
+                if (in_array('compatibleBrands', $requiredAttributes)) $visibleAttributes['compatibleBrands'] = $compatibleBrands;
 
                 $product['Visible'][$storeTypeCategory->name] = $visibleAttributes;
 
