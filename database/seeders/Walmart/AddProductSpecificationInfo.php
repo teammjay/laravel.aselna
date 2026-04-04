@@ -67,10 +67,12 @@ class AddProductSpecificationInfo extends Seeder
                             $this->addListingRequirement($this->storeType->id, $key, $required);
 
                             if (isset($property['enum']) || isset($property['items']['enum'])) {
-                                $enumData = $property['enum'];
-                                if (isset($property['items']['enum']) && !isset($enumData)) {
+                                $enumData = $property['enum'] ?? [];
+                                Log::info("Enum data for " . $required . " :: " . json_encode($enumData));
+                                if (isset($property['items']['enum'])) {
                                     $enumData = $property['items']['enum'];
                                 }
+                                Log::info("Final Enum data for " . $required . " :: " . json_encode($enumData));
                                 $productSpecification = ProductSpecifcationUniqueInfo::updateOrCreate([
                                     'field_name' => $required,
                                 ], [
