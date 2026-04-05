@@ -432,21 +432,21 @@ class WalmartService implements MarketplaceServiceInterface
                     'modelNumber' => $item->sku,
                 ];
 
-                // Fetch all required attributes dynamically from ListingRequirement
+                // Fetch all valid attributes for this category from ListingRequirement
                 $requirements = ListingRequirement::where('category', $storeTypeCategory->name)
                     ->where('store_type_id', $store->store_type_id)
                     ->get();
 
                 $specifications = $this->getProductSpecifications($listingItem);
 
-                // 1. Process explicit column-to-attribute mappings from products table
                 foreach ($requirements as $requirement) {
-                    if ($requirement->type === 'column' && $requirement->table === 'products') {
-                        $attrName = $requirement->key_value;
-                        $colValue = $productObj->{$requirement->column};
+                    $attrName = $requirement->key_value;
+                    $value = null;
 
+                    // 1. Resolve value from products table columns if specified
+                    if ($requirement->type === 'column' && $requirement->table === 'products') {
+                        $colValue = $productObj->{$requirement->column};
                         if ($colValue !== null && $colValue !== '') {
-                            $value = null;
                             switch ($attrName) {
                                 case 'assembledProductWidth':
                                 case 'assembledProductHeight':
@@ -462,17 +462,14 @@ class WalmartService implements MarketplaceServiceInterface
                                 default:
                                     $value = $colValue;
                             }
-
-                            if ($value !== null) {
-                                data_set($visibleAttributes, $attrName, $value);
-                            }
                         }
                     }
-                }
+                    // 2. Otherwise, resolve value from the specifications table
+                    elseif (isset($specifications[$attrName])) {
+                        $value = $specifications[$attrName];
+                    }
 
-                // 2. Process ALL available specifications for this product
-                // This includes both required and optional fields from the specification table
-                foreach ($specifications as $attrName => $value) {
+                    // 3. Process and add to feed if a value exists
                     if ($value !== null && $value !== '') {
                         // Cast value based on Walmart schema requirement
                         $type = $specInfoMap[$attrName] ?? 'string';
