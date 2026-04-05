@@ -2813,6 +2813,12 @@
                             $('#store_category').html(response.storeCategories);
                             $('#store_category').select2();
                         }
+
+                        if (response.warning_products && response.warning_products.length > 0) {
+                            let productList = response.warning_products.join("\n- ");
+                            alert("Please add some images to the following products (minimum 4 images required for Walmart):\n- " + productList);
+                        }
+
                         //generateTitleKeywords();
                         $(document).on('click', '.btn-danger', function () {
                             const targetModal = $(this).data('bs-target');

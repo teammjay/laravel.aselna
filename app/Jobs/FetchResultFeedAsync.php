@@ -51,7 +51,7 @@ class FetchResultFeedAsync implements ShouldQueue
                 ->orderBy('submit_ts', 'desc')
                 ->where(function ($query) {
                     $query->whereNull('status_check_count')
-                          ->orWhere('status_check_count', '<', 5);
+                          ->orWhere('status_check_count', '<', 15);
                 })
                 ->limit(5)
                 ->get();

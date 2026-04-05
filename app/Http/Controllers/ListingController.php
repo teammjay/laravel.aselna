@@ -976,7 +976,10 @@ class ListingController extends Controller
                 $query->addSelect([
                     'total_alt_images' => DB::table('product_image_alternatives')
                         ->selectRaw('COUNT(*)')
-                        ->whereColumn('product_image_alternatives.product_id', 'store_product.product_id')
+                        ->whereColumn('product_image_alternatives.product_id', 'store_product.product_id'),
+                    'total_images' => DB::table('product_images')
+                        ->selectRaw('COUNT(*)')
+                        ->whereColumn('product_images.product_id', 'store_product.product_id')
                 ]);
 
                 //Count of listings for this generation type
@@ -1087,6 +1090,15 @@ class ListingController extends Controller
                     ->leftJoin('store_type', 'store_type.id', '=', 'store.store_type_id')
                     ->where('store.id', $store_id)
                     ->first();
+
+                $warning_products = [];
+                if ($storeTypeName && $storeTypeName->storeTypeName === 'Walmart') {
+                    foreach ($products as $product) {
+                        if (($product->total_images) < 4) {
+                            $warning_products[] = $product->product->product_sku;
+                        }
+                    }
+                }
 
                 $storeCategories = [];
                 $cat_option = '';
@@ -1234,6 +1246,7 @@ class ListingController extends Controller
                         'totalproduct' => count($products),
                         'html' => $view,
                         'storeCategories' => $cat_option,
+                        'warning_products' => $warning_products
                     ]);
                 }
 
