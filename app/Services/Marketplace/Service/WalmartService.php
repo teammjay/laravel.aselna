@@ -491,6 +491,11 @@ class WalmartService implements MarketplaceServiceInterface
 
                 if (in_array('compatibleModels', $requiredAttributes)) $visibleAttributes['compatibleModels'] = $compatibleDevices;
                 if (in_array('compatibleBrands', $requiredAttributes)) $visibleAttributes['compatibleBrands'] = $compatibleBrands;
+                if (in_array('netContent', $requiredAttributes))
+                    $visibleAttributes['netContent'] = [
+                        'productNetContentUnit' => 'Each',
+                        'productNetContentMeasure' => 1,
+                    ];
 
                 $product['Visible'][$storeTypeCategory->name] = $visibleAttributes;
 
