@@ -483,6 +483,10 @@ class WalmartService implements MarketplaceServiceInterface
 
                         // Support for nested attributes using dot notation and data_set
                         data_set($visibleAttributes, $attrName, $value);
+
+                        if ($attrName == 'smallPartsWarnings') {
+                            data_set($visibleAttributes, 'smallPartsWarnings', [$value]);
+                        }
                     }
                 }
 
