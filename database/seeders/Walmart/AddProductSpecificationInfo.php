@@ -33,8 +33,7 @@ class AddProductSpecificationInfo extends Seeder
 
     private function fetchandStoreSpecifications($categories): void
     {
-        $exculdeKeys = ["productName", "brand", "shortDescription", "keyFeatures", "mainImageUrl", "netContent", "compatibleBrands", "compatibleModels",];
-//        $uniqueRequiredAttributes = [];
+        $excludeKeys = ["productName", "brand", "shortDescription", "keyFeatures", "mainImageUrl", "netContent", "compatibleBrands", "compatibleModels",];
         $categoryArray = [];
         foreach ($categories as $category) {
             $categoryArray[] = $category->code;
@@ -44,54 +43,96 @@ class AddProductSpecificationInfo extends Seeder
             $specifications = $this->walmartAuthService->getProductSpecifications('MP_ITEM', '5.0.20250828-17_32_59-api', $categoryArray);
             if (isset($specifications)) {
                 $specMap = $specifications['schema']['properties']['MPItem']['items']['properties']['Visible']['properties'] ?? [];
-                foreach ($specMap as $key => $specification) {
+                foreach ($specMap as $categoryKey => $specification) {
                     $requiredAttr = $specification['required'] ?? [];
-                    Log::info("Category Requirement: " . $key . " :: " . json_encode($requiredAttr));
-                    foreach ($requiredAttr as $required) {
-                        if (in_array($required, $exculdeKeys)) {
-                            continue;
-                        }
-                        $property = $specification['properties'][$required] ?? null;
-                        if ($property) {
-                            $propertyType = $property['type'] ?? 'string';
-                            ProductSpecificationInfo::updateOrCreate([
-                                'store_type_id' => $this->storeType->id,
-                                'field_name' => $required,
-                            ], [
-                                'store_type_id' => $this->storeType->id,
-                                'field_name' => $required,
-                                'field_local_name' => $required,
-                                'required' => 1,
-                            ]);
+                    Log::info("Category Requirement: " . $categoryKey . " :: " . json_encode($requiredAttr));
 
-                            $this->addListingRequirement($this->storeType->id, $key, $required);
-
-                            if (isset($property['enum'])) {
-                                $productSpecification = ProductSpecifcationUniqueInfo::updateOrCreate([
-                                    'field_name' => $required,
-                                ], [
-                                    'field_name' => $required,
-                                ]);
-
-                                foreach ($property['enum'] as $value) {
-                                    ProductSpecificationValue::updateOrCreate([
-                                        'product_specification_id' => $productSpecification->id,
-                                        'field_value' => $value,
-                                    ], [
-                                        'product_specification_id' => $productSpecification->id,
-                                        'field_value' => $value,
-                                        'store_type_id' => $this->storeType->id,
-                                    ]);
-                                }
+                    if (isset($specification['properties'])) {
+                        foreach ($specification['properties'] as $propKey => $property) {
+                            $isRequired = in_array($propKey, $requiredAttr);
+                            if ($isRequired) {
+                                $this->processProperty($categoryKey, $propKey, $property, $isRequired, '', $excludeKeys);
                             }
                         }
                     }
                 }
             }
         } catch (\Exception $e) {
-            Log::error("Error fetching specifications for category: " . $category->code . " :: " . $e->getMessage());
+            Log::error("Error fetching specifications for category: " . json_encode($categoryArray) . " :: " . $e->getMessage());
         }
         sleep(10);
+    }
+
+    private function processProperty($categoryKey, $propKey, $property, $isRequired = false, $prefix = '', $excludeKeys = [])
+    {
+        $fullName = $prefix ? "{$prefix}.{$propKey}" : $propKey;
+
+        if (in_array($fullName, $excludeKeys)) {
+            return;
+        }
+
+        $type = $property['type'] ?? 'string';
+
+        if ($type === 'object' && isset($property['properties'])) {
+            foreach ($property['properties'] as $childKey => $childProp) {
+                $childRequired = in_array($childKey, $property['required'] ?? []);
+                $this->processProperty($categoryKey, $childKey, $childProp, $childRequired, $fullName, $excludeKeys);
+            }
+        } elseif ($type === 'array' && isset($property['items']['properties'])) {
+            // For arrays of objects, we support at least the first index in the database
+            foreach ($property['items']['properties'] as $childKey => $childProp) {
+                $childRequired = in_array($childKey, $property['items']['required'] ?? []);
+                $this->processProperty($categoryKey, $childKey, $childProp, $childRequired, "{$fullName}.0", $excludeKeys);
+            }
+        } elseif ($type === 'array' && isset($property['items']['type'])) {
+            // Simple array of scalars, store as single key for now
+            $this->saveSpecificationDefinition($categoryKey, $fullName, $property, $isRequired);
+        } else {
+            // Leaf property
+            $this->saveSpecificationDefinition($categoryKey, $fullName, $property, $isRequired);
+        }
+    }
+
+    private function saveSpecificationDefinition($categoryKey, $fieldName, $property, $isRequired)
+    {
+        $propertyType = $property['type'] ?? 'string';
+        if ($propertyType === 'array' && isset($property['items']['type'])) {
+            $propertyType = 'array[' . $property['items']['type'] . ']';
+        }
+
+        ProductSpecificationInfo::updateOrCreate([
+            'store_type_id' => $this->storeType->id,
+            'field_name' => $fieldName,
+        ], [
+            'store_type_id' => $this->storeType->id,
+            'field_name' => $fieldName,
+            'field_local_name' => $fieldName,
+            'field_type' => $propertyType,
+            'field_description' => $property['description'] ?? null,
+            'required' => $isRequired ? 1 : 0,
+        ]);
+
+        $this->addListingRequirement($this->storeType->id, $categoryKey, $fieldName);
+
+        if (isset($property['enum']) || isset($property['items']['enum'])) {
+            $enumData = $property['enum'] ?? $property['items']['enum'] ?? [];
+            $productSpecification = ProductSpecifcationUniqueInfo::updateOrCreate([
+                'field_name' => $fieldName,
+            ], [
+                'field_name' => $fieldName,
+            ]);
+
+            foreach ($enumData as $value) {
+                ProductSpecificationValue::updateOrCreate([
+                    'product_specification_id' => $productSpecification->id,
+                    'field_value' => $value,
+                ], [
+                    'product_specification_id' => $productSpecification->id,
+                    'field_value' => $value,
+                    'store_type_id' => $this->storeType->id,
+                ]);
+            }
+        }
     }
 
     private function addListingRequirement(mixed $id, $code, mixed $required)

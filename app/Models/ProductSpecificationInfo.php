@@ -23,7 +23,7 @@ class ProductSpecificationInfo extends Model
             }
         });
     }
-    protected $fillable = ['id', 'field_name','field_local_name','required','store_type_id','created_at','updated_at'];
+    protected $fillable = ['id', 'field_name','field_local_name','field_type','field_description','required','store_type_id','created_at','updated_at'];
 
     public function storeType(){
         return $this->belongsTo(StoreType::class,'store_type_id');
