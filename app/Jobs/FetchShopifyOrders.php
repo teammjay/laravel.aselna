@@ -299,9 +299,10 @@ class FetchShopifyOrders implements ShouldQueue
 
                                         if ($product_detail) {
                                             $totalWeight += ($product_detail->product_weight * $item['quantity']);
+
+                                            Log::info('Product Detail: ' . json_encode($product_detail));
                                         }
 
-                                        Log::info('Product Detail: ' . json_encode($product_detail));
                                         $orderItemData = [
                                             'title' => $item['name'],
                                             'order_id' => $order_detail->id,
