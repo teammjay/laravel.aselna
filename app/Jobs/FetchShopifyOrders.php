@@ -308,7 +308,7 @@ class FetchShopifyOrders implements ShouldQueue
                                             'product_id' => isset($product_detail->product_id) ? $product_detail->product_id : NULL,
                                             'client_id' => $itemDetail->client ?? null,
                                             'listing_item_id' => $itemDetail->id ?? null,
-                                            'sku' => $product_detail->product_sku,
+                                            'sku' => $product_detail->product_sku ?? $item['sku'],
                                             'store_sku' => $order['id'],
                                             'quantity' => $item['quantity'],
                                             'id1' => $item['id'],
@@ -329,7 +329,7 @@ class FetchShopifyOrders implements ShouldQueue
                                             $orderOperationItemData = [
                                                 'order_item_id' => $order_item->id,
                                                 'order_operation_id' => $order_operation_detail->id,
-                                                'sku' => $product_detail->product_sku,
+                                                'sku' => $product_detail->product_sku ?? $item['sku'],
                                                 'quantity' => $item['quantity'],
                                                 //'client_id' => '',
                                                 'sync_status' => 6
