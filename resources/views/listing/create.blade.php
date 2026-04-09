@@ -3373,6 +3373,7 @@
                 type: 'POST',
                 data: {
                     product_id:product_ids,
+                    store_id:$('#listing_store').val(),
                     device_type:device_type,
                     devices:devices,
                     device_series:deviceSeries,
@@ -3383,7 +3384,9 @@
                     selected_device:selected_device,
                     is_selected:is_selected,
                     include_carrier:include_carrier,
-                    generate_type_name:generate_type_name
+                    generate_type_name:generate_type_name,
+                    generate_type:$('input[name="generate_type"]:checked').val(),
+                    listing_type:$('input[name="listing_type"]:checked').val(),
                 },
                 /* processData: false,
                  contentType: false,*/
