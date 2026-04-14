@@ -5437,6 +5437,20 @@ class ListingController extends Controller
                     'item_id' => $listingDetail->item_id,
                     'listing' => $listingDetail->listing
                 ];
+            } else {
+                // Fallback: get store from storeProduct
+                $storeProduct = $listingItem->storeProduct;
+                if ($storeProduct && $storeProduct->store_id) {
+                    $storeGroupedItems[$storeProduct->store_id][] = [
+                        'item_id' => $listingItem->id,
+                        'listing' => (object)[
+                            'generation_type_id' => $listingItem->generation_type_id,
+                            'include_carriers' => false,
+                            'brand_combo' => $listingItem->brand_combo ?? 0,
+                            'carrier_combo' => $listingItem->carrier_combo ?? 0,
+                        ]
+                    ];
+                }
             }
         }
 
