@@ -178,8 +178,9 @@ class WalmartService implements MarketplaceServiceInterface
         $authService = new WalmartAuthService($store->seller_id, $store->secret_key);
 
         $feedInfo = ListingFeed::where('id', $feedId)->first();
+        $itemCount = ListingItemLink::where('listing_id', $listingId)->count();
 
-        $response = $authService->getFeedStatus($feedInfo->feed_id, $feedInfo->number_of_items);
+        $response = $authService->getFeedStatus($feedInfo->feed_id, $itemCount);
         Log::info('Feed Status: ' . json_encode($response));
 
         // Always update counts regardless of status
@@ -187,7 +188,6 @@ class WalmartService implements MarketplaceServiceInterface
             'success_count' => $response['itemsSucceeded'] ?? 0,
             'fail_count' => $response['itemsFailed'] ?? 0,
             'processing_count' => $response['itemsProcessing'] ?? 0,
-            'number_of_items' => $response['itemsReceived'] ?? $feedInfo->number_of_items,
             'last_status_check_ts' => now(),
         ]);
 

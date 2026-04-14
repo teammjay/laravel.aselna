@@ -399,7 +399,20 @@ class OrderOperationUtility
             $orderItem = $item->orderItem;
             $product = $item->orderItem->product;
 //            $code = $product ? $product->product_sku : $item->sku;
-            $code = (isset($item->sku) && $item->sku != '') ? $item->sku : $product->product_sku;
+            $code = '';
+            if (isset($item->sku) && $item->sku != '') {
+                // If there is a hyphen, split it and take the first part
+                if (strpos($item->sku, '-') !== false) {
+                    $parts = explode('-', $item->sku);
+                    $code = $parts[0];
+                } else {
+                    // If there's no hyphen, just use the whole item SKU
+                    $code = $item->sku;
+                }
+            } else {
+                // Fallback if item SKU is not set or empty
+                $code = $product->product_sku;
+            }
 
             if($orderItem && $code){
                 $orderItem->update(['printed_sku' => $code]);

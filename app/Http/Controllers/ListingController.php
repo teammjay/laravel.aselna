@@ -1416,6 +1416,8 @@ class ListingController extends Controller
         $include_carrier = $request->input('include_carrier');
         $generate_type_name = $request->input('generate_type_name');
         $selected_device = $request->input('selected_device');
+        $generation_type_id = $request->input('generate_type');
+        $store_id = $request->input('store_id');
 
         if (empty($product_ids)) {
             return response()->json(['error' => true]);
@@ -1428,6 +1430,40 @@ class ListingController extends Controller
                 $field = 'carrier.name as carrier_name';
                 $field2 = 'carrier.id as carrier_id';
             }*/
+
+            /*$listingSub = DB::table('listing_item as li')
+                ->join('listing_item_detail as lid', 'lid.listing_item_id', '=', 'li.id')
+                ->join('store_product as sp', 'sp.id', '=', 'li.store_product_id')
+                ->select([
+                    'sp.product_id',
+                    DB::raw('COUNT(*) as total_listing_records'),
+                    DB::raw('COUNT(DISTINCT lid.device_id) as unique_device_count')
+                ])
+                ->where('li.status', ListingStatus::Active)
+                ->where('sp.product_id',$product_ids)
+                ->where('sp.store_id', $store_id)
+                ->when($generation_type_id, function ($q) use ($generation_type_id) {
+                    $q->where('li.generation_type_id', $generation_type_id);
+                })
+                ->groupBy('li.store_product_id');
+
+            $productsQuery = StoreProduct::where('store_product.product_id',$product_ids)->where('store_product.store_id', $store_id); // or your existing query
+
+            $productsQuery->leftJoinSub($listingSub, 'ls', function ($join) {
+                $join->on('ls.product_id', '=', 'store_product.product_id');
+            });
+
+            $productsQuery->addSelect([
+                DB::raw('COALESCE(ls.total_listing_records, 0) as total_listing_records'),
+                DB::raw('COALESCE(ls.unique_device_count, 0) as unique_device_count')
+            ]);
+
+            $p = $productsQuery->get();
+
+            echo '<pre>';
+            print_r($p);
+            echo '<pre>';die;*/
+
             $query = Device::select('device.*', 'product_interface.product_id', 'products.product_sku', 'products.product_title','brands.name as brand_name')
                 ->with(['brand', 'rating', 'deviceType', 'deviceSeries']);
             $query->leftJoin('brands', 'brands.id', '=', 'device.brand_id');
@@ -1476,9 +1512,9 @@ class ListingController extends Controller
             $count = $query->count();
 
             $devicesList = $query->get();
-            //echo '<pre>';
-            //print_r($devices);
-            // echo '</pre>';die;
+//            echo '<pre>';
+//            print_r($devicesList);
+//             echo '</pre>';die;
             //echo $query->toSql();die;
 //            $count = $devicesList->count();
 
@@ -5401,6 +5437,20 @@ class ListingController extends Controller
                     'item_id' => $listingDetail->item_id,
                     'listing' => $listingDetail->listing
                 ];
+            } else {
+                // Fallback: get store from storeProduct
+                $storeProduct = $listingItem->storeProduct;
+                if ($storeProduct && $storeProduct->store_id) {
+                    $storeGroupedItems[$storeProduct->store_id][] = [
+                        'item_id' => $listingItem->id,
+                        'listing' => (object)[
+                            'generation_type_id' => $listingItem->generation_type_id,
+                            'include_carriers' => false,
+                            'brand_combo' => $listingItem->brand_combo ?? 0,
+                            'carrier_combo' => $listingItem->carrier_combo ?? 0,
+                        ]
+                    ];
+                }
             }
         }
 
