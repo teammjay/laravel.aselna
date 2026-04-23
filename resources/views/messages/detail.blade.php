@@ -1878,6 +1878,11 @@
             });
         }
 
+        $(document).on('change','select[name="carrier_name_ms"]',function () {
+            var ele = $(this);
+            getShippingCarrierService(ele);
+        });
+
         function getShippingCarrierService(element){
             $.ajax({
                 url: "<?php echo e(route('shipment.getshippingcarrier')); ?>",
@@ -1889,8 +1894,8 @@
                 success: function (response) {
                     // If success, remove the user row from the table
                     if (response.success) {
-                        $('#carrier_service_id').html(response.option);
-                        $('#shipping_carrier_service').html(response.option);
+                        $('[id="carrier_service_id"]').html(response.option);
+                        $('[id="shipping_carrier_service"]').html(response.option);
                     }
                 },
                 error: function (xhr) {
