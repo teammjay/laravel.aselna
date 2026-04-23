@@ -736,6 +736,26 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
             Log::info('No order found by buyer email');
         }
 
+
+        // 3. Match by sender's email address from in_reply_to (Medium-Confidence)
+        if (!empty($email['in_reply_to'])) {
+            Log::info('Attempting to find order by buyer email', ['email' => $email['in_reply_to']]);
+
+            $order = Order::with('customer', 'orderOperation')
+                ->where('buyer_email', trim($email['in_reply_to']))
+                ->whereNotNull('purchase_order_id')
+                ->orderBy('order_date', 'desc')
+                ->first();
+            if ($order) {
+                Log::info('Order found by buyer_email', [
+                    'order_id' => $order->order_id,
+                    'order_date' => $order->order_date
+                ]);
+                return $order;
+            }
+            Log::info('No order found by buyer email');
+        }
+
         // 4. Match by sender's name (Low-Confidence)
         if (!empty($email['name'])) {
             $nameParts = explode(' ', trim($email['name']));

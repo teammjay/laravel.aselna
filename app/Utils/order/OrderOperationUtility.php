@@ -766,15 +766,20 @@ class OrderOperationUtility
                         Log::info('Cancellation :: ' . json_encode($cancellation));
                         $response = $authService->approveCancellation($cancellation['cancelId']);
 
+                        $orderOperation->update(['status' => OrderOperationStatus::Canceled]);
+                        if (isset($orderOperation->order->id)) {
+                            $order = Order::findOrFail($orderOperation->order->id);
+                            $order->update(['order_status' => OrderStatus::Canceled]);
+                        }
+
                         if (isset($orderOperation->order->orderItem)) {
                             foreach ($orderOperation->order->orderItem as $o_item) {
                                 $item_qty = $o_item->quantity;
                                 $orderItem = OrderItem::findOrFail($o_item->id);
                                 $orderItem->update(['canceled_quantity' => $item_qty]);
-
-                                $data['status'] = true;
-                                return $data;
                             }
+                            $data['status'] = true;
+                            return $data;
                         } else {
                             $data['status'] = false;
                             $data['message'] = 'Cancellation code Need to be implemented for this type of data';
