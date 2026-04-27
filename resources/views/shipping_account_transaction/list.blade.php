@@ -91,11 +91,11 @@
     </div>--}}
 
     <div class="card card-default">
-        <div class="card-header">
+        <div class="card-header" style="cursor: pointer;">
             <h3 class="card-title"><a href="javascript:void(0);" class="text-blue">Add search condition</a></h3>
-            <i class="fa fa-angle-down float-right"></i>
+            <i class="fa fa-angle-up float-right"></i>
         </div>
-        <div class="card-body" style="display: none;">
+        <div class="card-body" style="display: block;">
             <form id="filter-form">
 
                 <div class="row pt-3">
@@ -329,14 +329,23 @@
 
             $('.card-header').on('click', function () {
                 if ($(this).find('.fa').hasClass('fa-angle-down')) {
-                    $(this).find('.fa').removeClass('fa-angle-down');
-                    $(this).find('.fa').addClass('fa-angle-up');
+                    $(this).find('.fa').removeClass('fa-angle-down').addClass('fa-angle-up');
+                    sessionStorage.setItem('account_transaction_filter_open', '1');
                 } else {
-                    $(this).find('.fa').removeClass('fa-angle-up');
-                    $(this).find('.fa').addClass('fa-angle-down');
+                    $(this).find('.fa').removeClass('fa-angle-up').addClass('fa-angle-down');
+                    sessionStorage.setItem('account_transaction_filter_open', '0');
                 }
                 $('.card-body').toggle();
             });
+
+            var filterOpen = sessionStorage.getItem('account_transaction_filter_open');
+            if (filterOpen === '0') {
+                $('.card-header').find('.fa').removeClass('fa-angle-up').addClass('fa-angle-down');
+                $('.card-body').hide();
+            } else if (filterOpen === '1') {
+                $('.card-header').find('.fa').removeClass('fa-angle-down').addClass('fa-angle-up');
+                $('.card-body').show();
+            }
             $('#created_at, #transaction_date, #cancelled_date').datepicker({
                 dateFormat: 'yy-mm-dd',
             });
