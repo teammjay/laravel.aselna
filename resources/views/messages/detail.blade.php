@@ -367,6 +367,7 @@
                                     <button type="button" class="btn btn-default {{ $displayRefund }}" name="refund" id="refund">Refund</button>
                                     <button type="button" class="btn btn-default {{ $displayShipped }}" name="ship_order" id="ship_order">Ship Order</button>
                                     <button type="button" class="btn btn-default {{ $displayCanceled }}" name="cancel_order" id="cancel_order">Cancel Order</button>
+                                    <button type="button" class="btn btn-danger" name="delete_message" id="delete_message">Delete</button>
                                 {{--@endif--}}
                                 </div>
                             </div>
@@ -1502,6 +1503,36 @@
                 });
             });
 
+            $(document).on('click','#delete_message',function () {
+                if (confirm("Are you sure you want to delete this message?") == true) {
+                    let ticket_id = '{{ $ticketDetail->id }}';
+                    var ticket_ids = [ticket_id];
+                    $.ajax({
+                        type: "POST",
+                        url: "{{ route('message.updateticket') }}",
+                        data: {
+                            ticket_id: ticket_ids,
+                            status: 3,
+                        },
+                        headers: {
+                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                        },
+
+                        success: function (data) {
+                            if (data.success) {
+                                alert('Message deleted successfully.');
+                                window.location.href = "{{ route('message.index') }}";
+                            }
+                        },
+                        error: function (xhr) {
+                        },
+                        complete: function () {
+                            $("#ajax-preloader").hide();
+                        }
+                    });
+                }
+            });
+
             $(document).on('click','#cancel_order',function () {
                 var order_id = $('#order_id').val();
                 if(order_id != '' && order_id != null){
@@ -1878,6 +1909,11 @@
             });
         }
 
+        $(document).on('change','select[name="carrier_name_ms"]',function () {
+            var ele = $(this);
+            getShippingCarrierService(ele);
+        });
+
         function getShippingCarrierService(element){
             $.ajax({
                 url: "<?php echo e(route('shipment.getshippingcarrier')); ?>",
@@ -1889,8 +1925,8 @@
                 success: function (response) {
                     // If success, remove the user row from the table
                     if (response.success) {
-                        $('#carrier_service_id').html(response.option);
-                        $('#shipping_carrier_service').html(response.option);
+                        $('[id="carrier_service_id"]').html(response.option);
+                        $('[id="shipping_carrier_service"]').html(response.option);
                     }
                 },
                 error: function (xhr) {
