@@ -1521,7 +1521,7 @@
                         success: function (data) {
                             if (data.success) {
                                 alert('Message deleted successfully.');
-                                window.location.href = "{{ route('message.index') }}";
+                                window.location.href = "{{ route('message.need_action') }}";
                             }
                         },
                         error: function (xhr) {
