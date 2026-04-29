@@ -522,6 +522,7 @@ class OrderUtility
                         'product_id' => $itemDetail->storeProduct->product->product_id,
                         'store_sku' => $item['legacyItemId'],
                         'id1' => $item['lineItemId'],
+                        'id2' => $item['legacyVariationId'],
                     ], $orderItemData);
                     Log::info("Came Till Here 3 :: " . json_encode($order_item));
 
