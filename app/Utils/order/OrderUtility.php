@@ -509,6 +509,7 @@ class OrderUtility
                         'store_sku' => $item['legacyItemId'],
                         'quantity' => $item['quantity'],
                         'id1' => $item['lineItemId'],
+                        'id2' => $item['legacyVariationId'],
                         'item_price' => $item['lineItemCost']['value'],
                         'shipping_price' => $item['deliveryCost']['shippingCost']['value'],
                         'item_tax' => 0,
