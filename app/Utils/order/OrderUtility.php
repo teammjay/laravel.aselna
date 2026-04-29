@@ -570,6 +570,7 @@ class OrderUtility
                         'store_sku' => $item['legacyItemId'],
                         'quantity' => $item['quantity'],
                         'id1' => $item['lineItemId'],
+                        'id2' => $item['legacyVariationId'],
                         'item_price' => $item['lineItemCost']['value'],
                         'shipping_price' => $item['deliveryCost']['shippingCost']['value'],
                         'item_tax' => 0,
@@ -582,6 +583,8 @@ class OrderUtility
                     $order_item = OrderItem::updateOrCreate([
                         'order_id' => $order->id,
                         'store_sku' => $item['legacyItemId'],
+                        'id1' => $item['lineItemId'],
+                        'id2' => $item['legacyVariationId'],
                     ], $orderItemData);
 
                     if ($order_item->id) {
