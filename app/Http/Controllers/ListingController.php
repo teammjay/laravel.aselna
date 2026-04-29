@@ -174,9 +174,10 @@ class ListingController extends Controller
             'manufacturer'
         ])
             ->whereIn('id', $ids)
-            ->orderBy($sortColumn, $columnSortOrder)
-//            ->orderByRaw('FIELD(id, ' . implode(',', $ids) . ')')
-            ->get();
+            ->get()
+            ->sortBy(function ($item) use ($ids) {
+                return array_search($item->id, $ids);
+            });
 
         $data = [];
         foreach ($items as $product) {
