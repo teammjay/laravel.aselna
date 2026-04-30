@@ -8,6 +8,7 @@ use App\Http\Controllers\ImagesController;
 use App\Http\Controllers\InterfaceController;
 use App\Http\Controllers\ProductInterfaceController;
 use App\Http\Controllers\UPCController;
+use App\Http\Controllers\WalmartExportController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/upload-image', [ImagesController::class, 'uploadImage'])->name('images.upload');
@@ -25,3 +26,5 @@ Route::get('/product-interface-data', [ProductInterfaceController::class, 'getPr
 Route::get('/upc-code-data', [UPCController::class, 'getUpcData'])->name('upc-code-data');
 
 Route::get('/stores', [UPCController::class, 'getStoresData']);
+
+Route::get('/export/walmart-orders-csv', [WalmartExportController::class, 'exportWalmartOrdersCsv']);
