@@ -571,6 +571,12 @@ class OrderOperationUtility
                         }
                     }
 
+                    $orderOperation->update(['status' => OrderOperationStatus::Canceled]);
+                    if (isset($orderOperation->order->id)) {
+                        $order = Order::findOrFail($orderOperation->order->id);
+                        $order->update(['order_status' => OrderStatus::Canceled]);
+                    }
+
                     $data['message'] = 'Shopify cancer order successful';
                     $data['status'] = true;
 
