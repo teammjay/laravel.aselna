@@ -172,6 +172,12 @@ class SyncAllOrderStatusJob implements ShouldQueue
                         $order->save();
                         $operation->save();
                     }
+                    if(isset($orderDetail['displayFinancialStatus'])){
+                        if(strtolower($orderDetail['displayFinancialStatus']) == 'pending'){
+                            $operation->status = OrderOperationStatus::PaymentPending;
+                            $operation->save();
+                        }
+                    }
                     if(isset($orderDetail['risk']['assessments'][0]['riskLevel']) && ($orderDetail['risk']['assessments'][0]['riskLevel'] == 'HIGH' || $orderDetail['risk']['assessments'][0]['riskLevel'] == 'MEDIUM')){
                         $sync_message = '';
                         if(isset($order['risk']['assessments'][0]['facts']) && is_array($order['risk']['assessments'][0]['facts'])){
