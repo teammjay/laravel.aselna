@@ -19,6 +19,7 @@ class OrderOperationStatus
     const MarkAsShipped = 13;
 
     const CanceledRequested = 20;
+    const PaymentPending = 21;
 
     const Requested = 50;
     const Completed = 51;
@@ -57,6 +58,7 @@ class OrderOperationStatus
         self::Completed => 'Completed',
         self::Rejected => 'Rejected',
         self::CanceledRequested => 'Canceled Requested',
+        self::PaymentPending => 'Payment Not Completed',
 
         self::ESCALATED => 'Escalated',
         self::PARTIAL_REFUND_OFFERED => 'Partial Refund Offered',

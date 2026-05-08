@@ -74,7 +74,7 @@ class ShipmentsController extends Controller
             'shippingPackage:id,name',
         ])->select('order_operation.*', 'order_operation.id as oid');
 
-        $query->whereIn('order_operation.status', [OrderOperationStatus::Created, OrderOperationStatus::CanceledRequested, OrderOperationStatus::LabelPrinted]);
+        $query->whereIn('order_operation.status', [OrderOperationStatus::Created, OrderOperationStatus::CanceledRequested, OrderOperationStatus::LabelPrinted, OrderOperationStatus::PaymentPending]);
         $query->where('order_operation.is_merged', '=', false);
 
         // Filter by store
@@ -271,6 +271,11 @@ class ShipmentsController extends Controller
                             break; // if any of the merged operation has sync message, we will show that message in shipment list
                         }
                     }
+                }
+                $opstatus = null;
+                if ($order->status == OrderOperationStatus::PaymentPending) {
+                    $status = 2;
+                    $status_message = 'Payment not completed';
                 }
                 if ($order->status == OrderOperationStatus::CanceledRequested) {
                     $status = 2;
