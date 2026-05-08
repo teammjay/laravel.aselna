@@ -217,9 +217,13 @@ class FetchShopifyOrders implements ShouldQueue
                                 }
                             }
 
-                            if(isset($order['displayFinancialStatus']) && strtolower($order['displayFinancialStatus']) == 'expired'){
-                                $orderstatus = OrderStatus::Canceled;
-                                $orderOperationstatus = OrderOperationStatus::Canceled;
+                            if(isset($order['displayFinancialStatus'])){
+                                if (strtolower($order['displayFinancialStatus']) == 'expired'){
+                                    $orderstatus = OrderStatus::Canceled;
+                                    $orderOperationstatus = OrderOperationStatus::Canceled;
+                                } elseif (strtolower($order['displayFinancialStatus']) != 'paid') {
+                                    $orderOperationstatus = OrderOperationStatus::PaymentPending;
+                                }
                             }
 
                             $orderData = [
@@ -254,6 +258,10 @@ class FetchShopifyOrders implements ShouldQueue
                                         $sync_message .= $facts['description'].PHP_EOL;
                                     }
                                 }
+                            }
+
+                            if($orderOperationstatus == OrderOperationStatus::PaymentPending){
+                                $sync_message = ($sync_message ? $sync_message . PHP_EOL : '') . "Payment not completed";
                             }
 
                             /* create order operatation*/
@@ -439,6 +447,15 @@ class FetchShopifyOrders implements ShouldQueue
                                     if(!empty($orderOperationDetail)){
                                         $orderOpObj = OrderOperation::findOrFail($orderOperationDetail->id);
                                         $orderOpObj->update(['status'=>OrderOperationStatus::Canceled]);
+                                    }
+                                }
+
+                                if(isset($order['displayFinancialStatus'])){
+                                    if(strtolower($order['displayFinancialStatus']) == 'pending'){
+                                        if(!empty($orderOperationDetail) && $orderOperationDetail->status != OrderOperationStatus::PaymentPending){
+                                            $orderOpObj = OrderOperation::findOrFail($orderOperationDetail->id);
+                                            $orderOpObj->update(['status'=>OrderOperationStatus::PaymentPending, 'sync_message' => NULL]);
+                                        }
                                     }
                                 }
 
