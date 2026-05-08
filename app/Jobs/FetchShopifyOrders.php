@@ -217,15 +217,6 @@ class FetchShopifyOrders implements ShouldQueue
                                 }
                             }
 
-                            if(isset($order['displayFinancialStatus'])){
-                                if (strtolower($order['displayFinancialStatus']) == 'expired'){
-                                    $orderstatus = OrderStatus::Canceled;
-                                    $orderOperationstatus = OrderOperationStatus::Canceled;
-                                } elseif (strtolower($order['displayFinancialStatus']) != 'paid') {
-                                    $orderOperationstatus = OrderOperationStatus::PaymentPending;
-                                }
-                            }
-
                             $orderData = [
                                 'order_id' => $order['id'],
                                 'order_date' => date('Y-m-d H:i:s', strtotime($order['createdAt'])),
@@ -258,10 +249,6 @@ class FetchShopifyOrders implements ShouldQueue
                                         $sync_message .= $facts['description'].PHP_EOL;
                                     }
                                 }
-                            }
-
-                            if($orderOperationstatus == OrderOperationStatus::PaymentPending){
-                                $sync_message = ($sync_message ? $sync_message . PHP_EOL : '') . "Payment not completed";
                             }
 
                             /* create order operatation*/
