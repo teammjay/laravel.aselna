@@ -274,6 +274,9 @@ class FetchShopifyProductsJob implements ShouldQueue
                 if (ListingItemProductImage::where('listing_item_id', $listingItem->id)->where('path', $imageUrl)->exists()) {
                     continue;
                 }
+                if (ListingItemProductImage::where('listing_item_id', $listingItem->id)->where('reference_id', $imageIdReplaced)->exists()) {
+                    continue;
+                }
                 if(isset($AlreadyImages) && array_key_exists($imageUrl,$AlreadyImages)){
                 } else {
                     $altText = $mediaItem['alt'] ?? '';
