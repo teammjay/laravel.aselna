@@ -695,7 +695,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                     $collection_url = $item_detail->url;
                                 }
 
-                                if (!isset($collection_url)) {
+                                if (!isset($collection_url) || $collection_url == '') {
                                     $collection_url = $devicePage->url_path ?? '';
                                 }
 
