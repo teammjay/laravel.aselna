@@ -217,7 +217,7 @@ class ShopifyBrandPageSyncJob implements ShouldQueue
                         $subquery->whereNull('store_navigation_page.id')
                             ->orWhereRaw('store_navigation_page.updated_at < GREATEST(device.updated_at, COALESCE(di.last_interface_update, "1970-01-01"))');
                     })->whereIn('device_type_id', $compatibleDeviceTypes)
-                        ->orderBy('device.id')->chunk(100, function ($devices) use ($page_type, $template, $request) {
+                        ->chunkById(100, function ($devices) use ($page_type, $template, $request) {
                             foreach ($devices as $device) {
                                 Log::info('Processing device :: ' . $device->name . ' with id :: ' . $device->id);
                                 $handle = null;
@@ -323,7 +323,7 @@ class ShopifyBrandPageSyncJob implements ShouldQueue
                                     );
                                 }
                             }
-                        });
+                        }, 'device.id','id');
                     break;
                 case WebStorePageType::BRAND_DEVICE_PRODUCT_TYPES:
                     Device::where('status', 'active')->whereIn('device_type_id', $compatibleDeviceTypes)->orderBy('id')->chunk(100, function ($devices) use ($page_type, $template, $request) {

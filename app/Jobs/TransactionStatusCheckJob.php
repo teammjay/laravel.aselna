@@ -33,27 +33,34 @@ class TransactionStatusCheckJob implements ShouldQueue
 
     public function handle():void
     {
-        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Endicia Transaction Status Check']);
+        try {
+            $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Endicia Transaction Status Check']);
 
-        AccountTransaction::with('shippingAccount')
-            ->where(function ($q) {
-                $q->where('canceled', 0)
-                    ->orWhereNull('canceled');
-            })
-            ->where(function ($q) {
-                $q->where('status','!=', 'Delivered')->where('status','!=', 'Status not found')
-                    ->orWhereNull('status');
-            })
-            //->where('status','!=','Delivered')
-            ->orderBy('transaction_date','asc')
-            ->chunk(100, function ($transactions) {
-                $this->checkTransactionStatus($transactions);
-            });
+            AccountTransaction::with('shippingAccount')
+                ->where(function ($q) {
+                    $q->where('canceled', 0)
+                        ->orWhereNull('canceled');
+                })
+                ->where(function ($q) {
+                    $q->where('status', '!=', 'Delivered')->where('status', '!=', 'Status not found')
+                        ->orWhereNull('status');
+                })
+                //->where('status','!=','Delivered')
+                ->orderBy('transaction_date', 'asc')
+                ->chunk(100, function ($transactions) {
+                    $this->checkTransactionStatus($transactions);
+                });
 
-        $this->updateTrackingRecord([
-            'status' => 'completed',
-            'finished_at' => now()
-        ]);
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
+        } catch (\Exception $exception) {
+            $this->updateTrackingRecord([
+                'status' => 'failed',
+                'finished_at' => now()
+            ]);
+        }
 
     }
 
