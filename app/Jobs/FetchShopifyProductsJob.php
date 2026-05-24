@@ -243,25 +243,22 @@ class FetchShopifyProductsJob implements ShouldQueue
 
     private function handleMediaImages($product, $listingItem)
     {
-//        $query = DB::connection('easyesale_db')->table('listing_item_product_image')
-//            ->join('product_image', 'product_image.id', '=', 'listing_item_product_image.product_image_id')
-//            ->where('product_id', 'd75692a5-d38c-4599-9cc0-25d526a63686')->whereNotNull('reference_id');
-
-
-//        $listingImages = $query->get();
-        $AlreadyImages = [];
-//        foreach ($listingImages as $listingImage) {
-//            $AlreadyImages[$listingImage->path] = [
-//                'path' => $listingImage->path,
-//                'main_image' => $listingImage->main_image,
-//                'listing_item_id' => $listingImage->listing_item_id,
-//                'sort_order' => $listingImage->sort_order,
-//                'code' => $listingImage->code
-//            ];
-//        }
-
         $media = $product['media']['nodes'];
         Log::info('No of Media Items: ' . json_encode($media));
+
+        $shopifyMediaIds = [];
+        foreach ($media as $node) {
+            if ($node['mediaContentType'] == 'IMAGE') {
+                $shopifyMediaIds[] = str_replace('gid://shopify/MediaImage/', '', $node['id']);
+            }
+        }
+
+        // Delete local images that have a reference_id but are NOT in Shopify anymore
+        ListingItemProductImage::where('listing_item_id', $listingItem->id)
+            ->whereNotNull('reference_id')
+            ->whereNotIn('reference_id', $shopifyMediaIds)
+            ->delete();
+
         foreach ($media as $mediaItem) {
             if ($mediaItem['mediaContentType'] == 'IMAGE') {
                 if (!isset($mediaItem['preview']['image']['url'])) {

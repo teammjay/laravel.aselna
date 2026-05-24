@@ -109,7 +109,7 @@ class ShopifyBrandPageSyncJob implements ShouldQueue
                 case WebStorePageType::BRAND:
                     Log::info('Page Type :: ' . $page_type);
                     $this->getPuplications();
-                    $brands = Brand::leftJoin('store_navigation_page', function ($join) {
+                    $brands = Brand::select(['brands.name','brands.id','brands.image'])->leftJoin('store_navigation_page', function ($join) {
                         $join->on('store_navigation_page.device_brand_id', '=', 'brands.id')
                             ->where('store_navigation_page.store_id', $this->store_id)
                             ->where('store_navigation_page.page_type', WebStorePageType::BRAND);
