@@ -934,18 +934,14 @@ class SubmitShopifyProductsJob implements ShouldQueue
         foreach ($media as $mediaItem) {
             if ($mediaItem['mediaContentType'] == 'IMAGE') {
                 if (!isset($mediaItem['id'])) continue;
-//                if (!isset($mediaItem['preview']['image']['url'])) {
-//                    continue;
-//                }
+
                 $ImageId = $mediaItem['id'];
                 $imageIdReplaced = str_replace('gid://shopify/MediaImage/', '', $ImageId);
                 Log::info('Media Image: ' . json_encode($mediaItem));
                 $imageUrl = $mediaItem['preview']['image']['url'] ?? null;
-//                if (ListingItemProductImage::where('listing_item_id', $listingItem->id)->where('path', $imageUrl)->exists()) {
-//                    continue;
-//                }
-                if(isset($AlreadyImages) && array_key_exists($imageUrl,$AlreadyImages)){
 
+                if(isset($AlreadyImages) && array_key_exists($imageUrl,$AlreadyImages)){
+                    // skip
                 } else {
                     $altText = $mediaItem['alt'] ?? '';
                     Log::info('Image URL: ' . $imageUrl);
@@ -987,10 +983,6 @@ class SubmitShopifyProductsJob implements ShouldQueue
             if (!ListingItemProductImage::where('reference_id',$imageIdReplaced)->exists()) {
                 $mediaIds[] = $mediaId;
             }
-//            $altText = $image['alt'];
-//            if ($altText == null || $altText == '') {
-//                $mediaIds[] = $mediaId;
-//            }
         }
         if (count($mediaIds) == 0) {
             return;
