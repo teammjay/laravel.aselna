@@ -21,7 +21,7 @@ class TransactionStatusCheckJob implements ShouldQueue
         Queueable::withChain as queueableWithChain;
     }
 
-    public $timeout = 30000; // Set a timeout for the job
+    public $timeout = 3000; // Set a timeout for the job
 
     /**
      * Create a new job instance.
@@ -41,6 +41,7 @@ class TransactionStatusCheckJob implements ShouldQueue
                     $q->where('canceled', 0)
                         ->orWhereNull('canceled');
                 })
+                ->where('transaction_date', '>=', now()->subMonths(6))
                 ->where(function ($q) {
                     $q->where('status', '!=', 'Delivered')->where('status', '!=', 'Status not found')
                         ->orWhereNull('status');
