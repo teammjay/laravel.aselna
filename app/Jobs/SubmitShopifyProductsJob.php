@@ -15,6 +15,7 @@ use App\Models\Store;
 use App\Models\ManageMarketplaceProduct;
 use App\Models\ProductImages;
 use App\Models\ProductInterface;
+use App\Models\ProductSpecification;
 use App\Models\ProductTags;
 use App\Models\StoreProduct;
 use App\Models\StoreTypeListing;
@@ -1061,6 +1062,23 @@ class SubmitShopifyProductsJob implements ShouldQueue
                 'key' => 'interface',
                 'value' => $productInterface->interface_id,
                 'type' => 'single_line_text_field'
+            ];
+        }
+
+        $productSpecifications = ProductSpecification::where('product_id', $productData->product_id)
+            ->where('store_type_id', $store->store_type_id)
+            ->get();
+
+        if ($productSpecifications->count() > 0) {
+            $specs = [];
+            foreach ($productSpecifications as $specification) {
+                $specs[$specification->name] = $specification->calculated_value();
+            }
+            $metafields[] = [
+                'namespace' => 'global',
+                'key' => 'product_specification',
+                'value' => json_encode($specs),
+                'type' => 'json'
             ];
         }
 
