@@ -19,6 +19,7 @@ use App\Models\ProductSpecification;
 use App\Models\ProductTags;
 use App\Models\StoreProduct;
 use App\Models\StoreTypeListing;
+use App\Models\StoreType;
 use App\Models\UPCCodes;
 use App\Models\JobStatus;
 use App\Jobs\Sync\FonusCombinedSyncJob;
@@ -1065,15 +1066,33 @@ class SubmitShopifyProductsJob implements ShouldQueue
             ];
         }
 
+        $walmartStoreType = StoreType::where('code', 'walmart')->first();
+        $storeTypeIds = [$store->store_type_id];
+        if ($walmartStoreType) {
+            $storeTypeIds[] = $walmartStoreType->id;
+        }
+
         $productSpecifications = ProductSpecification::where('product_id', $productData->product_id)
-            ->where('store_type_id', $store->store_type_id)
+            ->whereIn('store_type_id', $storeTypeIds)
             ->get();
 
         if ($productSpecifications->count() > 0) {
             $specs = [];
-            foreach ($productSpecifications as $specification) {
-                $specs[$specification->name] = $specification->calculated_value();
+            // First pass for Walmart specs (lower precedence)
+            if ($walmartStoreType) {
+                foreach ($productSpecifications as $specification) {
+                    if ($specification->store_type_id == $walmartStoreType->id) {
+                        $specs[$specification->name] = $specification->calculated_value();
+                    }
+                }
             }
+            // Second pass for current store specs (higher precedence)
+            foreach ($productSpecifications as $specification) {
+                if ($specification->store_type_id == $store->store_type_id) {
+                    $specs[$specification->name] = $specification->calculated_value();
+                }
+            }
+
             $metafields[] = [
                 'namespace' => 'global',
                 'key' => 'product_specification',
