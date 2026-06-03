@@ -757,6 +757,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/queue_jobs', [QueueJobsController::class, 'index'])->name('queue.list');
     Route::post('/queue_jobs/filter', [QueueJobsController::class, 'filter'])->name('queue.filter');
     Route::post('/queue_jobs/purge', [QueueJobsController::class, 'purgeRecords'])->name('queue.purge');
+    Route::post('/queue_jobs/kill/{id}', [QueueJobsController::class, 'kill'])->name('queue.kill');
 
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 });

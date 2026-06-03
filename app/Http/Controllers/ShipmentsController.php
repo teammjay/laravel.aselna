@@ -66,12 +66,18 @@ class ShipmentsController extends Controller
             'order.customer',
             'order.customerAddress',
             'order.orderItem',
-            'order.orderItem.product',
+            'order.orderItem.product:product_id,product_sku,product_weight,shipping_package_id',
             'order.orderItem.product.image',
             'carrierService:id,name,shipping_carrier_id',
-            'carrierService.ShippingCarrier',
+            'carrierService.ShippingCarrier:id,name',
             'store:id,name,store_type_id',
+            'store.storeType:id,name',
             'shippingPackage:id,name',
+            'operationItem:id,order_operation_id,order_item_id,sku,quantity',
+            'operationItem.orderItem:id,product_id,quantity,sku',
+            'operationItem.orderItem.product:product_id,product_sku,product_weight,shipping_package_id',
+            'operationItem.orderItem.product.image',
+            'mergedOperations:id,merged_with,sync_message'
         ])->select('order_operation.*', 'order_operation.id as oid');
 
         $query->whereIn('order_operation.status', [OrderOperationStatus::Created, OrderOperationStatus::CanceledRequested, OrderOperationStatus::LabelPrinted, OrderOperationStatus::PaymentPending]);
@@ -174,17 +180,24 @@ class ShipmentsController extends Controller
                 $code = '';
                 $onlycode = '';
                 $image = $imagename = $product_ids = [];
-                $product_total_weight = Common::calculateProductWeight($order);
+                $product_total_weight = 0;
+                if ($order->operationItem->isNotEmpty()) {
+                    foreach ($order->operationItem as $opitem) {
+                        if (isset($opitem->orderItem->product)) {
+                            $product_total_weight += $opitem->orderItem->product->product_weight * $opitem->quantity;
+                        }
+                    }
+                }
                 $total_qty = [];
                 $package_id = $order->shipping_package_id;
-                if (isset($order->operationItem) && !empty($order->operationItem)) {
+                if ($order->operationItem->isNotEmpty()) {
                     $totalQty = 0;
                     $p20Items = [];
                     foreach ($order->operationItem as $opitem) {
                         $oitem = $opitem->orderItem;
 
                         if (isset($oitem->product) && !empty($oitem->product)) {
-                            $imagename[] = $oitem->product->product_image;
+//                            $imagename[] = $oitem->product->product_image;
                             if (!empty($oitem->product->image)) {
                                 $image[] = asset('storage/' . $oitem->product->image->getFileUrl());
                                 $product_ids[] = $oitem->product->product_id;
@@ -220,7 +233,7 @@ class ShipmentsController extends Controller
                                   }
                               }
 
-                              $product_weight = $oitem->product->product_weight * $opitem->quantity;
+                              //$product_weight = $oitem->product->product_weight * $opitem->quantity;
                               //$product_total_weight = $product_total_weight + $product_weight;
 
                               /*if ($oitem->product->shipping_package_id != '') {
@@ -247,10 +260,10 @@ class ShipmentsController extends Controller
                 $orderIds = isset($order->order) ? [$order->order->order_id] : [];
                 $porderIds = isset($order->order) ? [$order->order->purchase_order_id] : [];
                 if (isset($order->orderIds)) {
-                    $mergedOrderIds = json_decode($order->orderIds, true) ?? [];
-                    foreach ($mergedOrderIds as $oid) {
-                        $orderInfo = Order::where('id', $oid)->first();
-                        if ($orderInfo) {
+                    $mergedOrderIdList = json_decode($order->orderIds, true) ?? [];
+                    if (!empty($mergedOrderIdList)) {
+                        $mergedOrders = Order::whereIn('id', $mergedOrderIdList)->select('id', 'order_id', 'purchase_order_id')->get();
+                        foreach ($mergedOrders as $orderInfo) {
                             $orderIds[] = $orderInfo->order_id;
                             $porderIds[] = $orderInfo->purchase_order_id;
                         }
@@ -262,9 +275,9 @@ class ShipmentsController extends Controller
                     $status = 1;
                     $status_message = $order->sync_message;
                 }
-                $mergedOperations = OrderOperation::select('sync_message')->where('merged_with', $order->id)->get();
-                if (isset($mergedOperations)) {
-                    foreach ($mergedOperations as $operation) {
+
+                if ($order->mergedOperations->isNotEmpty()) {
+                    foreach ($order->mergedOperations as $operation) {
                         if ($operation->sync_message != NULL) {
                             $status = 1;
                             $status_message = $operation->sync_message;
@@ -388,12 +401,18 @@ class ShipmentsController extends Controller
             'order.customer',
             'order.customerAddress',
             'order.orderItem',
-            'order.orderItem.product',
+            'order.orderItem.product:product_id,product_sku,product_weight,shipping_package_id',
             'order.orderItem.product.image',
             'carrierService:id,name,shipping_carrier_id',
-            'carrierService.ShippingCarrier',
+            'carrierService.ShippingCarrier:id,name',
             'store:id,name,store_type_id',
+            'store.storeType:id,name',
             'shippingPackage:id,name',
+            'operationItem:id,order_operation_id,order_item_id,sku,quantity',
+            'operationItem.orderItem:id,product_id,quantity,sku',
+            'operationItem.orderItem.product:product_id,product_sku,product_weight,shipping_package_id',
+            'operationItem.orderItem.product.image',
+            'mergedOperations:id,merged_with,sync_message'
         ])->select('order_operation.*', 'order_operation.id as oid');
 
         // Filter by order id
