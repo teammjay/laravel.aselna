@@ -244,6 +244,12 @@ class ProcessFeedGenerationJob implements ShouldQueue
     public function failed(\Throwable $exception)
     {
         Log::error('Feed generation job failed: ' . $exception->getMessage());
+        
+        $this->updateTrackingRecord([
+            'status' => 'failed',
+            'output' => $exception->getMessage(),
+            'finished_at' => now(),
+        ]);
     }
 
     private function insertListingItemDetail($product_code, $listitem, $device)
