@@ -13,6 +13,7 @@
         .status-processing { color: blue; font-weight: 600; }
         .status-completed { color: green; font-weight: 600; }
         .status-failed { color: red; font-weight: 600; }
+        .status-cancelled { color: gray; font-weight: 600; }
         .show-error{cursor: pointer; color:#e71717;}
         .hide{display: none;}
         .child-row td {
@@ -78,6 +79,7 @@
                                     <option value="processing">Processing</option>
                                     <option value="completed">Completed</option>
                                     <option value="failed">Failed</option>
+                                    <option value="cancelled">Cancelled</option>
                                 </select>
                             </div>
                         </div>
@@ -239,6 +241,7 @@
                 <th>Error</th>
                 <th>Tags</th>
                 <th>Created At</th>
+                <th>Action</th>
             </tr>
             </thead>
             <tbody>
@@ -422,6 +425,32 @@
 
             });
 
+            $(document).on('click', '.kill-job', function () {
+                var jobId = $(this).data('id');
+                if (confirm('Are you sure you want to kill this job and its chain?')) {
+                    $.ajax({
+                        url: "/queue_jobs/kill/" + jobId,
+                        type: 'POST',
+                        data: {
+                            "_token": '{{ csrf_token() }}'
+                        },
+                        success: function (response) {
+                            if (response.success) {
+                                alert(response.message);
+                                if (table) {
+                                    table.ajax.reload(null, false);
+                                }
+                            } else {
+                                alert('Error: ' + response.message);
+                            }
+                        },
+                        error: function (xhr) {
+                            alert('Error: ' + (xhr.responseJSON ? xhr.responseJSON.message : 'Unknown error'));
+                        }
+                    });
+                }
+            });
+
            $(document).on('click', '.toggle-chain', function() {
                var $row = $(this).closest('tr');
                var chainIndex = $row.data('chain-index');
@@ -585,6 +614,7 @@
                     { data: 'output' },
                     { data: 'tags' },
                     { data: 'created_at' },
+                    { data: 'action' },
                 ],
                 columnDefs: [
                     {
