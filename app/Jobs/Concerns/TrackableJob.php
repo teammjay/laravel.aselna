@@ -156,4 +156,18 @@ trait TrackableJob
     {
         return $this->parentJobId;
     }
+
+    /**
+     * Handle a job failure.
+     */
+    public function failed(\Throwable $exception): void
+    {
+        $this->updateTrackingRecord([
+            'status' => 'failed',
+            'output' => $exception->getMessage(),
+            'finished_at' => now(),
+        ]);
+
+        Log::error(static::class . " Job failed: " . $exception->getMessage());
+    }
 }
