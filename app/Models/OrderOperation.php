@@ -70,4 +70,9 @@ class OrderOperation extends Model
 
         return $this->belongsTo(Self::class, 'related_operation_id');
     }
+
+    public function mergedOperations()
+    {
+        return $this->hasMany(Self::class, 'merged_with');
+    }
 }
