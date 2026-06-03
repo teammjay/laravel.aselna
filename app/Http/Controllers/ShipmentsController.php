@@ -66,7 +66,7 @@ class ShipmentsController extends Controller
             'order.customer',
             'order.customerAddress',
             'order.orderItem',
-            'order.orderItem.product:product_id,product_sku,product_weight,shipping_package_id',
+            'order.orderItem.product:product_id,product_sku,product_weight,shipping_package_id,product_image_url',
             'order.orderItem.product.image',
             'carrierService:id,name,shipping_carrier_id',
             'carrierService.ShippingCarrier:id,name',
@@ -75,7 +75,7 @@ class ShipmentsController extends Controller
             'shippingPackage:id,name',
             'operationItem:id,order_operation_id,order_item_id,sku,quantity',
             'operationItem.orderItem:id,product_id,quantity,sku',
-            'operationItem.orderItem.product:product_id,product_sku,product_weight,shipping_package_id',
+            'operationItem.orderItem.product:product_id,product_sku,product_weight,shipping_package_id,product_image_url',
             'operationItem.orderItem.product.image',
             'mergedOperations:id,merged_with,sync_message'
         ])->select('order_operation.*', 'order_operation.id as oid');
@@ -197,9 +197,10 @@ class ShipmentsController extends Controller
                         $oitem = $opitem->orderItem;
 
                         if (isset($oitem->product) && !empty($oitem->product)) {
-//                            $imagename[] = $oitem->product->product_image;
+                            //$imagename[] = $oitem->product->product_image;
                             if (!empty($oitem->product->image)) {
                                 $image[] = asset('storage/' . $oitem->product->image->getFileUrl());
+                                $imagename[] = $oitem->product->image->name;
                                 $product_ids[] = $oitem->product->product_id;
                             }
                         }
@@ -401,7 +402,7 @@ class ShipmentsController extends Controller
             'order.customer',
             'order.customerAddress',
             'order.orderItem',
-            'order.orderItem.product:product_id,product_sku,product_weight,shipping_package_id',
+            'order.orderItem.product:product_id,product_sku,product_weight,shipping_package_id,product_image_url',
             'order.orderItem.product.image',
             'carrierService:id,name,shipping_carrier_id',
             'carrierService.ShippingCarrier:id,name',
@@ -410,7 +411,7 @@ class ShipmentsController extends Controller
             'shippingPackage:id,name',
             'operationItem:id,order_operation_id,order_item_id,sku,quantity',
             'operationItem.orderItem:id,product_id,quantity,sku',
-            'operationItem.orderItem.product:product_id,product_sku,product_weight,shipping_package_id',
+            'operationItem.orderItem.product:product_id,product_sku,product_weight,shipping_package_id,product_image_url',
             'operationItem.orderItem.product.image',
             'mergedOperations:id,merged_with,sync_message'
         ])->select('order_operation.*', 'order_operation.id as oid');
@@ -548,12 +549,13 @@ class ShipmentsController extends Controller
                         $oitem = $opitem->orderItem;
                         $image .= '<input type="checkbox" class="pro-id" name="shipment_id[]" data-status="'.$order->status.'" value="'.$order->oid.'" style="visibility:hidden;"><div class="image-grid">';
                         if (isset($oitem->product) && !empty($oitem->product)) {
-                            $imagename[] = $oitem->product->product_image;
                             if (!empty($oitem->product->image)) {
                                 $img = asset('storage/' . $oitem->product->image->getFileUrl());
+                                $imgName = $oitem->product->image->name;
+                                $imagename[] = $imgName;
 
                                 $image .= '<div class="main-image mb-1">
-                                                <img src="'.$img.'" alt="'.$oitem->product->product_image.'" class="mainImage" width="70" height="70" data-product-id="'.$oitem->product->product_id.'">
+                                                <img src="'.$img.'" alt="'.$imgName.'" class="mainImage" width="70" height="70" data-product-id="'.$oitem->product->product_id.'">
                                             </div>';
 
                                 $product_ids[] = $oitem->product->product_id;
@@ -744,7 +746,7 @@ class ShipmentsController extends Controller
         $shippingCarrier = ShippingCarrier::all();
         $shipFrom = LogisticCenter::all();
         $shippingCarrierPackage = ShippingPackage::all();
-        $shipmentDetail = OrderOperation::with('operationItem', 'order', 'order.customerAddress', 'carrierService', 'store', 'store.storeType', 'store.logisticCenters', 'operationItem.orderItem', 'operationItem.orderItem.product', 'operationItem.orderItem.listingItem')->where('id', $order_opration_id)->first();
+        $shipmentDetail = OrderOperation::with('operationItem', 'order', 'order.customerAddress', 'carrierService', 'store', 'store.storeType', 'store.logisticCenters', 'operationItem.orderItem', 'operationItem.orderItem.product', 'operationItem.orderItem.product.image', 'operationItem.orderItem.listingItem')->where('id', $order_opration_id)->first();
 
         $package_id = '';
         $product_total_weight = Common::calculateProductWeight($shipmentDetail);
