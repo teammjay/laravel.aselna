@@ -445,7 +445,7 @@
                 if (!confirm('Are you sure you want to generate feed directly from this configuration?')) return;
 
                 $.ajax({
-                    url: "/feed/configuration/generate/" + id,
+                    url: "/configuration/generate/" + id,
                     type: 'POST',
                     headers: {
                         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -499,6 +499,12 @@
             $(document).on('click', '.load-config', function() {
                 let config = $(this).data('config');
                 $('#config_name').val(config.name);
+
+                // Set store and trigger change for Select2
+                if (config.store_id) {
+                    $('#listing_store').val(config.store_id).trigger('change');
+                }
+
                 $('input[name="feed_type"][value="' + config.feed_type + '"]').prop('checked', true);
                 $('#file_type').val(config.file_type);
 
@@ -513,47 +519,46 @@
                         });
                     }
                     if (config.filters.device_series) {
-                        // For device series, we might need labels, but let's use the IDs for now
                         config.filters.device_series.forEach(val => {
                             $('#device_series_list').append('<div class="border bg-blue d-flex justify-content-between p-1 mt-1"><input type="hidden" name="device_series[]" value="' + val + '">' + val + '<i class="fa fa-window-close float-right mt-1"></i></div>');
                         });
                     }
                     if (config.filters.device) {
                         config.filters.device.forEach(val => {
-                            $('#device_list').append('<div class="border bg-blue d-flex justify-content-between p-1 mt-1"><input type="hidden" name="device[]" value="' + val + '">' + val + '<i class="fa fa-window-close float-right mt-1"></i></div>');
+                            $('#device_list').append('<div class="border bg-blue d-flex justify-content-between p-1 mt-1"><input type="hidden" name="device[]" value="' + val + '">' + val + ' <i class="fa fa-window-close float-right mt-1"></i></div>');
                         });
                     }
 
                     // For multiselects, we need to set values and trigger refresh
                     if (config.filters.included_ratings) {
-                        $('#included_ratings_filter').val(config.filters.included_ratings);
+                        // $('#included_ratings_filter').val(config.filters.included_ratings);
                         // We need a way to refresh gs_multiselect, but it doesn't seem to have a standard refresh.
                         // However, we can re-initialize or find the checkboxes.
                         // Given the plugin, let's try to manually check the checkboxes in the dropdown if possible,
                         // or re-trigger the change event if the plugin supports it.
-                        $('#included_ratings_filter').trigger('change');
+                        // $('#included_ratings_filter').trigger('change');
                         refreshGsMultiselect('included_ratings_filter', config.filters.included_ratings);
                     }
                     if (config.filters.excluded_ratings) {
-                        $('#excluded_ratings_filter').val(config.filters.excluded_ratings);
-                        $('#excluded_ratings_filter').trigger('change');
+                        // $('#excluded_ratings_filter').val(config.filters.excluded_ratings);
+                        // $('#excluded_ratings_filter').trigger('change');
                         refreshGsMultiselect('excluded_ratings_filter', config.filters.excluded_ratings);
                     }
-                    if (config.filters.manufacturer) {
-                        $('#manufacturer_filter').val(config.filters.manufacturer);
-                        $('#manufacturer_filter').trigger('change');
-                        refreshGsMultiselect('manufacturer_filter', config.filters.manufacturer);
-                    }
-                    if (config.filters.product_type) {
-                        $('#product_type_filter').val(config.filters.product_type);
-                        $('#product_type_filter').trigger('change');
-                        refreshGsMultiselect('product_type_filter', config.filters.product_type);
-                    }
-                    if (config.filters.brand) {
-                        $('#brand_filter').val(config.filters.brand);
-                        $('#brand_filter').trigger('change');
-                        refreshGsMultiselect('brand_filter', config.filters.brand);
-                    }
+                    // if (config.filters.manufacturer) {
+                    //     $('#manufacturer_filter').val(config.filters.manufacturer);
+                    //     $('#manufacturer_filter').trigger('change');
+                    //     refreshGsMultiselect('manufacturer_filter', config.filters.manufacturer);
+                    // }
+                    // if (config.filters.product_type) {
+                    //     $('#product_type_filter').val(config.filters.product_type);
+                    //     $('#product_type_filter').trigger('change');
+                    //     refreshGsMultiselect('product_type_filter', config.filters.product_type);
+                    // }
+                    // if (config.filters.brand) {
+                    //     $('#brand_filter').val(config.filters.brand);
+                    //     $('#brand_filter').trigger('change');
+                    //     refreshGsMultiselect('brand_filter', config.filters.brand);
+                    // }
                 }
             });
 
@@ -619,17 +624,32 @@
             loadConfigurations();
 
             function refreshGsMultiselect(id, values) {
-                // The gs_multiselect plugin doesn't have a public refresh method that's obvious.
-                // It creates a .default-drop-down div with checkboxes.
-                let $select = $('#' + id);
-                let $container = $select.closest('.multi-select-filter');
-                $container.find('input[type="checkbox"]').prop('checked', false);
-                values.forEach(val => {
-                    $container.find('input[type="checkbox"][value="' + val + '"]').prop('checked', true);
-                });
-                // Update the button text if necessary
-                let selectedText = values.length + ' selected';
-                $container.find('input[type="button"]').val(selectedText);
+                let $originalSelect = $('#' + id);
+                let $table = $originalSelect.closest('table');
+                if ($table.length === 0) return;
+
+                let $fromSel = $table.find('select.default-drop-down');
+                let $mc = $table.find('td').eq(1); // middle cell
+                let $fb = $mc.find('.btn-val-add');
+                let $btr_all = $mc.find('.btn-all-val-remove'); // the << button
+
+                // 1. Clear current selection: click the "<<" button
+                $btr_all.click();
+
+                // The plugin uses a 300ms timeout for the "<<" button.
+                setTimeout(function() {
+                    // 2. Select the desired values in fromSel
+                    $fromSel.find('option').each(function() {
+                        if (values.indexOf($(this).val()) !== -1) {
+                            $(this).prop('selected', true);
+                        } else {
+                            $(this).prop('selected', false);
+                        }
+                    });
+
+                    // 3. Click the ">" button to move them to toSel
+                    $fb.click();
+                }, 500);
             }
 
             $("#manufacturer_filter, #product_type_filter, #brand_filter, #included_ratings_filter, #excluded_ratings_filter").gs_multiselect();
