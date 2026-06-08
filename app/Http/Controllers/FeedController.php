@@ -7,6 +7,7 @@ use App\Jobs\ProcessFeedGenerationJob;
 use App\Models\Brand;
 use App\Models\Catalog;
 use App\Models\DevicesLinkedDevice;
+use App\Models\DeviceRating;
 use App\Models\DeviceTypes;
 use App\Models\Feed;
 use App\Models\GenerateProductImage;
@@ -46,7 +47,8 @@ class FeedController extends Controller
         })->orderBy('name', 'asc')->get();
         $deviceTypes = DeviceTypes::all();
         $brands = Brand::orderBy('name', 'asc')->get();
-        return view('feed.create_feed', compact('stores', 'manufacturers', 'productTypes', 'deviceTypes', 'brands'));
+        $deviceRatings = DeviceRating::orderBy('value', 'asc')->get();
+        return view('feed.create_feed', compact('stores', 'manufacturers', 'productTypes', 'deviceTypes', 'brands', 'deviceRatings'));
     }
 
     public function filter(Request $request)
@@ -145,6 +147,8 @@ class FeedController extends Controller
                 'device' => $request->input('device'),
                 'interface' => $request->input('interface'),
                 'device_series' => $request->input('device_series'),
+                'included_ratings' => $request->input('included_ratings'),
+                'excluded_ratings' => $request->input('excluded_ratings'),
             ];
 
             if (isset($feed_type)) {

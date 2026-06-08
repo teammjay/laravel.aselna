@@ -220,6 +220,36 @@
                                 </div>
                             </div>
 
+                            <div class="border p-2" style="width: 20%;">
+                                <label>Included Ratings</label>
+                                <div class="row">
+                                    <div class="col-md-12 pro-rating multi-select-filter">
+                                        <select class="form-control list-filter" name="included_ratings[]" id="included_ratings_filter" multiple>
+                                            @if(count($deviceRatings ?? []) > 0)
+                                                @foreach($deviceRatings as $deviceR)
+                                                    <option value="{{ $deviceR->id }}">{{ $deviceR->value }}</option>
+                                                @endforeach
+                                            @endif
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="border p-2" style="width: 20%;">
+                                <label>Excluded Ratings</label>
+                                <div class="row">
+                                    <div class="col-md-12 pro-rating multi-select-filter">
+                                        <select class="form-control list-filter" name="excluded_ratings[]" id="excluded_ratings_filter" multiple>
+                                            @if(count($deviceRatings ?? []) > 0)
+                                                @foreach($deviceRatings as $deviceR)
+                                                    <option value="{{ $deviceR->id }}">{{ $deviceR->value }}</option>
+                                                @endforeach
+                                            @endif
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
                             {{--<div class="border p-2" style="width: 17%;">
                                 <label>Manufacturer Filter</label>
                                 <div class="row" id="manufacture" style="height: 87%;">
@@ -356,7 +386,7 @@
                 }
             });
 
-            $("#manufacturer_filter, #product_type_filter, #brand_filter").gs_multiselect();
+            $("#manufacturer_filter, #product_type_filter, #brand_filter, #included_ratings_filter, #excluded_ratings_filter").gs_multiselect();
 
             let cnt = cnt2 = cnt3 = 0;
             $(document).on('click','.btn-val-add',function(){
