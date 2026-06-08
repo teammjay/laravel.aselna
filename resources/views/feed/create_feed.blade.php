@@ -311,11 +311,56 @@
                         </div>
                     </div>
                     <div class="col-md-12 pt-3">
-                        <div style="width: 20%;">
-                            <button type="button" id="generateFeed" class="btn btn-primary w-100">Generate Feed</button>
+                        <div class="d-flex" style="gap:10px;">
+                            <div style="width: 20%;">
+                                <button type="button" id="generateFeed" class="btn btn-primary w-100">Generate Feed</button>
+                            </div>
+                            <div style="width: 30%;">
+                                <div class="input-group">
+                                    <input type="text" id="config_name" class="form-control" placeholder="Configuration Name">
+                                    <div class="input-group-append">
+                                        <button type="button" id="saveConfiguration" class="btn btn-success">Save Configuration</button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </form>
+
+                <div class="col-md-12 mt-5">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h3 class="card-title">Saved Configurations</h3>
+                            <div style="width: 250px;">
+                                <select id="table_store_filter" class="form-control select2">
+                                    <option value="">All Stores</option>
+                                    @foreach($stores as $store)
+                                        <option value="{{ $store->id }}">{{ $store->name }} {{ (!empty((array)$store->storeType)) ? ' - '.$store->storeType->name : '' }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <table id="configTable" class="table table-bordered table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Store</th>
+                                        <th>Feed Type</th>
+                                        <th>File Type</th>
+                                        <th>Created At</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="config-list">
+                                    <tr>
+                                        <td colspan="6" class="text-center">Loading configurations...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
 
             </div>
         </div>
@@ -385,6 +430,207 @@
                     generateFeed();
                 }
             });
+
+            $('#listing_store').on('change', function() {
+                let storeId = $(this).val();
+                $('#table_store_filter').val(storeId).trigger('change.select2');
+            });
+
+            $('#table_store_filter').select2().on('change', function() {
+                loadConfigurations();
+            });
+
+            $(document).on('click', '.generate-config', function() {
+                let id = $(this).data('id');
+                if (!confirm('Are you sure you want to generate feed directly from this configuration?')) return;
+
+                $.ajax({
+                    url: "/feed/configuration/generate/" + id,
+                    type: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            alert(response.message);
+                        } else {
+                            alert('Error: ' + response.message);
+                        }
+                    }
+                });
+            });
+
+            $(document).on('click', '#saveConfiguration', function() {
+                let name = $('#config_name').val();
+                let store_id = $('#listing_store').val();
+                if (name == '') {
+                    alert('Please enter a configuration name');
+                    return;
+                }
+                if (store_id == '') {
+                    alert('Please select a store');
+                    return;
+                }
+
+                const form = document.querySelector("#frmproductfilter");
+                let formData = new FormData(form);
+                formData.append('name', name);
+
+                $.ajax({
+                    url: "{{ route('feed.saveconfiguration') }}",
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            alert(response.message);
+                            loadConfigurations();
+                        } else {
+                            alert('Error: ' + response.message);
+                        }
+                    }
+                });
+            });
+
+            $(document).on('click', '.load-config', function() {
+                let config = $(this).data('config');
+                $('#config_name').val(config.name);
+                $('input[name="feed_type"][value="' + config.feed_type + '"]').prop('checked', true);
+                $('#file_type').val(config.file_type);
+
+                // Clear existing lists
+                $('#pro_code_list, #device_series_list, #device_list').html('');
+
+                // Load dynamic filters
+                if (config.filters) {
+                    if (config.filters.product_code) {
+                        config.filters.product_code.forEach(val => {
+                            $('#pro_code_list').append('<div class="border bg-blue d-flex justify-content-between p-1 mt-1"><input type="hidden" name="product_code[]" value="' + val + '">' + val + '<i class="fa fa-window-close float-right mt-1"></i></div>');
+                        });
+                    }
+                    if (config.filters.device_series) {
+                        // For device series, we might need labels, but let's use the IDs for now
+                        config.filters.device_series.forEach(val => {
+                            $('#device_series_list').append('<div class="border bg-blue d-flex justify-content-between p-1 mt-1"><input type="hidden" name="device_series[]" value="' + val + '">' + val + '<i class="fa fa-window-close float-right mt-1"></i></div>');
+                        });
+                    }
+                    if (config.filters.device) {
+                        config.filters.device.forEach(val => {
+                            $('#device_list').append('<div class="border bg-blue d-flex justify-content-between p-1 mt-1"><input type="hidden" name="device[]" value="' + val + '">' + val + '<i class="fa fa-window-close float-right mt-1"></i></div>');
+                        });
+                    }
+
+                    // For multiselects, we need to set values and trigger refresh
+                    if (config.filters.included_ratings) {
+                        $('#included_ratings_filter').val(config.filters.included_ratings);
+                        // We need a way to refresh gs_multiselect, but it doesn't seem to have a standard refresh.
+                        // However, we can re-initialize or find the checkboxes.
+                        // Given the plugin, let's try to manually check the checkboxes in the dropdown if possible,
+                        // or re-trigger the change event if the plugin supports it.
+                        $('#included_ratings_filter').trigger('change');
+                        refreshGsMultiselect('included_ratings_filter', config.filters.included_ratings);
+                    }
+                    if (config.filters.excluded_ratings) {
+                        $('#excluded_ratings_filter').val(config.filters.excluded_ratings);
+                        $('#excluded_ratings_filter').trigger('change');
+                        refreshGsMultiselect('excluded_ratings_filter', config.filters.excluded_ratings);
+                    }
+                    if (config.filters.manufacturer) {
+                        $('#manufacturer_filter').val(config.filters.manufacturer);
+                        $('#manufacturer_filter').trigger('change');
+                        refreshGsMultiselect('manufacturer_filter', config.filters.manufacturer);
+                    }
+                    if (config.filters.product_type) {
+                        $('#product_type_filter').val(config.filters.product_type);
+                        $('#product_type_filter').trigger('change');
+                        refreshGsMultiselect('product_type_filter', config.filters.product_type);
+                    }
+                    if (config.filters.brand) {
+                        $('#brand_filter').val(config.filters.brand);
+                        $('#brand_filter').trigger('change');
+                        refreshGsMultiselect('brand_filter', config.filters.brand);
+                    }
+                }
+            });
+
+            $(document).on('click', '.delete-config', function() {
+                if (!confirm('Are you sure you want to delete this configuration?')) return;
+                let id = $(this).data('id');
+                $.ajax({
+                    url: "/feed/configuration/" + id,
+                    type: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            loadConfigurations();
+                        } else {
+                            alert('Error: ' + response.message);
+                        }
+                    }
+                });
+            });
+
+            function loadConfigurations() {
+                let store_id = $('#table_store_filter').val();
+
+                $.ajax({
+                    url: "{{ route('feed.getconfigurations') }}",
+                    type: 'GET',
+                    data: { store_id: store_id },
+                    success: function(response) {
+                        if (response.success) {
+                            let html = '';
+                            if (response.data.length > 0) {
+                                response.data.forEach(config => {
+                                    html += '<tr>';
+                                    html += '<td>' + config.name + '</td>';
+                                    let storeInfo = 'Unknown';
+                                    if (config.store) {
+                                        storeInfo = config.store.name;
+                                        if (config.store.store_type) {
+                                            storeInfo += ' - ' + config.store.store_type.name;
+                                        }
+                                    }
+                                    html += '<td>' + storeInfo + '</td>';
+                                    html += '<td>' + config.feed_type + '</td>';
+                                    html += '<td>' + config.file_type + '</td>';
+                                    html += '<td>' + config.created_at + '</td>';
+                                    html += '<td>';
+                                    html += '<button class="btn btn-sm btn-info load-config mr-1" data-config=\'' + JSON.stringify(config) + '\'>Load</button>';
+                                    html += '<button class="btn btn-sm btn-primary generate-config mr-1" data-id="' + config.id + '">Generate</button>';
+                                    html += '<button class="btn btn-sm btn-danger delete-config" data-id="' + config.id + '">Delete</button>';
+                                    html += '</td>';
+                                    html += '</tr>';
+                                });
+                            } else {
+                                html = '<tr><td colspan="6" class="text-center">No saved configurations found</td></tr>';
+                            }
+                            $('#config-list').html(html);
+                        }
+                    }
+                });
+            }
+            loadConfigurations();
+
+            function refreshGsMultiselect(id, values) {
+                // The gs_multiselect plugin doesn't have a public refresh method that's obvious.
+                // It creates a .default-drop-down div with checkboxes.
+                let $select = $('#' + id);
+                let $container = $select.closest('.multi-select-filter');
+                $container.find('input[type="checkbox"]').prop('checked', false);
+                values.forEach(val => {
+                    $container.find('input[type="checkbox"][value="' + val + '"]').prop('checked', true);
+                });
+                // Update the button text if necessary
+                let selectedText = values.length + ' selected';
+                $container.find('input[type="button"]').val(selectedText);
+            }
 
             $("#manufacturer_filter, #product_type_filter, #brand_filter, #included_ratings_filter, #excluded_ratings_filter").gs_multiselect();
 
