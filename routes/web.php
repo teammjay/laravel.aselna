@@ -721,6 +721,10 @@ Route::middleware('auth')->group(function () {
         Route::post('/feed/filter', 'filter')->name('feed.filter');
         Route::get('/feed/getfeeds', 'getFeeds')->name('feed.getfeeds');
         Route::post('/feed/generatefeed', 'generateFeed')->name('feed.generatefeed');
+        Route::post('/configuration/save', 'saveConfiguration')->name('feed.saveconfiguration');
+        Route::get('/configuration/list', 'getConfigurations')->name('feed.getconfigurations');
+        Route::post('/configuration/generate/{id}', 'generateFromConfiguration')->name('feed.generatefromconfiguration');
+        Route::delete('/feed/configuration/{id}', 'deleteConfiguration')->name('feed.deleteconfiguration');
     });
 
     Route::controller(UsersController::class)->group(function () {

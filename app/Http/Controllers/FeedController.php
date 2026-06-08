@@ -7,8 +7,10 @@ use App\Jobs\ProcessFeedGenerationJob;
 use App\Models\Brand;
 use App\Models\Catalog;
 use App\Models\DevicesLinkedDevice;
+use App\Models\DeviceRating;
 use App\Models\DeviceTypes;
 use App\Models\Feed;
+use App\Models\FeedConfiguration;
 use App\Models\GenerateProductImage;
 use App\Models\ListingItem;
 use App\Models\ListingItemProductImage;
@@ -46,7 +48,142 @@ class FeedController extends Controller
         })->orderBy('name', 'asc')->get();
         $deviceTypes = DeviceTypes::all();
         $brands = Brand::orderBy('name', 'asc')->get();
-        return view('feed.create_feed', compact('stores', 'manufacturers', 'productTypes', 'deviceTypes', 'brands'));
+        $deviceRatings = DeviceRating::orderBy('value', 'asc')->get();
+        return view('feed.create_feed', compact('stores', 'manufacturers', 'productTypes', 'deviceTypes', 'brands', 'deviceRatings'));
+    }
+
+    public function saveConfiguration(Request $request)
+    {
+        try {
+            $request->validate([
+                'name' => 'required|string',
+                'store_id' => 'required',
+                'feed_type' => 'required',
+                'file_type' => 'required',
+            ]);
+
+            $filters = [
+                'product_code' => $request->input('product_code', []),
+                'device_series' => $request->input('device_series', []),
+                'device' => $request->input('device', []),
+                'included_ratings' => $request->input('included_ratings', []),
+                'excluded_ratings' => $request->input('excluded_ratings', []),
+                'manufacturer' => $request->input('manufacturer', []),
+                'product_type' => $request->input('product_type', []),
+                'brand' => $request->input('brand', []),
+            ];
+
+            FeedConfiguration::updateOrCreate(
+                [
+                    'name' => $request->name,
+                    'store_id' => $request->store_id
+                ],
+                [
+                    'feed_type' => $request->feed_type,
+                    'file_type' => $request->file_type,
+                    'filters' => $filters,
+                    'created_by' => auth()->user()->name ?? 'admin',
+                ]
+            );
+
+            return response()->json(['success' => true, 'message' => 'Configuration saved successfully']);
+        } catch (\Exception $e) {
+            Log::error('Error saving feed configuration: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => $e->getMessage()]);
+        }
+    }
+
+    public function getConfigurations(Request $request)
+    {
+        $store_id = $request->query('store_id');
+        $query = FeedConfiguration::with('store.storeType');
+        if ($store_id) {
+            $query->where('store_id', $store_id);
+        }
+        $configurations = $query->orderBy('created_at', 'desc')->get();
+
+        return response()->json(['success' => true, 'data' => $configurations]);
+    }
+
+    public function generateFromConfiguration($id)
+    {
+        DB::beginTransaction();
+        try {
+            $config = FeedConfiguration::findOrFail($id);
+            $store_id = $config->store_id;
+            $feed_type = $config->feed_type;
+            $fileType = $config->file_type;
+            $filters = $config->filters;
+
+            $requestData = [
+                'store_id' => $store_id,
+                'feed_type' => $feed_type,
+                'fileType' => $fileType,
+                'product_code' => $filters['product_code'] ?? [],
+                'device' => $filters['device'] ?? [],
+                'device_series' => $filters['device_series'] ?? [],
+                'included_ratings' => $filters['included_ratings'] ?? [],
+                'excluded_ratings' => $filters['excluded_ratings'] ?? [],
+                'manufacturer' => $filters['manufacturer'] ?? [],
+                'product_type' => $filters['product_type'] ?? [],
+                'brand' => $filters['brand'] ?? [],
+            ];
+
+            if (isset($feed_type)) {
+                switch (strtolower($feed_type)) {
+                    case 'google':
+                        $fname = date('Y-m-d-H-i-s');
+                        $fileName = 'google_shopping_feed_' . $fname . '.' . $fileType;
+                        $filePath = 'feeds/google-shopping/' . $fileName;
+                        break;
+                    case 'microsoft':
+                        $fname = date('Y-m-d-H-i-s');
+                        $fileName = 'microsoft_feed_' . $fname . '.' . $fileType;
+                        $filePath = 'feeds/microsoft/' . $fileName;
+                        break;
+                    default:
+                        throw new \Exception('Invalid feed type');
+                }
+
+                $requestData['fileName'] = $fileName;
+                $requestData['filePath'] = $filePath;
+
+                $feedData = [
+                    'store_id' => $store_id,
+                    'marketplace' => $feed_type,
+                    'file_type' => $fileType,
+                    'file_name' => $fileName,
+                    'path' => $filePath,
+                    'status' => 0,
+                    'created_by' => auth()->user()->name ?? 'admin',
+                ];
+
+                $marketfeed = Feed::create($feedData);
+                $feed_id = $marketfeed->id;
+                DB::commit();
+                
+                ProcessFeedGenerationJob::dispatch($requestData, $feed_id);
+                return response()->json(['success' => true, 'message' => 'Feed generation job dispatched successfully.']);
+            }
+            
+            throw new \Exception('Feed type not set');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error generating feed from configuration: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => $e->getMessage()]);
+        }
+    }
+
+    public function deleteConfiguration($id)
+    {
+        try {
+            $config = FeedConfiguration::findOrFail($id);
+            $config->delete();
+            return response()->json(['success' => true, 'message' => 'Configuration deleted successfully']);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()]);
+        }
     }
 
     public function filter(Request $request)
@@ -145,6 +282,8 @@ class FeedController extends Controller
                 'device' => $request->input('device'),
                 'interface' => $request->input('interface'),
                 'device_series' => $request->input('device_series'),
+                'included_ratings' => $request->input('included_ratings'),
+                'excluded_ratings' => $request->input('excluded_ratings'),
             ];
 
             if (isset($feed_type)) {

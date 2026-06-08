@@ -75,7 +75,7 @@
             </button>
 
             <button type="button" class="btn btn-default mr-2" id="mark_as_open" disabled="">
-                <i class="fas fa-fw fa-envelope"></i> Mark As Open
+                <i class="fas fa-fw fa-envelope"></i> Restore Messages
             </button>
 
         </div>
