@@ -35,8 +35,8 @@ class ShipmentDocumentsCreator
         $this->printer = $labelDoc ? $labelDoc->printer : null;
 
 //        $useDazzle = $shipment->shippingAccount->shippingSolution->isEndiciaDazzle();
-        $this->labelFormat = $labelDoc->printer->labelFormat;
-        $this->imageRotate = $labelDoc->rotate;
+        $this->labelFormat = $this->printer ? $this->printer->labelFormat : null;
+        $this->imageRotate = $labelDoc ? $labelDoc->rotate : null;
 
         if ($shipment->print_to_file) {
             $this->labelFormat = ShippingLabelFormat::JPEG;
