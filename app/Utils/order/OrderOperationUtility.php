@@ -135,6 +135,8 @@ class OrderOperationUtility
 
         $shipmentDetails['store_id'] = $orderOperation->store_id ?? null;
 
+        $operation_type = $orderOperation->operation_type;
+
         $shippingDocumentCreator = new ShipmentDocumentsCreator($orderOperation);
         //    $imageFormat = $shippingDocumentCreator->getLabelFormat();
         //    $rotate = $shippingDocumentCreator->getImageRotate();
@@ -145,12 +147,11 @@ class OrderOperationUtility
             $shipmentDetails['printerId'] = $printer->id;
             $shipmentDetails['systemId'] = $printer->internal_name;
 
-        } else {
+        } elseif (!OrderOperationType::isReturn($operation_type)) {
             Log::error('Printer not found for order operation: ' . $orderOperation->id);
             return 'Printer not found for order operation.';
         }
 
-        $operation_type = $orderOperation->operation_type;
         $shipFrom = $orderOperation->shipFrom;
 
         if (OrderOperationType::isReturn($operation_type)) {
