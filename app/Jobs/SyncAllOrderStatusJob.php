@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Constants\OrderOperationStatus;
+use App\Constants\OrderOperationType;
 use App\Constants\OrderStatus;
 use App\Models\Order;
 use App\Models\OrderOperation;
@@ -58,6 +59,9 @@ class SyncAllOrderStatusJob implements ShouldQueue
                     OrderOperationStatus::MarkAsShipped,
                     OrderOperationStatus::Delivered,
                     OrderOperationStatus::Canceled
+                ])
+                ->whereNotIn('operation_type', [
+                    OrderOperationType::OrderReturn,
                 ])
                 ->when($this->orderId, function ($query) {
                     $query->where('order_id', $this->orderId);
