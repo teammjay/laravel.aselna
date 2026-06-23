@@ -128,7 +128,7 @@
                                     <label for="tracking_number">Tracking Number</label>
                                 </div>
                                 <div class="col-md-8">
-                                    <input type="text" class="form-control" name="tracking_number" id="tracking_number" readonly>
+                                    <input type="text" class="form-control" name="tracking_number" id="tracking_number" autocomplete="off" readonly>
                                 </div>
                             </div>
 
