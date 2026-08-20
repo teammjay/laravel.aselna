@@ -444,6 +444,12 @@ class JobScheduler extends Seeder
                 'name' => 'Fonus Scheduler Cron Job',
                 'description' => 'Fonus Scheduler Cron Job',
                 'class_name' => 'App\Jobs\Sync\FonusCombinedSyncJob',
+            ],
+            [
+                //OdemobileListingItemSyncJob
+                'name' => 'Odemobile Items Sync Job',
+                'description' => 'Sync items for odemobile & accessry choice from oydera',
+                'class_name' => 'App\Jobs\Sync\OdemobileListingItemSyncJob',
             ]
         ];
 
