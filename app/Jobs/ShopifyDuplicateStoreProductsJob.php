@@ -140,7 +140,7 @@ class ShopifyDuplicateStoreProductsJob implements ShouldQueue
                             ->first();
                         $oldListingItem = ListingItem::where('store_product_id', $product->id)
                             ->first();
-                        if ($newListingItem) {
+                        if ($newListingItem && $oldListingItem) {
                             Log::info("Found Listing Item ID: " . $newListingItem->id . " for Store Product ID: " . $newStoreProduct->id);
                             $listingItemDetails = ListingItemDetail::where('listing_item_id', $oldListingItem->id)->get();
                             foreach ($listingItemDetails as $detail) {

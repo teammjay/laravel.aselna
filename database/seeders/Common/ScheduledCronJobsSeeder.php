@@ -217,18 +217,18 @@ class ScheduledCronJobsSeeder extends Seeder
                 'description' => 'Sync Shopify-only products every 2 hours',
             ],
 
-            // Shopify Combined Syncing - Daily at 12:30
-            [
-                'name' => 'Shopify Combined Syncing',
-                'class_name' => 'App\Jobs\Sync\ShopifyCombinedSyncing',
-                'command' => null,
-                'cron_expression' => '30 12 * * *', // daily at 12:30
-                'parameters' => null,
-                'store_type' => 'shopify',
-                'is_active' => true,
-                'type' => 'job',
-                'description' => 'Run combined Shopify syncing daily at 12:30',
-            ],
+//            // Shopify Combined Syncing - Daily at 12:30
+//            [
+//                'name' => 'Shopify Combined Syncing',
+//                'class_name' => 'App\Jobs\Sync\ShopifyCombinedSyncing',
+//                'command' => null,
+//                'cron_expression' => '30 12 * * *', // daily at 12:30
+//                'parameters' => null,
+//                'store_type' => 'shopify',
+//                'is_active' => true,
+//                'type' => 'job',
+//                'description' => 'Run combined Shopify syncing daily at 12:30',
+//            ],
 
             // Clear Order Synchronization - Daily at 00:00
             [
