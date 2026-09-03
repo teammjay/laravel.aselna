@@ -351,12 +351,12 @@ class JobScheduler extends Seeder
                 'description' => 'Send Notification Email Sync Fail',
                 'class_name' => 'App\Jobs\SendNotificationEmailSyncFailJob',
             ],
-            [
-                //ShopifyCombinedSyncing
-                'name' => 'Shopify Combined Syncing',
-                'description' => 'Shopify Combined Syncing',
-                'class_name' => 'App\Jobs\Sync\ShopifyCombinedSyncing',
-            ],
+//            [
+//                //ShopifyCombinedSyncing
+//                'name' => 'Shopify Combined Syncing',
+//                'description' => 'Shopify Combined Syncing',
+//                'class_name' => 'App\Jobs\Sync\ShopifyCombinedSyncing',
+//            ],
             [
                 'name' => 'Ebay Listing Item Status Check',
                 'description' => 'Ebay Listing Item Status Check',
@@ -397,24 +397,24 @@ class JobScheduler extends Seeder
                 'description' => 'Sync all popular devices',
                 'class_name' => 'App\Jobs\Devices\PopularDevicesSyncJob',
             ],
-            [
-                //CombinedDevicesSyncJob
-                'name' => 'Combined Devices Sync',
-                'description' => 'Combined Devices Sync',
-                'class_name' => 'App\Jobs\Sync\CombinedDevicesSyncJob',
-            ],
-            [
-                //CombinedProductsSyncJob
-                'name' => 'Combined Products Sync',
-                'description' => 'Combined Products Sync',
-                'class_name' => 'App\Jobs\Sync\CombinedProductsSyncJob',
-            ],
-            [
-                //CombinedSyncJob
-                'name' => 'Combined DB Sync',
-                'description' => 'Only Combined DB Sync',
-                'class_name' => 'App\Jobs\Sync\CombinedSyncJob',
-            ],
+//            [
+//                //CombinedDevicesSyncJob
+//                'name' => 'Combined Devices Sync',
+//                'description' => 'Combined Devices Sync',
+//                'class_name' => 'App\Jobs\Sync\CombinedDevicesSyncJob',
+//            ],
+//            [
+//                //CombinedProductsSyncJob
+//                'name' => 'Combined Products Sync',
+//                'description' => 'Combined Products Sync',
+//                'class_name' => 'App\Jobs\Sync\CombinedProductsSyncJob',
+//            ],
+//            [
+//                //CombinedSyncJob
+//                'name' => 'Combined DB Sync',
+//                'description' => 'Only Combined DB Sync',
+//                'class_name' => 'App\Jobs\Sync\CombinedSyncJob',
+//            ],
             [
                 //ExistingListingItemSyncJob
                 'name' => 'Walmart Existing Listing Item Sync',
