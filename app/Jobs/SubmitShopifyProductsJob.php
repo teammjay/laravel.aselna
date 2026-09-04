@@ -194,6 +194,22 @@ class SubmitShopifyProductsJob implements ShouldQueue
                             break;
                         }
                     }
+
+                    // Handle Deleted Products (product row removed from `products` table entirely,
+                    // but still marked as successfully uploaded in manage_marketplace_products)
+                    $deletedMarketplaceProducts = ManageMarketplaceProduct::whereNotIn('product_id', function ($query) {
+                            $query->select('product_id')->from('products');
+                        })
+                        ->where('store_id', $store->id)
+                        ->where('upload_status', 'success')
+                        ->get();
+
+                    foreach ($deletedMarketplaceProducts as $marketplaceProduct) {
+                        $this->discontinueDeletedProduct($marketplaceProduct, $store);
+                        if (env('APP_ENV') == 'local') {
+                            break;
+                        }
+                    }
                 }
                 $this->updateTrackingRecord(['tags' => implode(' ', $tags) . ' Submit Shopify Products']);
             }
@@ -805,6 +821,64 @@ class SubmitShopifyProductsJob implements ShouldQueue
                     ]);
                 }
             }
+        }
+    }
+
+    /**
+     * Discontinue a marketplace product whose source product row has been deleted
+     * from the `products` table (so it can no longer be resolved via Catalog/StoreProduct joins).
+     * Relies solely on the manage_marketplace_products record and marks it so it is not
+     * picked up again on subsequent runs.
+     */
+    private function discontinueDeletedProduct(ManageMarketplaceProduct $marketplaceProduct, mixed $store)
+    {
+        Log::info('Discontinuing Deleted Product Code :: ' . $marketplaceProduct->product_code . ' | Product ID :: ' . $marketplaceProduct->product_id);
+
+        if (empty($marketplaceProduct->marketplace_product_id)) {
+            Log::info('No marketplace_product_id found, marking as discontinued without Shopify call. Product ID :: ' . $marketplaceProduct->product_id);
+            $marketplaceProduct->update([
+                'upload_status' => 'discontinued',
+                'updated_at' => now()
+            ]);
+            return;
+        }
+
+        $storeProduct = StoreProduct::where('product_id', $marketplaceProduct->product_id)->where('store_id', $store->id)->first();
+        $listingItem = $storeProduct ? ListingItem::where('store_product_id', $storeProduct->id)->first() : null;
+
+        $shopifyAuthService = new ShopifyAuthService($store->secret_key, $store->service_url);
+
+        $productUpdateData = [
+            'product' => [
+                'id' => $marketplaceProduct->marketplace_product_id,
+                'status' => 'DRAFT',
+            ],
+        ];
+
+        $response = $shopifyAuthService->updateProduct($productUpdateData);
+
+        if (isset($response['data']) && empty($response['data']['userErrors'])) {
+            if ($storeProduct) {
+                $storeProduct->update([
+                    'last_synch_date_time' => date('Y-m-d H:i:s')
+                ]);
+            }
+            if ($listingItem) {
+                $listingItem->update([
+                    'status' => ListingStatus::Suspended
+                ]);
+            }
+
+            $marketplaceProduct->update([
+                'upload_status' => 'discontinued',
+                'updated_at' => now()
+            ]);
+        } else {
+            Log::info('Failed to discontinue deleted product on Shopify. Product ID :: ' . $marketplaceProduct->product_id . ' Response :: ' . json_encode($response));
+            $marketplaceProduct->update([
+                'upload_attempts' => $marketplaceProduct->upload_attempts + 1,
+                'updated_at' => now()
+            ]);
         }
     }
 
