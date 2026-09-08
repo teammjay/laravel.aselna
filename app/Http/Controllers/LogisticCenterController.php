@@ -64,11 +64,28 @@ class LogisticCenterController extends Controller
         $tabId = $request->input('tab');
         $logicticCenter = LogisticCenter::findOrFail($id);
 
+        $addressRules = [
+            'first_name' => 'nullable|string|max:100',
+            'last_name' => 'nullable|string|max:100',
+            'company' => 'nullable|string|max:100',
+            'address_line_1' => 'nullable|string',
+            'address_line_2' => 'nullable|string',
+            'address_line_3' => 'nullable|string',
+            'phone' => 'nullable|string',
+            'email' => 'nullable|email',
+            'city' => 'nullable|string',
+            'state_or_region' => 'nullable|string',
+            'postal_code' => 'nullable|string',
+            'country' => 'nullable|string',
+            'country_code' => 'nullable|string',
+            'district' => 'nullable|string',
+            'client' => 'nullable|string',
+        ];
+
         if ($tabId == 1) {
 
             $validated = $request->validate([
                 'name' => 'required',
-                ''
             ]);
 
             $updated_by = auth()->user()->name ?? 'admin';
@@ -76,58 +93,23 @@ class LogisticCenterController extends Controller
 
             $logicticCenter->update($validated);
 
-            return redirect()->route('logistic_center_document.index')
-                ->with('success', 'Document setting updated successfully.');
+            return response()->json(['message' => 'Logistic center updated successfully.']);
         } elseif ($tabId == 2) {
             $fromAddress = $logicticCenter->fromAddress;
             // Handle from address update logic here
-            $validated = $request->validate([
-                'first_name',
-                'last_name',
-                'company',
-                'address_line_1',
-                'address_line_2',
-                'address_line_3',
-                'phone',
-                'email',
-                'city',
-                'state_or_region',
-                'postal_code',
-                'country',
-                'country_code',
-                'district',
-                'client',
-            ]);
+            $validated = $request->validate($addressRules);
             $fromAddress->update($validated);
 
-            return redirect()->route('logistic_center.edit', ['id' => $id])
-                ->with('success', 'From address updated successfully.');
+            return response()->json(['message' => 'From address updated successfully.']);
         } elseif ($tabId == 3) {
             $returnAddress = $logicticCenter->returnAddress;
             // Handle other tab updates if necessary
-            $returnAddress->update($request->only([
-                'first_name',
-                'last_name',
-                'company',
-                'address_line_1',
-                'address_line_2',
-                'address_line_3',
-                'phone',
-                'email',
-                'city',
-                'state_or_region',
-                'postal_code',
-                'country',
-                'country_code',
-                'district',
-                'client',
-            ]));
+            $validated = $request->validate($addressRules);
+            $returnAddress->update($validated);
 
-            return redirect()->route('logistic_center.edit', ['id' => $id])
-                ->with('success', 'Return address updated successfully.');
+            return response()->json(['message' => 'Return address updated successfully.']);
         } else {
-            return redirect()->route('logistic_center.edit', ['id' => $id])
-                ->with('error', 'Invalid tab selection.');
+            return response()->json(['message' => 'Invalid tab selection.'], 422);
         }
     }
 
