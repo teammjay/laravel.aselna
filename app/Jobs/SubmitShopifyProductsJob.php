@@ -982,6 +982,9 @@ class SubmitShopifyProductsJob implements ShouldQueue
             }
             $mediaId = $image['id'];
             $imageIdReplaced = str_replace('gid://shopify/MediaImage/', '', $mediaId);
+            if (ListingItemProductImage::where('path', $imageUrl)->exists()) {
+                continue;
+            }
             if (!ListingItemProductImage::where('reference_id',$imageIdReplaced)->exists()) {
                 $mediaIds[] = $mediaId;
             }

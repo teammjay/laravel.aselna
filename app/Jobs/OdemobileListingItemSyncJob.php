@@ -80,6 +80,7 @@ class OdemobileListingItemSyncJob implements ShouldQueue
                         ->keyBy('product_id');
 
                     foreach ($oyderaItems as $oyderaItem) {
+                        Log::info('Sync Item Id :: ' . $oyderaItem->id);
                         // Requirement: Sync only those whose product id is not matching
                         $existingItem = $localItems->get($oyderaItem->id);
                         if ($existingItem) {
