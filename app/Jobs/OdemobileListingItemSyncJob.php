@@ -123,11 +123,12 @@ class OdemobileListingItemSyncJob implements ShouldQueue
                                 $localStoreProducts->put($localProduct->product_id, $localStoreProduct);
                             } else {
                                 Log::error("Store Product ID: {$oyderaItem->store_product_id} not found in Oydera for Listing Item ID: {$oyderaItem->id}");
-                                continue;
                             }
                         }
 
-                        $this->upsertListingItem($oyderaItem, $localStoreProduct->id);
+                        // product_id is always stored on the listing item so the product stays
+                        // resolvable even when no store product could be matched or created.
+                        $this->upsertListingItem($oyderaItem, $localStoreProduct?->id, $localProduct->product_id);
                     }
                 });
             }
@@ -156,9 +157,9 @@ class OdemobileListingItemSyncJob implements ShouldQueue
     /**
      * Update or create the listing item locally.
      */
-    private function upsertListingItem(mixed $oyderaItem, string $localStoreProductId): void
+    private function upsertListingItem(mixed $oyderaItem, ?string $localStoreProductId, string $localProductId): void
     {
-        Log::info("Upserting Listing Item ID: {$oyderaItem->id} for Store Product ID: {$localStoreProductId}");
+        Log::info("Upserting Listing Item ID: {$oyderaItem->id} for Store Product ID: {$localStoreProductId} / Product ID: {$localProductId}");
         ListingItem::updateOrCreate([
             'id' => $oyderaItem->id
         ], [
@@ -180,6 +181,7 @@ class OdemobileListingItemSyncJob implements ShouldQueue
             'carrier_id' => $oyderaItem->carrier_id,
             'device_id' => $oyderaItem->device_id,
             'store_product_id' => $localStoreProductId,
+            'product_id' => $localProductId,
             'generation_type_id' => $oyderaItem->cea_generation_type_id,
             'brand_id' => $oyderaItem->cea_brand_id,
             'device_carrier_id' => $oyderaItem->device_carrier_id,
