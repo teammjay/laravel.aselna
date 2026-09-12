@@ -154,7 +154,7 @@ class FeedController extends Controller
                     'file_type' => $fileType,
                     'file_name' => $fileName,
                     'path' => $filePath,
-                    'status' => 0,
+                    'status' => FeedStatus::PROCESSING,
                     'created_by' => auth()->user()->name ?? 'admin',
                 ];
 
@@ -229,7 +229,7 @@ class FeedController extends Controller
                     }
                     $action .= '</div>';
                 }
-                else if ($feed->status) {
+                else if ($feed->status == FeedStatus::PROCESSED) {
                     // Fallback for feeds that don't have parts
                     $action = '<button class="btn btn-default download-feed" data-file="' . $feed->file_name . '" data-filepath="' . $feed->path . '"><i class="fas fa-fw fa-download"></i> Download</button>';
                 }
@@ -310,7 +310,7 @@ class FeedController extends Controller
                     'file_type' => $fileType,
                     'file_name' => $fileName,
                     'path' => $filePath,
-                    'status' => 0,
+                    'status' => FeedStatus::PROCESSING,
                     'created_by' => 'admin',
                 ];
 
