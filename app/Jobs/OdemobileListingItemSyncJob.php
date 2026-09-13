@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Constants\ListingStatus;
 use App\Models\ListingItem;
 use App\Models\Catalog;
 use App\Models\Store;
@@ -82,10 +83,10 @@ class OdemobileListingItemSyncJob implements ShouldQueue
                     foreach ($oyderaItems as $oyderaItem) {
                         Log::info('Sync Item Id :: ' . $oyderaItem->id);
                         // Requirement: Sync only those whose product id is not matching
-                        $existingItem = $localItems->get($oyderaItem->id);
-                        if ($existingItem) {
-                            continue;
-                        }
+//                        $existingItem = $localItems->get($oyderaItem->id);
+//                        if ($existingItem) {
+//                            continue;
+//                        }
                         $productCode = $oyderaItem->oydera_product_code;
                         if (!$productCode) {
                             continue;
@@ -154,6 +155,16 @@ class OdemobileListingItemSyncJob implements ShouldQueue
         }
     }
 
+    private function mapStatus($oyderaStatus): int
+    {
+        return match ((int)$oyderaStatus) {
+            0 => ListingStatus::Active,
+            1 => ListingStatus::Suspended,
+            2 => ListingStatus::Deleted,
+            default => ListingStatus::Deleted,
+        };
+    }
+
     /**
      * Update or create the listing item locally.
      */
@@ -187,7 +198,7 @@ class OdemobileListingItemSyncJob implements ShouldQueue
             'device_carrier_id' => $oyderaItem->device_carrier_id,
             'color_id' => $oyderaItem->color_id,
             'size_id' => $oyderaItem->size_id,
-            'status' => 1,
+            'status' => $this->mapStatus($oyderaItem->status),
             'client' => $oyderaItem->client,
             'upc' => $oyderaItem->upc,
             'brand_combo' => $oyderaItem->brand_combo,
