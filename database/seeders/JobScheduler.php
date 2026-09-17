@@ -448,7 +448,7 @@ class JobScheduler extends Seeder
             [
                 //OdemobileListingItemSyncJob
                 'name' => 'Odemobile Items Sync Job',
-                'description' => 'Sync items for odemobile & accessry choice from oydera',
+                'description' => 'Sync items for uzid & odemobile & accessry choice from oydera',
                 'class_name' => 'App\Jobs\OdemobileListingItemSyncJob',
             ]
         ];
