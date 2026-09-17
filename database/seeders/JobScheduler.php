@@ -450,6 +450,12 @@ class JobScheduler extends Seeder
                 'name' => 'Odemobile Items Sync Job',
                 'description' => 'Sync items for uzid & odemobile & accessry choice from oydera',
                 'class_name' => 'App\Jobs\OdemobileListingItemSyncJob',
+            ],
+            [
+                //OyderaMasterSwitch
+                'name' => 'Oydera Master Switch',
+                'description' => 'Sync store products, listing items, listing item details & listing item images from oydera for uzid, odemobile & accessorychoice',
+                'class_name' => 'App\Jobs\Sync\OyderaMasterSwitch',
             ]
         ];
 

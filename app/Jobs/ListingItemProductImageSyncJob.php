@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Models\ListingItemProductImage;
 use App\Models\ProductImages;
+use App\Models\Store;
 use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -21,11 +22,25 @@ class ListingItemProductImageSyncJob implements ShouldQueue
     public $timeout = 600000;
 
     /**
-     * Create a new job instance.
+     * The task this job performs, used in the job_statuses tags.
      */
-    public function __construct()
-    {
-        //
+    public const TASK_LISTING_ITEM_IMAGES = 'listing_item_images';
+
+    /**
+     * Picked up by the Queue::createPayloadUsing hook in AppServiceProvider and used for the
+     * job_statuses tags, so the dashboard shows which store the job is for.
+     */
+    public $store_name;
+
+    /**
+     * Create a new job instance.
+     *
+     * @param  string  $storeId  The store to sync the listing item images for.
+     */
+    public function __construct(
+        public string $storeId
+    ) {
+        $this->store_name = Store::where('id', $storeId)->value('name') ?? $storeId;
     }
 
     /**
@@ -36,11 +51,11 @@ class ListingItemProductImageSyncJob implements ShouldQueue
         try {
             $this->updateTrackingRecord([
                 'status' => 'processing',
-                'finished_at' => now()
+                'started_at' => now(),
+                'tags' => $this->store_name . ' ' . self::TASK_LISTING_ITEM_IMAGES
             ]);
-//        $this->ListingItemImagesAll();
 
-            $this->listingItemImagesByStore('c2c8131f-c8a2-e082-9f89-3e8bf96b1049');
+            $this->listingItemImagesByStore($this->storeId);
 
             $this->updateTrackingRecord([
                 'status' => 'completed',
@@ -105,7 +120,6 @@ class ListingItemProductImageSyncJob implements ShouldQueue
 
     private function listingItemImagesByStore(string $storeId)
     {
-        $this->updateTrackingRecord(['tags' => 'Listing Item Product Image By Store']);
         $listingItemLinksQ = DB::connection('easyesale_db')->table('listing_item_product_image')
             ->join('product_image', 'listing_item_product_image.product_image_id', '=', 'product_image.id')
             ->whereIn('listing_item_id', function ($query) use ($storeId) {

@@ -15,6 +15,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use InvalidArgumentException;
 
 class SyncShopifyItems implements ShouldQueue
 {
@@ -23,14 +24,31 @@ class SyncShopifyItems implements ShouldQueue
         Queueable::withChain as queueableWithChain;
     }
 
+    public const TASK_STORE_PRODUCT = 'store_product';
+
+    public const TASK_LISTING_ITEM = 'listing_item';
+
+    public const TASK_LISTING_ITEM_DETAIL = 'listing_item_detail';
+
     public $timeout = 300000;
 
     /**
-     * Create a new job instance.
+     * Picked up by the Queue::createPayloadUsing hook in AppServiceProvider and used for the
+     * job_statuses tags, so the dashboard shows which store the job is for.
      */
-    public function __construct()
-    {
-        //
+    public $store_name;
+
+    /**
+     * Create a new job instance.
+     *
+     * @param  string  $storeId    The store to sync.
+     * @param  string  $taskType   One of the TASK_* constants.
+     */
+    public function __construct(
+        public string $storeId,
+        public string $taskType
+    ) {
+        $this->store_name = Store::where('id', $storeId)->value('name') ?? $storeId;
     }
 
     /**
@@ -38,19 +56,15 @@ class SyncShopifyItems implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Store Products']);
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => $this->store_name . ' ' . $this->taskType]);
 
         try {
-            $storeIds = Store::join('store_type', 'store_type.id', '=', 'store.store_type_id')
-                ->where('store_type.code', 'shopify')
-                ->whereIn('store.name',['NevaWireless'])
-                ->pluck('store.id');
-            // store products sync
-            $this->syncStoreProducts($storeIds);
-            // listing Item sync
-            $this->syncListingItems($storeIds);
-            // listing Item data
-            $this->syncListingItemDetails($storeIds);
+            match ($this->taskType) {
+                self::TASK_STORE_PRODUCT => $this->syncStoreProducts($this->storeId),
+                self::TASK_LISTING_ITEM => $this->syncListingItems($this->storeId),
+                self::TASK_LISTING_ITEM_DETAIL => $this->syncListingItemDetails($this->storeId),
+                default => throw new InvalidArgumentException('Unknown task type: ' . $this->taskType),
+            };
 
             $this->updateTrackingRecord([
                 'status' => 'completed',
@@ -69,9 +83,9 @@ class SyncShopifyItems implements ShouldQueue
 
     }
 
-    private function syncStoreProducts($storeIds)
+    private function syncStoreProducts($storeId)
     {
-        $storeProductsQ = DB::connection('easyesale_db')->table('store_product')->whereIn('store_id', $storeIds)->orderBy('id');
+        $storeProductsQ = DB::connection('easyesale_db')->table('store_product')->where('store_id', $storeId)->orderBy('id');
         $storeProductsQ->chunk(1000, function ($storeProducts) {
             foreach ($storeProducts as $storeProduct) {
                 if (Catalog::where('product_id', $storeProduct->product_id)->doesntExist()) {
@@ -126,13 +140,13 @@ class SyncShopifyItems implements ShouldQueue
         });
     }
 
-    private function syncListingItems($storeIds)
+    private function syncListingItems($storeId)
     {
         DB::connection('easyesale_db')->table('listing_item')
-            ->whereIn('store_product_id', function ($query) use ($storeIds) {
+            ->whereIn('store_product_id', function ($query) use ($storeId) {
                 $query->select('store_product.id')
                     ->from('store_product')
-                    ->whereIn('store_id', $storeIds);
+                    ->where('store_id', $storeId);
             })
             ->orderBy('id')
             ->chunk(100, function ($items) {
@@ -205,12 +219,12 @@ class SyncShopifyItems implements ShouldQueue
         }
     }
 
-    private function syncListingItemDetails($storeIds)
+    private function syncListingItemDetails($storeId)
     {
-        $listingItems = ListingItem::whereIn('store_product_id', function ($query) use ($storeIds) {
+        $listingItems = ListingItem::whereIn('store_product_id', function ($query) use ($storeId) {
             $query->select('store_product.id')
                 ->from('store_product')
-                ->whereIn('store_id', $storeIds);
+                ->where('store_id', $storeId);
         })->pluck('id');
 
         foreach ($listingItems as $listingItemId) {
