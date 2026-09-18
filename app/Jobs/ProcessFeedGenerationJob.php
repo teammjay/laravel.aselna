@@ -99,7 +99,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
             $this->max_file_size = 200 * 1024 * 1024;
 
             if (env('APP_ENV') == 'local' || env('APP_ENV') == 'development') {
-                $this->max_file_size = 1 * 1024 * 1024; // 1 MB for local testing
+//                $this->max_file_size = 1 * 1024 * 1024; // 1 MB for local testing
             }
 
             $this->compatibleDeviceTypes = StoreDeviceType::where('store_id', $store_id)

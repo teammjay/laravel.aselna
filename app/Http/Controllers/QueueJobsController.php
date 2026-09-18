@@ -101,7 +101,7 @@ class QueueJobsController extends Controller
                         "finished_at" => ($job->finished_at && $job->started_at)
                             ? $job->finished_at->diffForHumans() . " (" . round($job->started_at->diffInMinutes($job->finished_at)) . " minutes)"
                             : "",
-                        "output" => ($job->output) ? '<i class="fa fa-exclamation-triangle show-error" style="font-size:24px" data-content="' . addslashes(str_replace('"', '', $job->output)) . '"></i>' : "",
+                        "output" => $this->outputIcon($job),
                         "tags" => $job->tags,
                         "created_at" => date('Y-m-d H:i:s', strtotime($job->created_at)),
                         "action" => in_array($job->status, ['pending', 'processing'])
@@ -202,7 +202,7 @@ class QueueJobsController extends Controller
                     "finished_at" => $job->finished_at
                         ? $job->finished_at->diffForHumans() . " (" . round($job->started_at->diffInMinutes($job->finished_at)) . " minutes)"
                         : "",
-                    "output" => ($job->output) ? '<i class="fa fa-exclamation-triangle show-error" style="font-size:24px" data-content="'.addslashes(str_replace('"', '',$job->output)).'"></i>' : "",
+                    "output" => $this->outputIcon($job),
                     "tags" => $job->tags,
                     "created_at" => date('Y-m-d H:i:s',strtotime($job->created_at)),
                     "action" => in_array($job->status, ['pending', 'processing'])
@@ -256,6 +256,32 @@ class QueueJobsController extends Controller
         }else{
             return response()->json(['success' => false, 'message' => 'Option not selected!']);
         }
+    }
+
+    /**
+     * The icon shown in the Output column.
+     *
+     * A failed job really is an error, but a completed one also leaves a summary of what it did
+     * behind, so the two get a different icon rather than the same red warning for both.
+     */
+    private function outputIcon($job): string
+    {
+        if (empty($job->output)) {
+            return "";
+        }
+
+        // htmlspecialchars, not addslashes: the text goes into an HTML attribute, and a message
+        // holding a quote or an angle bracket would otherwise break the tag itself.
+        $content = e($job->output);
+
+        if (in_array($job->status, ['failed', 'cancelled'])) {
+            return '<i class="fa fa-exclamation-triangle show-error" style="font-size:24px" data-title="Error Info" data-content="' . $content . '"></i>';
+        }
+
+        // show-error stays on the icon as the click hook, so a page that was loaded before this
+        // change - its click handler is inline in the blade, while the icons come from ajax -
+        // still opens the modal. show-info only makes it blue.
+        return '<i class="fa fa-info-circle show-error show-info" style="font-size:24px" data-title="Job Info" data-content="' . $content . '"></i>';
     }
 
     public function kill($id)

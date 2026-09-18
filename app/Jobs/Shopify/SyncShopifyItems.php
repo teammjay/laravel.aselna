@@ -5,6 +5,7 @@ namespace App\Jobs\Shopify;
 use App\Constants\ListingStatus;
 use App\Jobs\Concerns\TrackableJob;
 use App\Models\Catalog;
+use App\Models\Device;
 use App\Models\ListingItem;
 use App\Models\ListingItemDetail;
 use App\Models\Store;
@@ -27,6 +28,12 @@ use InvalidArgumentException;
  *   - rows that are only in the source are created,
  *   - rows that are in both are updated, but only when a value actually differs,
  *   - rows that are only here are deleted, because they were removed upstream.
+ *
+ * Products and devices are not always the same row on both sides: some of them were re-created
+ * here with an id of our own. Those are matched on their code (products on products.product_code
+ * against the source reference_id1, devices on device.code), the way OdemobileListingItemSyncJob
+ * does it, so nothing is skipped just because an id changed. What cannot be matched at all is
+ * logged, since that is a different problem.
  *
  * The delete pass never touches a listing item that an order line or a helpdesk ticket points at:
  * order_item.listing_item_id and hd_ticket.related_listing_item_id are ON DELETE CASCADE, so
@@ -57,6 +64,16 @@ class SyncShopifyItems implements ShouldQueue
     private const COMPARE_CHUNK = 500;
 
     public $timeout = 300000;
+
+    /**
+     * Local product ids keyed by the source product id, null when the product is not here at all.
+     */
+    private array $productIds = [];
+
+    /**
+     * Local device ids keyed by the source device id, null when the device is not here at all.
+     */
+    private array $deviceIds = [];
 
     /**
      * Picked up by the Queue::createPayloadUsing hook in AppServiceProvider and used for the
@@ -127,18 +144,41 @@ class SyncShopifyItems implements ShouldQueue
         DB::connection('easyesale_db')->table('store_product')
             ->where('store_id', $storeId)
             ->orderBy('id')
-            ->chunk(self::READ_CHUNK, function ($storeProducts) use (&$stats) {
+            ->chunk(self::READ_CHUNK, function ($storeProducts) use (&$stats, $storeId) {
                 $existing = $this->existingRows(StoreProduct::class, $storeProducts->pluck('id')->all());
 
+                $this->resolveProductIds($storeProducts->pluck('product_id')->all());
+
+                $claimed = $this->rowsHeldUnderAnotherId($storeId, $storeProducts, $existing);
+
                 foreach ($storeProducts as $storeProduct) {
-                    // The product has to exist in our catalog before the store product can point at it.
-                    // The source row is still there, so it is not an extra row either - just skipped.
-                    if (Catalog::where('product_id', $storeProduct->product_id)->doesntExist()) {
-                        $stats['skipped']++;
+                    $productId = $this->productIds[$storeProduct->product_id] ?? null;
+
+                    // store_product.product_id is a foreign key, so a product we cannot place at
+                    // all is the one thing that cannot be written. It is reported, not skipped
+                    // quietly.
+                    if (empty($productId)) {
+                        $stats['unresolved']++;
+                        Log::error('SyncShopifyItems: no local product for source product ' . $storeProduct->product_id
+                            . ' (store product ' . $storeProduct->id . ', store ' . $this->store_name . '), row not synced.');
+
                         continue;
                     }
 
-                    $this->saveRecord(StoreProduct::class, $storeProduct->id, $this->mapStoreProduct($storeProduct), [], $stats, $existing);
+                    // The pair is unique, so a row already sitting on it under an id of our own
+                    // has to give way before the source row can be written.
+                    if (!$existing->has($storeProduct->id) && $claimed->has($productId)) {
+                        if (!$this->releaseHeldRow($claimed->get($productId), $stats)) {
+                            continue;
+                        }
+
+                        $claimed->forget($productId);
+                    }
+
+                    $attributes = $this->mapStoreProduct($storeProduct);
+                    $attributes['product_id'] = $productId;
+
+                    $this->saveRecord(StoreProduct::class, $storeProduct->id, $attributes, [], $stats, $existing);
                 }
             });
 
@@ -165,11 +205,24 @@ class SyncShopifyItems implements ShouldQueue
             ->chunk(self::READ_CHUNK, function ($items) use (&$stats) {
                 $existing = $this->existingRows(ListingItem::class, $items->pluck('id')->all());
 
+                $this->resolveDeviceIds($items->pluck('device_id')->all(), $stats);
+
+                // The store product already carries the local product id, resolved by code where
+                // it had to be, so the item can be pointed at the same product.
+                $productIds = StoreProduct::whereIn('id', $items->pluck('store_product_id')->filter()->unique()->all())
+                    ->pluck('product_id', 'id');
+
                 foreach ($items as $item) {
+                    $attributes = $this->mapListingItem($item);
+
+                    if (!empty($productIds->get($item->store_product_id))) {
+                        $attributes['product_id'] = $productIds->get($item->store_product_id);
+                    }
+
                     $this->saveRecord(
                         ListingItem::class,
                         $item->id,
-                        $this->mapListingItem($item),
+                        $attributes,
                         ['created_at' => $item->create_ts],
                         $stats,
                         $existing
@@ -204,7 +257,13 @@ class SyncShopifyItems implements ShouldQueue
                     ->whereIn('listing_item_id', $listingItemIds)
                     ->orderBy('id')
                     ->chunk(self::READ_CHUNK, function ($details) use (&$stats) {
+                        // The legacy table holds every detail row twice, with the same id and the
+                        // same values, and ordering by id puts the copies next to each other.
+                        $details = $details->unique('id');
+
                         $existing = $this->existingRows(ListingItemDetail::class, $details->pluck('id')->all());
+
+                        $this->resolveDeviceIds($details->pluck('device_id')->all(), $stats);
 
                         foreach ($details as $detail) {
                             $this->saveRecord(ListingItemDetail::class, $detail->id, $this->mapListingItemDetail($detail), [], $stats, $existing);
@@ -239,11 +298,82 @@ class SyncShopifyItems implements ShouldQueue
 
                 $sourceIds = DB::connection('easyesale_db')->table('cea_listing_item_detail')
                     ->whereIn('listing_item_id', $listingItemIds)
+                    ->distinct()
                     ->pluck('id')
                     ->all();
 
                 $stats['deleted'] += $this->deleteInChunks('listing_item_detail', 'id', array_values(array_diff($localIds, $sourceIds)));
             });
+    }
+
+    /**
+     * The rows of this store that already hold a source row's (product_id, store_id) pair under an
+     * id of our own, keyed by the local product id.
+     *
+     * store_product has a unique index on that pair, so the source row cannot simply be inserted
+     * on top of one: without this the insert dies with a 1062 and takes the whole run with it.
+     * Only source rows that are not here by id can run into this.
+     *
+     * @param  Collection  $existing  The rows of this chunk that are already here, keyed by id.
+     */
+    private function rowsHeldUnderAnotherId(string $storeId, $storeProducts, Collection $existing): Collection
+    {
+        $productIds = [];
+
+        foreach ($storeProducts as $storeProduct) {
+            if ($existing->has($storeProduct->id)) {
+                continue;
+            }
+
+            $productId = $this->productIds[$storeProduct->product_id] ?? null;
+
+            if (!empty($productId)) {
+                $productIds[] = $productId;
+            }
+        }
+
+        if (empty($productIds)) {
+            return new Collection();
+        }
+
+        return StoreProduct::where('store_id', $storeId)
+            ->whereIn('product_id', array_values(array_unique($productIds)))
+            ->whereNotIn('id', $storeProducts->pluck('id')->all())
+            ->get()
+            ->keyBy('product_id');
+    }
+
+    /**
+     * Free the (product_id, store_id) pair a local row is sitting on so the source row can take
+     * its place. The row is one the delete pass would remove anyway - it is not in the source
+     * under this id - so it goes the same way, and under the same rule: a row whose listing items
+     * an order or a ticket points at is kept and reported instead, and the source row waits.
+     *
+     * @return bool  Whether the pair is now free.
+     */
+    private function releaseHeldRow(Model $held, array &$stats): bool
+    {
+        $listingItemIds = DB::table('listing_item')->where('store_product_id', $held->id)->pluck('id')->all();
+
+        if (!empty($listingItemIds)) {
+            $this->deleteListingItems($listingItemIds, $stats);
+        }
+
+        if (DB::table('listing_item')->where('store_product_id', $held->id)->exists()) {
+            $stats['conflicts']++;
+            Log::warning('SyncShopifyItems: store product ' . $held->id . ' holds product ' . $held->product_id
+                . ' for ' . $this->store_name . ' and its listing items are referenced by orders or tickets,'
+                . ' so the source row for that product was not written.');
+
+            return false;
+        }
+
+        DB::table('store_product')->where('id', $held->id)->delete();
+        $stats['deleted']++;
+
+        Log::info('SyncShopifyItems: replaced local store product ' . $held->id . ' with the source row for product ' . $held->product_id . '.');
+
+        return true;
     }
 
     /**
@@ -253,7 +383,13 @@ class SyncShopifyItems implements ShouldQueue
      */
     private function deleteExtraStoreProducts(string $storeId, array &$stats): void
     {
-        $extras = $this->findExtraIds(DB::table('store_product')->where('store_id', $storeId), 'store_product');
+        // Scoped to the same store on both sides: a store product the source moved to another
+        // store is gone from this one and has to go here too, or the two counts never meet.
+        $extras = $this->findExtraIds(
+            DB::table('store_product')->where('store_id', $storeId),
+            'store_product',
+            fn ($query) => $query->where('store_id', $storeId)
+        );
 
         if (empty($extras)) {
             return;
@@ -398,6 +534,124 @@ class SyncShopifyItems implements ShouldQueue
     }
 
     /**
+     * Fill in the local product id for every source product id of a chunk.
+     *
+     * Most of them are the same row on both sides. The ones that are not were re-created here with
+     * an id of our own, and are found again on their code - the source reference_id1 first, the
+     * way OdemobileListingItemSyncJob matches them, then the source product code.
+     */
+    private function resolveProductIds(array $sourceProductIds): void
+    {
+        $unknown = array_values(array_diff(array_filter(array_unique($sourceProductIds)), array_keys($this->productIds)));
+
+        if (empty($unknown)) {
+            return;
+        }
+
+        foreach (Catalog::whereIn('product_id', $unknown)->pluck('product_id') as $productId) {
+            $this->productIds[$productId] = $productId;
+        }
+
+        $renumbered = array_values(array_diff($unknown, array_keys($this->productIds)));
+
+        if (empty($renumbered)) {
+            return;
+        }
+
+        $sourceProducts = DB::connection('easyesale_db')->table('product')
+            ->whereIn('id', $renumbered)
+            ->select('id', 'code', 'reference_id1')
+            ->get();
+
+        $codes = $sourceProducts->pluck('reference_id1')->merge($sourceProducts->pluck('code'))->filter()->unique()->all();
+
+        $byCode = empty($codes) ? collect() : Catalog::whereIn('product_code', $codes)->pluck('product_id', 'product_code');
+
+        foreach ($sourceProducts as $sourceProduct) {
+            $productId = $byCode->get($sourceProduct->reference_id1) ?? $byCode->get($sourceProduct->code);
+
+            $this->productIds[$sourceProduct->id] = $productId;
+
+            if (!empty($productId)) {
+                Log::info('Matched source product ' . $sourceProduct->id . ' to local product ' . $productId
+                    . ' on code ' . ($sourceProduct->reference_id1 ?? $sourceProduct->code) . '.');
+            }
+        }
+
+        // Ids with no row in the source product table at all.
+        foreach ($renumbered as $sourceProductId) {
+            if (!array_key_exists($sourceProductId, $this->productIds)) {
+                $this->productIds[$sourceProductId] = null;
+            }
+        }
+    }
+
+    /**
+     * Fill in the local device id for every source device id of a chunk, the same way as products
+     * but on device.code.
+     */
+    private function resolveDeviceIds(array $sourceDeviceIds, array &$stats): void
+    {
+        $unknown = array_values(array_diff(array_filter(array_unique($sourceDeviceIds)), array_keys($this->deviceIds)));
+
+        if (empty($unknown)) {
+            return;
+        }
+
+        foreach (Device::whereIn('id', $unknown)->pluck('id') as $deviceId) {
+            $this->deviceIds[$deviceId] = $deviceId;
+        }
+
+        $renumbered = array_values(array_diff($unknown, array_keys($this->deviceIds)));
+
+        if (empty($renumbered)) {
+            return;
+        }
+
+        $sourceDevices = DB::connection('easyesale_db')->table('cea_device')
+            ->whereIn('id', $renumbered)
+            ->select('id', 'code')
+            ->get();
+
+        $codes = $sourceDevices->pluck('code')->filter()->unique()->all();
+
+        $byCode = empty($codes) ? collect() : Device::whereIn('code', $codes)->pluck('id', 'code');
+
+        foreach ($sourceDevices as $sourceDevice) {
+            $deviceId = $byCode->get($sourceDevice->code);
+
+            $this->deviceIds[$sourceDevice->id] = $deviceId;
+
+            if (!empty($deviceId)) {
+                Log::info('Matched source device ' . $sourceDevice->id . ' to local device ' . $deviceId
+                    . ' on code ' . $sourceDevice->code . '.');
+            }
+        }
+
+        foreach ($renumbered as $sourceDeviceId) {
+            if (empty($this->deviceIds[$sourceDeviceId])) {
+                $this->deviceIds[$sourceDeviceId] = null;
+                $stats['devices_unmatched']++;
+                Log::warning('SyncShopifyItems: no local device for source device ' . $sourceDeviceId
+                    . ', the rows using it keep the source id.');
+            }
+        }
+    }
+
+    /**
+     * The local id of a source device. Unknown devices keep the source id rather than losing it,
+     * and were already reported by resolveDeviceIds().
+     */
+    private function localDeviceId($sourceDeviceId)
+    {
+        if (empty($sourceDeviceId)) {
+            return $sourceDeviceId;
+        }
+
+        return $this->deviceIds[$sourceDeviceId] ?? $sourceDeviceId;
+    }
+
+    /**
      * The rows of a source chunk that are already here, keyed by id, so the compare pass costs one
      * query per chunk instead of one per row.
      */
@@ -491,18 +745,25 @@ class SyncShopifyItems implements ShouldQueue
     /**
      * Local ids that the source no longer has. Compared in chunks so neither id list is ever
      * held in full.
+     *
+     * @param  callable|null  $sourceScope  Narrows the source side to the same rows the local
+     *                                      query covers, so a row the source moved elsewhere
+     *                                      counts as gone rather than as still present.
      */
-    private function findExtraIds($localQuery, string $sourceTable): array
+    private function findExtraIds($localQuery, string $sourceTable, ?callable $sourceScope = null): array
     {
         $extras = [];
 
-        $localQuery->select('id')->orderBy('id')->chunk(self::COMPARE_CHUNK, function ($rows) use (&$extras, $sourceTable) {
+        $localQuery->select('id')->orderBy('id')->chunk(self::COMPARE_CHUNK, function ($rows) use (&$extras, $sourceTable, $sourceScope) {
             $ids = $rows->pluck('id')->all();
 
-            $sourceIds = DB::connection('easyesale_db')->table($sourceTable)
-                ->whereIn('id', $ids)
-                ->pluck('id')
-                ->all();
+            $sourceQuery = DB::connection('easyesale_db')->table($sourceTable)->whereIn('id', $ids);
+
+            if ($sourceScope !== null) {
+                $sourceScope($sourceQuery);
+            }
+
+            $sourceIds = $sourceQuery->pluck('id')->all();
 
             $extras = array_merge($extras, array_values(array_diff($ids, $sourceIds)));
         });
@@ -540,9 +801,11 @@ class SyncShopifyItems implements ShouldQueue
             'created' => 0,
             'updated' => 0,
             'unchanged' => 0,
-            'skipped' => 0,
+            'unresolved' => 0,
+            'devices_unmatched' => 0,
             'deleted' => 0,
             'protected' => 0,
+            'conflicts' => 0,
         ];
     }
 
@@ -551,7 +814,7 @@ class SyncShopifyItems implements ShouldQueue
      */
     private function sourceWasRead(array $stats): bool
     {
-        return ($stats['created'] + $stats['updated'] + $stats['unchanged'] + $stats['skipped']) > 0;
+        return ($stats['created'] + $stats['updated'] + $stats['unchanged'] + $stats['unresolved'] + $stats['conflicts']) > 0;
     }
 
     private function formatStats(array $stats): string
@@ -626,7 +889,7 @@ class SyncShopifyItems implements ShouldQueue
             'creation_retry_count' => $item->creation_retry_count,
             'linked_item_id' => $item->linked_item_id,
             'carrier_id' => $item->carrier_id,
-            'device_id' => $item->device_id,
+            'device_id' => $this->localDeviceId($item->device_id),
             'generation_type_id' => $item->cea_generation_type_id,
             'brand_id' => $item->cea_brand_id,
             'device_carrier_id' => $item->device_carrier_id,
@@ -663,7 +926,7 @@ class SyncShopifyItems implements ShouldQueue
             'store_sku' => $listingItemData->store_sku,
             'kicked' => $listingItemData->kicked,
             'replaced_id' => $listingItemData->replaced_id,
-            'device_id' => $listingItemData->device_id,
+            'device_id' => $this->localDeviceId($listingItemData->device_id),
             'device_carrier_id' => $listingItemData->device_carrier_id,
             'listing_item_id' => $listingItemData->listing_item_id,
             'last_sale_date' => $listingItemData->last_sale_date,
