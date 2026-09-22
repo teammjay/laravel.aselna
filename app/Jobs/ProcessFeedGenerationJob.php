@@ -564,16 +564,21 @@ class ProcessFeedGenerationJob implements ShouldQueue
      */
     private function clearPreviousFeedFiles(): void
     {
-        $oldFiles = glob($this->directory . '/' . $this->fileNameBase . '_*.' . $this->fileExtension) ?: [];
+        // Numbered parts only: feed_1.csv, feed_12.csv. Anything else named like a part, such as
+        // feed_1_asl.csv or a backup copy, is left alone.
+        $partPattern = '/^' . preg_quote($this->fileNameBase, '/') . '_\d+\.' . preg_quote($this->fileExtension, '/') . '$/';
 
-        foreach ($oldFiles as $oldFile) {
-            if (is_file($oldFile)) {
+        $removed = 0;
+
+        foreach (glob($this->directory . '/' . $this->fileNameBase . '_*.' . $this->fileExtension) ?: [] as $oldFile) {
+            if (is_file($oldFile) && preg_match($partPattern, basename($oldFile))) {
                 @unlink($oldFile);
+                $removed++;
             }
         }
 
-        if (!empty($oldFiles)) {
-            Log::info('Removed ' . count($oldFiles) . ' feed part file(s) of the previous run from ' . $this->directory);
+        if ($removed > 0) {
+            Log::info('Removed ' . $removed . ' feed part file(s) of the previous run from ' . $this->directory);
         }
     }
 
