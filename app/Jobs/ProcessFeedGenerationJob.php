@@ -35,6 +35,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Jobs\Concerns\TrackableJob;
 
@@ -326,6 +327,37 @@ class ProcessFeedGenerationJob implements ShouldQueue
         return $newlistingItem;
     }
 
+    /**
+     * Claim the next unused UPC for this store from upc_codes, skipping any code
+     * already assigned to a listing item detail, and mark it as used.
+     * Returns null when no UPC is available.
+     */
+    private function claimUnusedUpc(): ?string
+    {
+        return DB::transaction(function () {
+            $upcCode = UPCCodes::where('store', $this->store_id)
+                ->where('is_used', 0)
+                ->whereNotNull('upc_code')
+                ->where('upc_code', '!=', '')
+                ->whereNotExists(function ($query) {
+                    $query->select(DB::raw(1))
+                        ->from('listing_item_detail')
+                        ->whereColumn('listing_item_detail.upc', 'upc_codes.upc_code');
+                })
+                ->orderBy('sequence_id', 'asc')
+                ->lockForUpdate()
+                ->first();
+
+            if (!$upcCode) {
+                return null;
+            }
+
+            $upcCode->update(['is_used' => 1]);
+
+            return $upcCode->upc_code;
+        });
+    }
+
     private function generateProductDetail($product_id, $store_type_id)
     {
 
@@ -387,8 +419,16 @@ class ProcessFeedGenerationJob implements ShouldQueue
         }
 
         $query->where('device.status', 'active');
-        $query->whereNotIn('device.rating_id', $excludedRating);
-        $query->whereIn('device.rating_id', $includedRatings);
+
+        // An unrated device has rating_id NULL, and both IN and NOT IN evaluate to
+        // NULL for it, so it fails either test. Let it through explicitly.
+        $query->where(function ($subQuery) use ($excludedRating, $includedRatings) {
+            $subQuery->whereNull('device.rating_id')
+                ->orWhere(function ($rated) use ($excludedRating, $includedRatings) {
+                    $rated->whereNotIn('device.rating_id', $excludedRating)
+                        ->whereIn('device.rating_id', $includedRatings);
+                });
+        });
 
         if ($deviceSeries) {
             $devices = DevicesLinkedDevice::select('device_id')->whereIn('device_series_id', $deviceSeries)->get();
@@ -707,6 +747,17 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                 if (!$item_detail) {
                                     Log::info('Inserting new listing item detail for listing item ID: ' . $listitem->id . ' and device ID: ' . $device->id);
                                     $item_detail = $this->insertListingItemDetail($product_code, $listitem, $device);
+                                }
+
+                                // Fill a missing UPC from upc_codes; if none are left, carry on without one.
+                                if (empty($item_detail->upc)) {
+                                    $newUpc = $this->claimUnusedUpc();
+                                    if ($newUpc) {
+                                        $item_detail->update(['upc' => $newUpc]);
+                                        Log::info('Assigned UPC ' . $newUpc . ' to listing item detail ID: ' . $item_detail->id);
+                                    } else {
+                                        Log::warning('No unused UPC available for store ' . $this->store_id . '; listing item detail ID: ' . $item_detail->id . ' left without UPC');
+                                    }
                                 }
 
                                 $collection_url = '';
