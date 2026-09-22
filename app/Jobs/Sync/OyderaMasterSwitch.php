@@ -101,6 +101,9 @@ class OyderaMasterSwitch implements ShouldQueue
 
                 // 4. listing item images
                 $chain[] = new ListingItemProductImageSyncJob($store->id);
+
+                // 5. store navigation pages
+                $chain[] = new SyncShopifyItems($store->id, SyncShopifyItems::TASK_STORE_NAVIGATION_PAGE);
             }
 
             $chain[] = new ChainCompletionJob($this->jobId);

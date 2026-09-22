@@ -13,7 +13,7 @@ driven by one master job.
 | Piece | Path | Purpose |
 |---|---|---|
 | Master job | `app/Jobs/Sync/OyderaMasterSwitch.php` | Loops the stores, builds the chain, dispatches it |
-| Item sync | `app/Jobs/Shopify/SyncShopifyItems.php` | Takes `(storeId, taskType)` — runs **one** task for **one** store |
+| Item sync | `app/Jobs/Shopify/SyncShopifyItems.php` | Takes `(storeId, taskType)` — runs **one** task for **one** store (store products, listing items, details, navigation pages) |
 | Image sync | `app/Jobs/ListingItemProductImageSyncJob.php` | Takes `(storeId)` |
 | Command | `app/Console/Commands/OyderaMasterSwitchCommand.php` | Run the whole thing for a single store |
 | Scheduler row | `database/seeders/JobScheduler.php` | Registers the master job so it can be run from the UI |
@@ -40,7 +40,7 @@ is exact.
 
 ### The chain
 
-For each store, in order, four jobs are appended to a single `Bus::chain`:
+For each store, in order, five jobs are appended to a single `Bus::chain`:
 
 | # | Job | Task | Writes to |
 |---|---|---|---|
@@ -48,14 +48,54 @@ For each store, in order, four jobs are appended to a single `Bus::chain`:
 | 2 | `SyncShopifyItems` | `TASK_LISTING_ITEM` (`'listing_item'`) | `listing_item` |
 | 3 | `SyncShopifyItems` | `TASK_LISTING_ITEM_DETAIL` (`'listing_item_detail'`) | `listing_item_detail` |
 | 4 | `ListingItemProductImageSyncJob` | — | `listing_item_product_images` |
+| 5 | `SyncShopifyItems` | `TASK_STORE_NAVIGATION_PAGE` (`'store_navigation_page'`) | `store_navigation_page` |
 
-Three stores x four jobs = a 12-job chain, plus a trailing `ChainCompletionJob` that closes out the
+Three stores x five jobs = a 15-job chain, plus a trailing `ChainCompletionJob` that closes out the
 parent record. Because it is one chain, the jobs run strictly in sequence — store by store, task by
 task — and each one gets its own `job_statuses` row, tagged with the task type. A failure stops the
 chain and marks the parent `failed` via the `catch` callback.
 
 > The order still matters for the same reason it always did: each task reads rows the previous one
-> wrote. Splitting them does not make them independent.
+> wrote. Splitting them does not make them independent. Step 5 is the exception — navigation pages
+> depend on nothing above them and sit last only so the listing data is in place first.
+
+### Every task is a full reconciliation
+
+Each task compares one store's rows with oydera (`easyesale_db`) and brings them level:
+
+- a row only in oydera is **created**,
+- a row in both is **updated**, and only when a value actually differs,
+- a row only in Aselna is **deleted**, because it was removed upstream.
+
+So after a clean run the per-store counts match oydera, and no separate purge is needed. Two
+guards apply to the delete pass:
+
+- It is skipped when the source read returns nothing for the store, so an empty or unreachable
+  source cannot wipe a store.
+- A listing item that an `order_item` or `hd_ticket` points at is **kept** and counted as
+  `protected` (those foreign keys are `ON DELETE CASCADE` and would take order lines with them).
+  A store product still holding such an item is kept as well.
+
+Each run logs, and writes to `job_statuses.output`, a summary like
+`created: 12, updated: 40, unchanged: 3100, deleted: 5, protected: 0, ...`.
+
+#### Store navigation pages (step 5)
+
+`TASK_STORE_NAVIGATION_PAGE` does for the three stores what `App\Jobs\StorePagesJobSync` does for
+every store at once: it copies oydera `store_navigation_page` into `store_navigation_page`, keeping
+the same id and the same columns. Unlike `StorePagesJobSync` (which only upserts) it also deletes
+the pages oydera no longer has for that store, so the counts end up equal. Device ids are matched
+on `device.code` where the id differs, as for listing items. `StorePagesJobSync` itself is
+unchanged.
+
+```sql
+-- Aselna side; compare with the same query on easyesale_db
+SELECT store_id, COUNT(*) FROM store_navigation_page
+WHERE store_id IN ('e4424bb0-87f7-ce9e-90c3-6d9f491bc726',
+                   '6c7009ce-eac1-a995-a986-27d5df0103ac',
+                   '99ede22c-fc39-7f9f-cd0d-34d4b9a70c21')
+GROUP BY store_id;
+```
 
 ### How to run it
 
@@ -85,6 +125,7 @@ SyncShopifyItems::dispatch($storeId, SyncShopifyItems::TASK_STORE_PRODUCT);
 SyncShopifyItems::dispatch($storeId, SyncShopifyItems::TASK_LISTING_ITEM);
 SyncShopifyItems::dispatch($storeId, SyncShopifyItems::TASK_LISTING_ITEM_DETAIL);
 App\Jobs\ListingItemProductImageSyncJob::dispatch($storeId);
+SyncShopifyItems::dispatch($storeId, SyncShopifyItems::TASK_STORE_NAVIGATION_PAGE);
 ```
 
 An unknown `taskType` throws `InvalidArgumentException`, which the job's own `catch` turns into an
@@ -117,113 +158,6 @@ re-checking the duplicate query in step 1.
 
 ---
 
-## Purging a store before a re-sync
-
-`OyderaMasterSwitch` upserts; it never deletes. To rebuild a store from a clean base you have to
-empty the four tables first, and that is what the `oydera:purge*` commands do. They implement
-`docs/superpowers/plans/2026-09-17-pre-sync-purge-plan.md` — read that for the reasoning; this is
-the operating summary.
-
-| Command | Purpose |
-|---|---|
-| `oydera:purge {store}` | Stage ids, park order links, delete, verify |
-| `oydera:purge-relink {store}` | Restore the parked order links, **after** the re-sync |
-| `oydera:purge-teardown [{store}]` | Drop the staging tables, or clear one store from them |
-
-Source lives in `app/Console/Commands/Purge/`, sharing `InteractsWithPurgeTables`.
-
-### Why you cannot just write the DELETEs by hand
-
-`order_item.listing_item_id` is `ON DELETE CASCADE`. A plain
-`DELETE li FROM listing_item li JOIN store_product sp ...` therefore deletes the order lines sold
-under those listing items, and their children cascade in turn. Measured on 2026-09-17:
-
-| Store | `order_item` | `order_item_attribute` | `order_operation_item` | orders affected |
-|---|---:|---:|---:|---:|
-| UZID | **0** | 0 | 0 | 0 |
-| OdeMobile | **20,455** | 37,734 | 21,581 | 19,639 |
-| AccessoryChoice | **1,882** | 3,222 | 1,963 | 1,832 |
-
-UZID is genuinely clean, which is exactly why hand-written SQL looks safe. It is not safe for the
-other two.
-
-`oydera:purge` defuses this rather than accepting it. Because the sync upserts on oydera's own ids
-(`updateOrCreate(['id' => $item->id], ...)`), a deleted listing item comes back with the **same**
-primary key. So the command copies each `order_item.id -> listing_item_id` pair into
-`purge_order_item_links`, sets the column NULL (it is nullable — 40,805 rows already are), and
-`oydera:purge-relink` puts them back after the sync. No order row is ever deleted.
-
-It also refuses to run at all if any `hd_ticket.related_listing_item_id` points at a targeted
-listing item, because that cascade reaches `order` itself and would delete whole orders. The column
-is NULL on every ticket today; the check is there for the day it is not.
-
-### Order of deletion
-
-Only `store_product_image` and `order_item` have a foreign key pointing at these tables, so almost
-nothing cascades and the rest must be deleted explicitly, children first:
-
-1. `listing_item_product_images` (no FK)
-2. `listing_item_detail` (no FK, batched — up to ~766k rows)
-3. `listing_item_link` (no FK)
-4. `listing_item_history` (no FK)
-5. `listing_item` (cascade now inert)
-6. `store_product`
-
-### Running it
-
-Always dry-run first. It builds the staging tables and reports, and deletes nothing:
-
-```bash
-php artisan oydera:purge UZID --dry-run
-```
-
-Then the real thing (prompts for confirmation unless `--force`):
-
-```bash
-php artisan oydera:purge UZID
-php artisan oydera:master-switch UZID      # repopulate
-php artisan oydera:purge-relink UZID       # restore the order links
-php artisan oydera:purge-teardown          # drop the staging tables
-```
-
-Options on `oydera:purge`:
-
-| Option | Effect |
-|---|---|
-| `--dry-run` | Stage and report only |
-| `--batch=500` | Listing items per batch for the `listing_item_detail` delete |
-| `--keep-store-product` | Purge listings and below, leave `store_product` alone |
-| `--force` | Skip the confirmation prompt |
-
-`--keep-store-product` is worth considering: UZID has 28,651 store products but only 1,934 listing
-items, so ~93% carry nothing, and the sync refreshes the rest in place anyway.
-
-### Verification is built in
-
-After deleting, the command checks all four tables are empty for that store **and** that the three
-order tables have the same row count as before it started. If either check fails it exits 1 and
-tells you not to run the sync.
-
-### Operational notes
-
-- **Do UZID first, alone.** Zero order exposure means a mistake cannot cost order history, and it
-  has the smallest listing set. Then `AccessoryChoice` (1,882 order lines), then `OdeMobile`
-  (20,455) — smallest exposure first.
-- **The staging tables are permanent, not `TEMPORARY`.** A temp table dies with the connection, and
-  MySQL cannot open the same temp table twice in one statement. They are created on demand and
-  dropped by `oydera:purge-teardown`.
-- **No wrapping transaction.** The detail delete can reach ~766k rows, so it runs batch by batch and
-  autocommits. Restartability comes from the staging tables and `batch_no` instead: re-running
-  `oydera:purge` for the same store re-stages and carries on.
-- **Do not drop the staging tables before relinking.** `oydera:purge-teardown` warns when parked
-  links are still present, but it will do as it is told. The mapping cannot be rebuilt once gone.
-- **Stop the workers first**, and set `auto_generate_listings = 0`, so nothing pushes to Shopify
-  mid-purge and no sync chain is writing while you delete.
-- **Counts move.** These tables are live; between two measurements 30 minutes apart, UZID's image
-  count went from 16,122 to 20,817. Trust the dry run over any number written down here.
-
----
-
 ## Shopify verification
 
 After switching, run these three jobs **in this order** to copy listing data from Oydera
@@ -238,9 +172,8 @@ Each job reads rows that the previous job wrote.
 
 ### Before you start
 
-0. **Decide whether you are purging first.** These jobs upsert, they do not delete. If the store
-   needs rebuilding from a clean base, run `oydera:purge` first — see **Purging a store before a
-   re-sync** above.
+0. **No purge is needed.** The `SyncShopifyItems` tasks and `ListingItemProductImageSyncJob`
+   delete what oydera no longer has themselves — see **Every task is a full reconciliation** above.
 
 1. **Check that the stores exist.** Jobs 1 and 2 find their stores by `store.name` joined to
    `store_type.code = 'shopify'`. If a store's name doesn't match exactly, it is skipped with no error.
@@ -364,8 +297,8 @@ per dispatch; this step is `TASK_LISTING_ITEM_DETAIL`. (The other two, `TASK_STO
 rows whose `store_product_id` belongs to that store, and copies Oydera `cea_listing_item_detail`
 into `listing_item_detail`, keeping the same id.
 
-- It **only inserts**. If a `listing_item_detail` id already exists, that row is skipped and not
-  updated, so re-running it won't refresh stale rows.
+- It **reconciles**: missing detail rows are created, changed ones updated, and detail rows oydera
+  no longer has for these listing items are deleted.
 - It depends on step 1. Listing items that step 1 left without a `store_product_id` are not picked up.
 - It is **one store per dispatch**. Repeat it for each store, or let the master switch do that.
 

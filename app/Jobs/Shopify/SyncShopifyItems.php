@@ -9,6 +9,7 @@ use App\Models\Device;
 use App\Models\ListingItem;
 use App\Models\ListingItemDetail;
 use App\Models\Store;
+use App\Models\StoreNavigationPage;
 use App\Models\StoreProduct;
 use App\Services\CriticalErrorService;
 use Exception;
@@ -18,6 +19,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use InvalidArgumentException;
 
 /**
@@ -53,6 +55,8 @@ class SyncShopifyItems implements ShouldQueue
 
     public const TASK_LISTING_ITEM_DETAIL = 'listing_item_detail';
 
+    public const TASK_STORE_NAVIGATION_PAGE = 'store_navigation_page';
+
     /**
      * Rows read from the source per chunk.
      */
@@ -74,6 +78,11 @@ class SyncShopifyItems implements ShouldQueue
      * Local device ids keyed by the source device id, null when the device is not here at all.
      */
     private array $deviceIds = [];
+
+    /**
+     * Whether a table has the created_by / updated_by columns, keyed by table name.
+     */
+    private array $auditColumns = [];
 
     /**
      * Picked up by the Queue::createPayloadUsing hook in AppServiceProvider and used for the
@@ -106,6 +115,7 @@ class SyncShopifyItems implements ShouldQueue
                 self::TASK_STORE_PRODUCT => $this->syncStoreProducts($this->storeId),
                 self::TASK_LISTING_ITEM => $this->syncListingItems($this->storeId),
                 self::TASK_LISTING_ITEM_DETAIL => $this->syncListingItemDetails($this->storeId),
+                self::TASK_STORE_NAVIGATION_PAGE => $this->syncStoreNavigationPages($this->storeId),
                 default => throw new InvalidArgumentException('Unknown task type: ' . $this->taskType),
             };
 
@@ -275,6 +285,43 @@ class SyncShopifyItems implements ShouldQueue
             $this->deleteExtraListingItemDetails($storeId, $stats);
         } else {
             Log::warning('SyncShopifyItems: the source returned no listing item details for ' . $this->store_name . ', delete pass skipped.');
+        }
+
+        return $stats;
+    }
+
+    /**
+     * The store's navigation pages (collections, brand and device pages), the table
+     * StorePagesJobSync copies for every store at once.
+     */
+    private function syncStoreNavigationPages($storeId): array
+    {
+        $stats = $this->newStats();
+
+        DB::connection('easyesale_db')->table('store_navigation_page')
+            ->where('store_id', $storeId)
+            ->orderBy('id')
+            ->chunk(self::READ_CHUNK, function ($pages) use (&$stats) {
+                $existing = $this->existingRows(StoreNavigationPage::class, $pages->pluck('id')->all());
+
+                $this->resolveDeviceIds($pages->pluck('device_id')->all(), $stats);
+
+                foreach ($pages as $page) {
+                    $this->saveRecord(StoreNavigationPage::class, $page->id, $this->mapStoreNavigationPage($page), [], $stats, $existing);
+                }
+            });
+
+        if ($this->sourceWasRead($stats)) {
+            // Nothing points at store_navigation_page with a foreign key, so the extras can go as they are.
+            $extras = $this->findExtraIds(
+                DB::table('store_navigation_page')->where('store_id', $storeId),
+                'store_navigation_page',
+                fn ($query) => $query->where('store_id', $storeId)
+            );
+
+            $stats['deleted'] += $this->deleteInChunks('store_navigation_page', 'id', $extras);
+        } else {
+            Log::warning('SyncShopifyItems: the source returned no store_navigation_page rows for ' . $this->store_name . ', delete pass skipped.');
         }
 
         return $stats;
@@ -504,11 +551,13 @@ class SyncShopifyItems implements ShouldQueue
 
         if (!$model) {
             $model = new $modelClass();
-            $model->forceFill($attributes + $createOnly + [
-                'id' => $id,
-                'created_by' => 'system',
-                'updated_by' => 'system',
-            ]);
+            $model->forceFill($attributes + $createOnly + ['id' => $id]);
+
+            if ($this->hasAuditColumns($model)) {
+                $model->created_by = 'system';
+                $model->updated_by = 'system';
+            }
+
             $model->save();
 
             $stats['created']++;
@@ -526,11 +575,26 @@ class SyncShopifyItems implements ShouldQueue
         }
 
         $model->forceFill($changed);
-        $model->updated_by = 'system';
+
+        if ($this->hasAuditColumns($model)) {
+            $model->updated_by = 'system';
+        }
+
         $model->save();
 
         $stats['updated']++;
         Log::info('Updated ' . class_basename($modelClass) . ' ' . $id . ' (' . implode(', ', array_keys($changed)) . ')');
+    }
+
+    /**
+     * Not every synced table has created_by / updated_by (store_navigation_page does not), and
+     * writing them where they are missing fails the insert.
+     */
+    private function hasAuditColumns(Model $model): bool
+    {
+        $table = $model->getTable();
+
+        return $this->auditColumns[$table] ??= Schema::hasColumn($table, 'created_by') && Schema::hasColumn($table, 'updated_by');
     }
 
     /**
@@ -930,6 +994,32 @@ class SyncShopifyItems implements ShouldQueue
             'device_carrier_id' => $listingItemData->device_carrier_id,
             'listing_item_id' => $listingItemData->listing_item_id,
             'last_sale_date' => $listingItemData->last_sale_date,
+        ];
+    }
+
+    private function mapStoreNavigationPage(mixed $page): array
+    {
+        return [
+            'store_id' => $page->store_id,
+            'store_image_url' => $page->store_image_url,
+            'page_type' => $page->page_type,
+            'page_id' => $page->page_id,
+            'url_path' => $page->url_path,
+            'parent_page_id' => $page->parent_page_id,
+            'template_id' => $page->template_id,
+            'title' => $page->title,
+            'device_brand_id' => $page->device_brand_id,
+            'device_id' => $this->localDeviceId($page->device_id),
+            'product_type_id' => $page->product_type_id,
+            'generated_body' => $page->generated_body,
+            'keywords' => $page->keywords,
+            'meta_title' => $page->meta_title,
+            'meta_description' => $page->meta_description,
+            'child_ids' => $page->child_ids,
+            'description' => $page->description,
+            'image_id' => $page->image_id,
+            'synchronize' => $page->synchronize ? 1 : 0,
+            'update_image' => $page->update_image ? 1 : 0,
         ];
     }
 
