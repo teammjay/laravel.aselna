@@ -189,6 +189,8 @@ class ProcessFeedGenerationJob implements ShouldQueue
             $this->fileNameBase = pathinfo($this->file_name, PATHINFO_FILENAME);
             $this->fileExtension = pathinfo($this->file_name, PATHINFO_EXTENSION);
 
+            $this->clearPreviousFeedFiles();
+
             $this->fileHandle = fopen($this->getFilePath($this->current_file_index), 'w');
             fputcsv($this->fileHandle, $this->columns);
 
@@ -554,6 +556,27 @@ class ProcessFeedGenerationJob implements ShouldQueue
         return $this->directory . '/' . $this->fileNameBase . "_{$index}." . $this->fileExtension;
     }
 
+    /**
+     * Remove the part files of the previous run for this store. A run that ends up with fewer parts
+     * than the last one only overwrites the parts it writes, so without this the leftover parts
+     * (feed_4.csv .. feed_7.csv after a 7 part run followed by a 3 part one) stay on disk and keep
+     * being served.
+     */
+    private function clearPreviousFeedFiles(): void
+    {
+        $oldFiles = glob($this->directory . '/' . $this->fileNameBase . '_*.' . $this->fileExtension) ?: [];
+
+        foreach ($oldFiles as $oldFile) {
+            if (is_file($oldFile)) {
+                @unlink($oldFile);
+            }
+        }
+
+        if (!empty($oldFiles)) {
+            Log::info('Removed ' . count($oldFiles) . ' feed part file(s) of the previous run from ' . $this->directory);
+        }
+    }
+
     private function getPartFilename($index)
     {
         return $this->fileNameBase . "_{$index}." . $this->fileExtension;
@@ -801,6 +824,11 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                 $finalMainImage = $mainImage . '?device=' . $listitem->id;
 
                                 $upcCode = (isset($item_detail->upc)) ? $item_detail->upc : '';
+
+                                // Google wants the 14 digit GTIN, so a 12 digit UPC goes in padded.
+                                if (strtolower($feed_type) == 'google' && $upcCode != '' && !str_starts_with($upcCode, '00')) {
+                                    $upcCode = '00' . $upcCode;
+                                }
 
                                 /*if (!in_array($this->storeDetail->name,['UZID','NevaWireless','AccessoryWiz','OdeMobile','AccessoryChoice','GetAccessory'])) {
                                     $upcCode = $listitem->sku;
