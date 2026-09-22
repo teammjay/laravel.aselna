@@ -9,6 +9,10 @@ class ListingItemProductImage extends Model
 {
     protected $table = 'listing_item_product_images';
 
+    protected $keyType = 'string';
+
+    public $incrementing = false;
+
     protected static function boot()
     {
         parent::boot();

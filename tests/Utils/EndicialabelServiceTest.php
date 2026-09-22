@@ -114,6 +114,25 @@ class EndicialabelServiceTest extends TestCase
         ];
     }
 
+    public function testBuildStatusRequestXmlEscaping()
+    {
+        $service = new EndicialabelService();
+        $trans = [
+            'accountId' => '123456',
+            'passPhrase' => 'Secret&Pass<>fg"Test',
+            'requesterId' => 'Iweb&Co',
+            'requestId' => 'uuid-1234',
+            'transactions' => ['94001234567890']
+        ];
 
+        $xml = $service->buildStatusRequestXML($trans);
 
+        $this->assertStringContainsString('&amp;', $xml);
+        $this->assertStringContainsString('Secret&amp;Pass&lt;&gt;fg"Test', $xml);
+        $this->assertStringContainsString('Iweb&amp;Co', $xml);
+
+        libxml_use_internal_errors(true);
+        $parsed = simplexml_load_string($xml);
+        $this->assertNotFalse($parsed);
+    }
 }

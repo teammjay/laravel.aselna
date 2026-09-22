@@ -1,0 +1,79 @@
+<?php
+
+namespace App\Jobs\Oydera;
+
+use App\Models\Catalog;
+use App\Services\CriticalErrorService;
+use App\Models\ProductSearchTerm;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\Facades\DB;
+use App\Jobs\Concerns\TrackableJob;
+
+class ProductSearchTermSyncJob implements ShouldQueue
+{
+    use Queueable, TrackableJob {
+        TrackableJob::withChain insteadof Queueable;
+        Queueable::withChain as queueableWithChain;
+    }
+
+    /**
+     * Create a new job instance.
+     */
+    public function __construct()
+    {
+        //
+    }
+
+    /**
+     * Execute the job.
+     */
+    public function handle(): void
+    {
+        $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Product Search Terms']);
+
+        try {
+            $productSearchTermQ = DB::connection('easyesale_db')->table('product_search_term')
+                ->orderBy('id');
+
+            $productSearchTermQ->chunk(1000, function ($productSearchTerms) {
+                foreach ($productSearchTerms as $productSearchTerm) {
+                    $this->createProductSearchTerm($productSearchTerm);
+                }
+            });
+
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'finished_at' => now()
+            ]);
+        }catch (\Throwable $e) {
+
+            $this->updateTrackingRecord([
+                'status' => 'failed',
+                'output' => $e->getMessage(),
+                'finished_at' => now()
+            ]);
+
+            CriticalErrorService::report('Product Search Terms Sync Job Failed', [
+                'marketplace' => 'N/A',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
+                'method' => __METHOD__
+            ]);
+        }
+    }
+
+    private function createProductSearchTerm(mixed $productSearchTerm)
+    {
+        if (Catalog::where('product_id', $productSearchTerm->product_id)->doesntExist()) {
+            return;
+        }
+        ProductSearchTerm::updateOrCreate([
+            'id' => $productSearchTerm->id
+        ], [
+            'id' => $productSearchTerm->id,
+            'product_id' => $productSearchTerm->product_id,
+            'term' => $productSearchTerm->value,
+            'sort_order' => $productSearchTerm->sort_order,
+        ]);
+    }
+}

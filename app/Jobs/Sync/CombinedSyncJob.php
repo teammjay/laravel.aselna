@@ -2,18 +2,18 @@
 
 namespace App\Jobs\Sync;
 
-use App\Jobs\BrandSyncJob;
-use App\Jobs\CategorySyncJob;
+use App\Jobs\Oydera\BrandSyncJob;
+use App\Jobs\Oydera\CategorySyncJob;
 use App\Jobs\Concerns\TrackableJob;
-use App\Jobs\DeviceCarrierSyncJob;
-use App\Jobs\DeviceInterfaces;
-use App\Jobs\DevicesSyncJob;
+use App\Jobs\Oydera\DeviceCarrierSyncJob;
+use App\Jobs\Oydera\DeviceInterfaces;
+use App\Jobs\Oydera\DevicesSyncJob;
 use App\Jobs\Fonus\ChainCompletionJob;
-use App\Jobs\InterfaceSyncJob;
+use App\Jobs\Oydera\InterfaceSyncJob;
 use App\Jobs\ProductImagesSyncJob;
-use App\Jobs\ProductInterfaces;
-use App\Jobs\ProductKeyFeaturesSyncJob;
-use App\Jobs\ProductSpecificationSyncJob;
+use App\Jobs\Oydera\ProductInterfaces;
+use App\Jobs\Oydera\ProductKeyFeaturesSyncJob;
+use App\Jobs\Oydera\ProductSpecificationSyncJob;
 use App\Jobs\ProductSyncJob;
 use App\Jobs\SubmitShopifyProductsJob;
 use App\Models\JobStatus;
