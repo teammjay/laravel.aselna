@@ -261,24 +261,24 @@ class OrderOperationUtility
             $orderOperation->status = OrderOperationStatus::LabelCreated;
             $orderOperation->save();
 
-            if (!OrderOperationType::isReturn($operation_type)) {
-                $result = self::waitForOperationCompleted($response['trackingNumber']);
-
-                if (!$result) {
-                    DB::connection('aselna_printer_db')->table('PrintJobs')
-                        ->where('fileName', $response['trackingNumber'] . '.txt')
-                        ->update(['status' => 'failed']);
-
-                   // AccountTransaction::where('tracking_number', $response['trackingNumber'])
-                      //  ->update(['status' => 'failed']);
-
-                    Log::error('Label creation operation did not complete successfully for order operation: ' . $orderOperation->id);
-                    return ['Error creating label. Printing Failed.'];
-                } else {
-                    //AccountTransaction::where('tracking_number', $response['trackingNumber'])
-                        //->update(['status' => 'completed']);
-                }
-            }
+//            if (!OrderOperationType::isReturn($operation_type)) {
+//                $result = self::waitForOperationCompleted($response['trackingNumber']);
+//
+//                if (!$result) {
+//                    DB::connection('aselna_printer_db')->table('PrintJobs')
+//                        ->where('fileName', $response['trackingNumber'] . '.txt')
+//                        ->update(['status' => 'failed']);
+//
+//                   // AccountTransaction::where('tracking_number', $response['trackingNumber'])
+//                      //  ->update(['status' => 'failed']);
+//
+//                    Log::error('Label creation operation did not complete successfully for order operation: ' . $orderOperation->id);
+//                    return ['Error creating label. Printing Failed.'];
+//                } else {
+//                    //AccountTransaction::where('tracking_number', $response['trackingNumber'])
+//                        //->update(['status' => 'completed']);
+//                }
+//            }
 
             //$orderOperation->tracking_number = $response['trackingNumber'];
             $orderOperation->status = OrderOperationStatus::LabelPrinted;

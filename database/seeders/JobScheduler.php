@@ -13,141 +13,87 @@ class JobScheduler extends Seeder
     public function run(): void
     {
         $jobs = [
+            // Fonus (fonus_db) single-table syncs, in the order FonusCombinedSyncJob runs them.
+            // Each one can be run on its own; later ones rely on rows the earlier ones wrote.
             [
-                'name' => 'Store Type Sync',
-                'description' => 'Sync all store types',
-                'class_name' => 'App\Jobs\StoreTypeSyncJob',
+                'name' => 'Fonus Product Color Sync',
+                'description' => 'Sync product colors from Fonus (tbl_colors)',
+                'class_name' => 'App\Jobs\Fonus\ProductcolorSyncJob',
             ],
             [
-                'name' => 'Store Sync',
-                'description' => 'Sync all stores',
-                'class_name' => 'App\Jobs\StoreSyncJob',
+                'name' => 'Fonus Manufacturer Sync',
+                'description' => 'Sync manufacturers from Fonus (tbl_manufacturer)',
+                'class_name' => 'App\Jobs\Fonus\ManufacturerSyncJob',
             ],
             [
-                'name' => 'Manufacturer Sync',
-                'description' => 'Sync all manufacturers',
-                'class_name' => 'App\Jobs\ManufacturerSyncJob',
+                'name' => 'Fonus Carrier Sync',
+                'description' => 'Sync mobile carriers from Fonus (tbl_carrier)',
+                'class_name' => 'App\Jobs\Fonus\CarrierSyncJob',
             ],
             [
-                'name' => 'Device Types Sync',
-                'description' => 'Sync all device types',
-                'class_name' => 'App\Jobs\DeviceTypesSyncJob',
-            ],
-            [
-                'name' => 'Device Rating Sync',
-                'description' => 'Sync all device ratings',
-                'class_name' => 'App\Jobs\DeviceRatingSyncJob',
-            ],
-//            [
-//                'name' => 'Device Series Sync',
-//                'description' => 'Sync all device series',
-//                'class_name' => 'App\Jobs\DeviceSeriesSyncJob',
-//            ],
-            [
-                'name' => 'Brand Sync',
-                'description' => 'Sync all brands',
-                'class_name' => 'App\Jobs\BrandSyncJob',
-            ],
-            [
-                'name' => 'Category Sync',
-                'description' => 'Sync all categories',
-                'class_name' => 'App\Jobs\CategorySyncJob',
-            ],
-            [
-                'name' => 'Interface Sync',
-                'description' => 'Sync all interfaces',
-                'class_name' => 'App\Jobs\InterfaceSyncJob',
-            ],
-            [
-                'name' => 'Devices Sync',
-                'description' => 'Sync all devices',
-                'class_name' => 'App\Jobs\DevicesSyncJob',
-            ],
-            [
-                'name' => 'Device Interfaces',
-                'description' => 'Sync all device interfaces',
-                'class_name' => 'App\Jobs\DeviceInterfaces',
-            ],
-            [
-                'name' => 'Product Condition Sync',
-                'description' => 'Sync all product conditions',
-                'class_name' => 'App\Jobs\ProductConditionJob',
-            ],
-            [
-                'name' => 'Carrier Sync',
-                'description' => 'Sync all carriers',
-                'class_name' => 'App\Jobs\CarrierSyncJob',
-            ],
-            [
-                'name' => 'Shipping Carrier Sync',
-                'description' => 'Sync all shipping carriers',
-                'class_name' => 'App\Jobs\ShippingCarrierJob',
-            ],
-            [
-                'name' => 'Product Color Sync',
-                'description' => 'Sync all product colors',
-                'class_name' => 'App\Jobs\ProductColorSync',
-            ],
-            [
-                'name' => 'Product Size Sync',
-                'description' => 'Sync all product sizes',
-                'class_name' => 'App\Jobs\ProductSizeSyncJob',
-            ],
-            [
-                'name' => 'Product Material Sync',
-                'description' => 'Sync all product
-                materials',
-                'class_name' => 'App\Jobs\ProductMaterialSyncJob',
-            ],
-            [
-                'name' => 'Generation Type And Template Sync',
-                'description' => 'Sync all generation types and templates',
-                'class_name' => 'App\Jobs\GenerationTypeAndTemplateSync',
-            ],
-            [
-                'name' => 'Product Sync',
-                'description' => 'Sync all products',
+                'name' => 'Fonus Product Sync',
+                'description' => 'Sync the product catalog and product key features from Fonus (tbl_product)',
                 'class_name' => 'App\Jobs\Fonus\ProductSyncJob',
             ],
             [
-                'name' => 'Product Channel Detail Sync',
-                'description' => 'Sync all product channel details',
-                'class_name' => 'App\Jobs\ProductChannelDetailSyncJob',
+                'name' => 'Fonus Interface Sync',
+                'description' => 'Sync compatibility interfaces (attributes) from Fonus (tbl_attributes)',
+                'class_name' => 'App\Jobs\Fonus\InterfacesSyncJob',
             ],
             [
-                'name' => 'Store Product Sync',
-                'description' => 'Sync all store products',
-                'class_name' => 'App\Jobs\StoreProductSyncJob',
+                'name' => 'Fonus Category Sync',
+                'description' => 'Sync product categories and sub-categories from Fonus (tbl_category, tbl_category_sub)',
+                'class_name' => 'App\Jobs\Fonus\CategorySyncJob',
             ],
             [
-                'name' => 'Product Interfaces',
-                'description' => 'Sync all product interfaces',
-                'class_name' => 'App\Jobs\ProductInterfaces',
+                'name' => 'Fonus Brand Sync',
+                'description' => 'Sync device brands from Fonus (tbl_brand)',
+                'class_name' => 'App\Jobs\Fonus\BrandSyncJob',
             ],
             [
-                'name' => 'Devices Link Sync',
-                'description' => 'Sync all devices links',
-                'class_name' => 'App\Jobs\DevicesLinkSyncJob',
+                'name' => 'Fonus Device Type Sync',
+                'description' => 'Sync device types and sub-types from Fonus (tbl_device_type, tbl_device_type_sub)',
+                'class_name' => 'App\Jobs\Fonus\DeviceTypeSyncJob',
             ],
             [
-                'name' => 'Logistic Centre Sync',
-                'description' => 'Sync all logistic centres',
-                'class_name' => 'App\Jobs\LogisticCentreSyncJob',
+                'name' => 'Fonus Device Sync',
+                'description' => 'Sync devices and gadgets from Fonus (tbl_device, tbl_gadget)',
+                'class_name' => 'App\Jobs\Fonus\DevicesSyncJob',
             ],
             [
-                'name' => 'Product Search Term Sync',
-                'description' => 'Sync all product search terms',
-                'class_name' => 'App\Jobs\ProductSearchTermSyncJob',
+                'name' => 'Fonus Device Carrier Sync',
+                'description' => 'Sync which carriers each device is sold on from Fonus (tbl_device_carriers)',
+                'class_name' => 'App\Jobs\Fonus\DeviceCarrierSyncJob',
             ],
             [
-                'name' => 'Product Type Keyword Sync',
-                'description' => 'Sync all product type keywords',
-                'class_name' => 'App\Jobs\ProductTypeKeywordSyncJob',
+                'name' => 'Fonus Device Interface Sync',
+                'description' => 'Sync device and gadget to interface links from Fonus (tbl_device_attributes, tbl_gadget_attributes)',
+                'class_name' => 'App\Jobs\Fonus\DevicesInterfacesSyncJob',
             ],
             [
-                'name' => 'Product Tag Sync',
-                'description' => 'Sync all product tags',
-                'class_name' => 'App\Jobs\ProductTagSyncJob',
+                'name' => 'Fonus Product Interface Sync',
+                'description' => 'Sync product to interface links from Fonus (tbl_product)',
+                'class_name' => 'App\Jobs\Fonus\ProductInterfacesSyncJob',
+            ],
+            [
+                'name' => 'Fonus Title Keyword Sync',
+                'description' => 'Sync product title keywords from Fonus (tbl_title_keywords)',
+                'class_name' => 'App\Jobs\Fonus\ProductTitleKeyword',
+            ],
+            [
+                'name' => 'Fonus Product Channel Sync',
+                'description' => 'Sync per-channel product details from Fonus (tbl_product_channels)',
+                'class_name' => 'App\Jobs\Fonus\ProductChannelSyncJob',
+            ],
+            [
+                'name' => 'Fonus Popular Devices Sync',
+                'description' => 'Sync the popular devices list from Fonus (tbl_popular_devices)',
+                'class_name' => 'App\Jobs\Fonus\PopularDevicesSyncJob',
+            ],
+            [
+                'name' => 'Fonus Product Specifications Sync',
+                'description' => 'Sync product specifications and their values from Fonus (tbl_features, tbl_category_feature_values, tbl_product_features)',
+                'class_name' => 'App\Jobs\Fonus\ProductSpecificationsSyncJob',
             ],
             [
                 'name' => 'Product Images Sync',
@@ -160,21 +106,6 @@ class JobScheduler extends Seeder
                 'class_name' => 'App\Jobs\ProductAlternativeImagesSyncJob',
             ],
             [
-                'name' => 'Listing Template Sync',
-                'description' => 'Sync all listing templates',
-                'class_name' => 'App\Jobs\ListingTemplateSyncJob',
-            ],
-//            [
-//                'name' => 'Store Pages Job Sync',
-//                'description' => 'Sync all store pages',
-//                'class_name' => 'App\Jobs\StorePagesJobSync',
-//            ],
-            [
-                'name' => 'Device Carrier Sync',
-                'description' => 'Sync all device carriers',
-                'class_name' => 'App\Jobs\DeviceCarrierSyncJob',
-            ],
-            [
                 'name' => 'Fetch Result Feed Async',
                 'description' => 'Fetch result feed asynchronously',
                 'class_name' => 'App\Jobs\FetchResultFeedAsync',
@@ -183,21 +114,6 @@ class JobScheduler extends Seeder
                 'name' => 'Amazon Product Type Sync',
                 'description' => 'Sync all Amazon product types',
                 'class_name' => 'App\Jobs\AmazonProductTypeSyncJob',
-            ],
-            [
-                'name' => 'Listing Sync Job',
-                'description' => 'Sync all listing items',
-                'class_name' => 'App\Jobs\ListingSyncJob',
-            ],
-            [
-                'name' => 'Listing Item Sync Job',
-                'description' => 'Sync all listing items',
-                'class_name' => 'App\Jobs\ListingItemSyncJob',
-            ],
-            [
-                'name' => 'Listing Item Link sync Job',
-                'description' => 'Sync all listing item links',
-                'class_name' => 'App\Jobs\ListingItemLinkSyncJob',
             ],
             [
                 'name' => 'Fetch Walmart Orders Sync Job',
@@ -213,56 +129,6 @@ class JobScheduler extends Seeder
                 'name' => 'Fetch Ebay Orders Sync Job',
                 'description' => 'Fetch Ebay orders',
                 'class_name' => 'App\Jobs\FetchEbayOrders',
-            ],
-            [
-                'name' => 'Addresses Sync Job',
-                'description' => 'Sync all addresses',
-                'class_name' => 'App\Jobs\AddressesSyncJob',
-            ],
-            [
-                'name' => 'Shipping Account Sync Job',
-                'description' => 'Sync all shipping accounts',
-                'class_name' => 'App\Jobs\ShippingAccountsSyncJob',
-            ],
-            [
-                'name' => 'Shipping Solution Sync Job',
-                'description' => 'Sync all shipping solutions',
-                'class_name' => 'App\Jobs\ShippingSolutionSyncJob',
-            ],
-            [
-                'name' => 'Client Sync Job',
-                'description' => 'Sync all clients',
-                'class_name' => 'App\Jobs\ClientSyncJob',
-            ],
-            [
-                'name' => 'Order Operation Reason Sync Job',
-                'description' => 'Sync all order operation reasons',
-                'class_name' => 'App\Jobs\OperationReasonSyncJob',
-            ],
-            [
-                'name' => 'Messaging Account Sync Job',
-                'description' => 'Sync all messaging account',
-                'class_name' => 'App\Jobs\MessagingAccountSyncJob',
-            ],
-            [
-                'name' => 'Store Message Account Sync Job',
-                'description' => 'Sync all store message account',
-                'class_name' => 'App\Jobs\StoreMessageAccountSyncJob',
-            ],
-//            [
-//                'name' => 'Printer Sync Job',
-//                'description' => 'Sync all printer',
-//                'class_name' => 'App\Jobs\PrinterSyncJob',
-//            ],
-            [
-                'name' => 'Shipment Document Setting Sync Job',
-                'description' => 'Sync all shipment document settings',
-                'class_name' => 'App\Jobs\ShipmentDocuemntSettingSyncJob',
-            ],
-            [
-                'name' => 'HD Message Template Sync Job',
-                'description' => 'Sync all hd message templates',
-                'class_name' => 'App\Jobs\SyncMessageTemplateJob',
             ],
             [
                 'name' => 'Sync all order status',
@@ -291,12 +157,6 @@ class JobScheduler extends Seeder
                 'class_name' => 'App\Jobs\FetchShopifyProductsJob',
             ],
             [
-                //HtTicketStaticDataSyncJob
-                'name' => 'HD Ticket Static Data Sync',
-                'description' => 'Sync HD ticket static data',
-                'class_name' => 'App\Jobs\HtTicketStaticDataSyncJob',
-            ],
-            [
                 'name' => 'Fetch Email Message Sync Job',
                 'description' => 'Fetch Email Message',
                 'class_name' => 'App\Jobs\FetchEmailMessagesJob',
@@ -314,27 +174,9 @@ class JobScheduler extends Seeder
                 'class_name' => 'App\Jobs\ShopifyCollectionSyncJob',
             ],
             [
-                //ShopifyListingProductsSyncJob
-                'name' => 'Shopify Listing Products Sync',
-                'description' => 'Sync Shopify listing products',
-                'class_name' => 'App\Jobs\ShopifyListingProductsSyncJob',
-            ],
-            [
-                //OldOrderSyncJob
-                'name' => 'Old Order Sync',
-                'description' => 'Sync old orders',
-                'class_name' => 'App\Jobs\OldOrderSyncJob',
-            ],
-            [
                 'name' => 'Shopify Pages Sync',
                 'description' => 'Sync Shopify pages',
                 'class_name' => 'App\Jobs\ShopifyPagesSyncJob',
-            ],
-            [
-                //ShopifyStoreProductsSyncJob
-                'name' => 'Shopify Store Products Sync',
-                'description' => 'Sync Shopify store products',
-                'class_name' => 'App\Jobs\ShopifyStoreProductsSyncJob',
             ],
             [
                 'name' => 'Transaction Status Update Job',
@@ -351,12 +193,6 @@ class JobScheduler extends Seeder
                 'description' => 'Send Notification Email Sync Fail',
                 'class_name' => 'App\Jobs\SendNotificationEmailSyncFailJob',
             ],
-//            [
-//                //ShopifyCombinedSyncing
-//                'name' => 'Shopify Combined Syncing',
-//                'description' => 'Shopify Combined Syncing',
-//                'class_name' => 'App\Jobs\Sync\ShopifyCombinedSyncing',
-//            ],
             [
                 'name' => 'Ebay Listing Item Status Check',
                 'description' => 'Ebay Listing Item Status Check',
@@ -366,12 +202,6 @@ class JobScheduler extends Seeder
                 'name' => 'Listing Item Detail Status Check',
                 'description' => 'Listing Item Detail Status Check',
                 'class_name' => 'App\Jobs\ListingItemDetailStatusCheckJob',
-            ],
-            [
-                //ProductSpecificationSyncJob
-                'name' => 'Product Specification Sync',
-                'description' => 'Sync all product specifications',
-                'class_name' => 'App\Jobs\ProductSpecificationSyncJob',
             ],
             [
                 //FetchTemuOrders
@@ -385,36 +215,6 @@ class JobScheduler extends Seeder
                 'description' => 'Amazon Listing Item Status Check',
                 'class_name' => 'App\Jobs\AmazonListingItemSyncJob',
             ],
-            [
-                //ProductKeyFeaturesSyncJob
-                'name' => 'Product Key Features Sync',
-                'description' => 'Sync all product key features',
-                'class_name' => 'App\Jobs\ProductKeyFeaturesSyncJob',
-            ],
-            [
-                //PopularDevicesSyncJob
-                'name' => 'Popular Devices Sync',
-                'description' => 'Sync all popular devices',
-                'class_name' => 'App\Jobs\Devices\PopularDevicesSyncJob',
-            ],
-//            [
-//                //CombinedDevicesSyncJob
-//                'name' => 'Combined Devices Sync',
-//                'description' => 'Combined Devices Sync',
-//                'class_name' => 'App\Jobs\Sync\CombinedDevicesSyncJob',
-//            ],
-//            [
-//                //CombinedProductsSyncJob
-//                'name' => 'Combined Products Sync',
-//                'description' => 'Combined Products Sync',
-//                'class_name' => 'App\Jobs\Sync\CombinedProductsSyncJob',
-//            ],
-//            [
-//                //CombinedSyncJob
-//                'name' => 'Combined DB Sync',
-//                'description' => 'Only Combined DB Sync',
-//                'class_name' => 'App\Jobs\Sync\CombinedSyncJob',
-//            ],
             [
                 //ExistingListingItemSyncJob
                 'name' => 'Walmart Existing Listing Item Sync',
@@ -441,15 +241,21 @@ class JobScheduler extends Seeder
             ],
             [
                 //FonusCombinedSyncJob
-                'name' => 'Fonus Scheduler Cron Job',
-                'description' => 'Fonus Scheduler Cron Job',
+                'name' => 'Fonus Combined Cron Job',
+                'description' => 'Combined Fonus Scheduler Cron Job',
                 'class_name' => 'App\Jobs\Sync\FonusCombinedSyncJob',
             ],
             [
                 //OdemobileListingItemSyncJob
                 'name' => 'Odemobile Items Sync Job',
-                'description' => 'Sync items for odemobile & accessry choice from oydera',
-                'class_name' => 'App\Jobs\Sync\OdemobileListingItemSyncJob',
+                'description' => 'Sync items for uzid & odemobile & accessry choice from oydera',
+                'class_name' => 'App\Jobs\OdemobileListingItemSyncJob',
+            ],
+            [
+                //OyderaMasterSwitch
+                'name' => 'Oydera Master Switch',
+                'description' => 'Sync store products, listing items, listing item details & listing item images from oydera for uzid, odemobile & accessorychoice',
+                'class_name' => 'App\Jobs\Sync\OyderaMasterSwitch',
             ]
         ];
 

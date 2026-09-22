@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Constants\ListingStatus;
 use App\Models\ListingItem;
 use App\Models\Catalog;
 use App\Models\Store;
@@ -41,7 +42,7 @@ class OdemobileListingItemSyncJob implements ShouldQueue
             // Find all local stores with "odemobile" in their name (case-insensitive)
             $odemobileStores = Store::join('store_type', 'store_type.id', '=', 'store.store_type_id')
                 ->where('store_type.code', 'shopify')
-                ->whereIn('store.name',['AccessoryChoice','OdeMobile'])
+                ->whereIn('store.name',['UZID','AccessoryChoice','OdeMobile'])
                 ->select('store.id', 'store.name')
                 ->get();
 
@@ -80,11 +81,12 @@ class OdemobileListingItemSyncJob implements ShouldQueue
                         ->keyBy('product_id');
 
                     foreach ($oyderaItems as $oyderaItem) {
+                        Log::info('Sync Item Id :: ' . $oyderaItem->id);
                         // Requirement: Sync only those whose product id is not matching
-                        $existingItem = $localItems->get($oyderaItem->id);
-                        if ($existingItem) {
-                            continue;
-                        }
+//                        $existingItem = $localItems->get($oyderaItem->id);
+//                        if ($existingItem) {
+//                            continue;
+//                        }
                         $productCode = $oyderaItem->oydera_product_code;
                         if (!$productCode) {
                             continue;
@@ -122,11 +124,12 @@ class OdemobileListingItemSyncJob implements ShouldQueue
                                 $localStoreProducts->put($localProduct->product_id, $localStoreProduct);
                             } else {
                                 Log::error("Store Product ID: {$oyderaItem->store_product_id} not found in Oydera for Listing Item ID: {$oyderaItem->id}");
-                                continue;
                             }
                         }
 
-                        $this->upsertListingItem($oyderaItem, $localStoreProduct->id);
+                        // product_id is always stored on the listing item so the product stays
+                        // resolvable even when no store product could be matched or created.
+                        $this->upsertListingItem($oyderaItem, $localStoreProduct?->id, $localProduct->product_id);
                     }
                 });
             }
@@ -152,12 +155,22 @@ class OdemobileListingItemSyncJob implements ShouldQueue
         }
     }
 
+    private function mapStatus($oyderaStatus): int
+    {
+        return match ((int)$oyderaStatus) {
+            0 => ListingStatus::Active,
+            1 => ListingStatus::Suspended,
+            2 => ListingStatus::Deleted,
+            default => ListingStatus::Deleted,
+        };
+    }
+
     /**
      * Update or create the listing item locally.
      */
-    private function upsertListingItem(mixed $oyderaItem, string $localStoreProductId): void
+    private function upsertListingItem(mixed $oyderaItem, ?string $localStoreProductId, string $localProductId): void
     {
-        Log::info("Upserting Listing Item ID: {$oyderaItem->id} for Store Product ID: {$localStoreProductId}");
+        Log::info("Upserting Listing Item ID: {$oyderaItem->id} for Store Product ID: {$localStoreProductId} / Product ID: {$localProductId}");
         ListingItem::updateOrCreate([
             'id' => $oyderaItem->id
         ], [
@@ -179,12 +192,13 @@ class OdemobileListingItemSyncJob implements ShouldQueue
             'carrier_id' => $oyderaItem->carrier_id,
             'device_id' => $oyderaItem->device_id,
             'store_product_id' => $localStoreProductId,
+            'product_id' => $localProductId,
             'generation_type_id' => $oyderaItem->cea_generation_type_id,
             'brand_id' => $oyderaItem->cea_brand_id,
             'device_carrier_id' => $oyderaItem->device_carrier_id,
             'color_id' => $oyderaItem->color_id,
             'size_id' => $oyderaItem->size_id,
-            'status' => 1,
+            'status' => $this->mapStatus($oyderaItem->status),
             'client' => $oyderaItem->client,
             'upc' => $oyderaItem->upc,
             'brand_combo' => $oyderaItem->brand_combo,

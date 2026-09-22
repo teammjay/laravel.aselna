@@ -34,6 +34,12 @@ class SyncJobRegistryCommand extends Command
         $foundJobs = [];
 
         foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($path)) as $file) {
+            // app/Jobs/Oydera holds the retired single-table easyesale_db (oydera) syncs, kept for
+            // reference only. They must not come back onto the dashboard where someone could start one.
+            if (str_starts_with($file->getPathname(), $path . DIRECTORY_SEPARATOR . 'Oydera' . DIRECTORY_SEPARATOR)) {
+                continue;
+            }
+
             if ($file->isFile() && $file->getExtension() === 'php') {
                 $relativePath = str_replace([$path . DIRECTORY_SEPARATOR, '.php'], '', $file->getPathname());
                 $class = $namespace . str_replace(DIRECTORY_SEPARATOR, '\\', $relativePath);

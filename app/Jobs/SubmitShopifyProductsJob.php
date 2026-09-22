@@ -1046,7 +1046,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
     {
         $oldImages = $shopifyAuthService->getProductImages($marketplace_product_id);
         Log::info('Old Images: ' . json_encode($oldImages));
-        $Images = $oldImages['data']['product']['media']['nodes'];
+        $Images = $oldImages['data']['product']['media']['nodes'] ?? [];
         $mediaIds = [];
         foreach ($Images as $image) {
             $imageUrl = $image['preview']['image']['url'] ?? '';
@@ -1056,6 +1056,9 @@ class SubmitShopifyProductsJob implements ShouldQueue
             }
             $mediaId = $image['id'];
             $imageIdReplaced = str_replace('gid://shopify/MediaImage/', '', $mediaId);
+            if (ListingItemProductImage::where('path', $imageUrl)->exists()) {
+                continue;
+            }
             if (!ListingItemProductImage::where('reference_id',$imageIdReplaced)->exists()) {
                 $mediaIds[] = $mediaId;
             }
@@ -1087,6 +1090,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
 //            ];
 //        }
         $oldImages = $shopifyAuthService->getProductImages($marketplace_product_id);
+        if (!isset($oldImages['data']['product'])) return;
         $this->handleMediaImages($oldImages['data']['product'], $listingItem,$AlreadyImages);
 
         //$this->deleteOldProductImages($shopifyAuthService, $marketplace_product_id,$AlreadyImages);

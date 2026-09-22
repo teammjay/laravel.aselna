@@ -15,6 +15,7 @@
         .status-failed { color: red; font-weight: 600; }
         .status-cancelled { color: gray; font-weight: 600; }
         .show-error{cursor: pointer; color:#e71717;}
+        .show-info{cursor: pointer; color:#1769e7;}
         .hide{display: none;}
         .child-row td {
             background: #e2e7f1;
@@ -349,9 +350,10 @@
             });
 
 
-            $(document).on('click', '.show-error', function(event) {
+            $(document).on('click', '.show-error, .show-info', function(event) {
                 var content = $(this).data('content');
-                $('#erroInfoModal').find('.modal-body').html(content);
+                $('#erroInfoModal').find('.modal-title').text($(this).data('title') || 'Error Info');
+                $('#erroInfoModal').find('.modal-body').text(content);
                 $('#erroInfoModal').modal('show');
             });
 
