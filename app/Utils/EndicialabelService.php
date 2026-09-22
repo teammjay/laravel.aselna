@@ -317,8 +317,21 @@ class EndicialabelService
         }
     }
 
-    private
-    function buildXmlRequest(array $shipmentDetails,$orderOperationId)
+    /**
+     * Safely add a child element with proper character escaping.
+     */
+    protected function addSafeChild(\SimpleXMLElement $parent, string $name, $value = null, ?string $namespace = null): \SimpleXMLElement
+    {
+        if ($value === null) {
+            return $parent->addChild($name, null, $namespace);
+        }
+
+        $child = $parent->addChild($name, null, $namespace);
+        $child[0] = (string)$value;
+        return $child;
+    }
+
+    private function buildXmlRequest(array $shipmentDetails, $orderOperationId)
     {
         $xml = new \SimpleXMLElement('<?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"/>');
         $body = $xml->addChild('soap:Body', null, 'http://schemas.xmlsoap.org/soap/envelope/');
@@ -341,13 +354,13 @@ class EndicialabelService
             $shipmentDetails['MailpieceShape'] = 'Parcel';
         }*/
 
-        $labelRequest->addChild('RequesterID', $shipmentDetails['requesterId']);
-        $labelRequest->addChild('AccountID', $shipmentDetails['accountId']);
-        $labelRequest->addChild('PassPhrase', $shipmentDetails['passPhrase']);
+        $this->addSafeChild($labelRequest, 'RequesterID', $shipmentDetails['requesterId'] ?? null);
+        $this->addSafeChild($labelRequest, 'AccountID', $shipmentDetails['accountId'] ?? null);
+        $this->addSafeChild($labelRequest, 'PassPhrase', $shipmentDetails['passPhrase'] ?? null);
 
-        $labelRequest->addChild('MailClass', $shipmentDetails['MailClass']);
-        $labelRequest->addChild('MailpieceShape', $shipmentDetails['MailpieceShape'] ?? 'Package');
-        $labelRequest->addChild('WeightOz', $shipmentDetails['weight']['value']);
+        $this->addSafeChild($labelRequest, 'MailClass', $shipmentDetails['MailClass'] ?? null);
+        $this->addSafeChild($labelRequest, 'MailpieceShape', $shipmentDetails['MailpieceShape'] ?? 'Package');
+        $this->addSafeChild($labelRequest, 'WeightOz', $shipmentDetails['weight']['value'] ?? null);
 
         /*if($shipmentDetails['MailpieceShape'] == 'Letter'){
             $shipmentDetails['non_machinable'] = 0;
@@ -357,55 +370,55 @@ class EndicialabelService
 
 //        $labelRequest->addChild('MailpieceShape','');
 
-        $labelRequest->addChild('PartnerTransactionID', $shipmentDetails['transactionId']);
+        $this->addSafeChild($labelRequest, 'PartnerTransactionID', $shipmentDetails['transactionId'] ?? null);
 
         //if($shipmentDetails['MailpieceShape'] != 'Parcel') {
-        $labelRequest->addChild('Machinable', $shipmentDetails['non_machinable'] == 0 ? 'TRUE' : 'FALSE');
+        $this->addSafeChild($labelRequest, 'Machinable', ($shipmentDetails['non_machinable'] ?? 0) == 0 ? 'TRUE' : 'FALSE');
         //}
 
         //if ($shipmentDetails['dimensions'] && ($shipmentDetails['MailpieceShape'] == 'Flat' || $shipmentDetails['MailpieceShape'] == 'Parcel')) {
         //}
-        if ($shipmentDetails['dimensions'] && ($shipmentDetails['MailpieceShape'] != 'Letter')) {
+        if (!empty($shipmentDetails['dimensions']) && (($shipmentDetails['MailpieceShape'] ?? '') != 'Letter')) {
             $dimensions = $labelRequest->addChild('MailpieceDimensions');
-            $dimensions->addChild('Length', $shipmentDetails['dimensions']['length']);
-            $dimensions->addChild('Width', $shipmentDetails['dimensions']['width']);
-            $dimensions->addChild('Height', $shipmentDetails['dimensions']['height']);
+            $this->addSafeChild($dimensions, 'Length', $shipmentDetails['dimensions']['length'] ?? null);
+            $this->addSafeChild($dimensions, 'Width', $shipmentDetails['dimensions']['width'] ?? null);
+            $this->addSafeChild($dimensions, 'Height', $shipmentDetails['dimensions']['height'] ?? null);
         }
 
-        if ($shipmentDetails['fromAddress']) {
-            $labelRequest->addChild('FromName', $shipmentDetails['fromAddress']['name']);
-            $labelRequest->addChild('FromCompany', $shipmentDetails['fromAddress']['company'] ?? '');
-            $labelRequest->addChild('FromAddress1', $shipmentDetails['fromAddress']['address1']);
+        if (!empty($shipmentDetails['fromAddress'])) {
+            $this->addSafeChild($labelRequest, 'FromName', $shipmentDetails['fromAddress']['name'] ?? null);
+            $this->addSafeChild($labelRequest, 'FromCompany', $shipmentDetails['fromAddress']['company'] ?? '');
+            $this->addSafeChild($labelRequest, 'FromAddress1', $shipmentDetails['fromAddress']['address1'] ?? null);
             if (isset($shipmentDetails['fromAddress']['address2']) && $shipmentDetails['fromAddress']['address2'] !== '') {
-                $labelRequest->addChild('FromAddress2', $shipmentDetails['fromAddress']['address2']);
+                $this->addSafeChild($labelRequest, 'FromAddress2', $shipmentDetails['fromAddress']['address2']);
             }
             if (isset($shipmentDetails['fromAddress']['address3']) && $shipmentDetails['fromAddress']['address3'] !== '') {
-                $labelRequest->addChild('FromAddress3', $shipmentDetails['fromAddress']['address3']);
+                $this->addSafeChild($labelRequest, 'FromAddress3', $shipmentDetails['fromAddress']['address3']);
             }
-            $labelRequest->addChild('FromCity', $shipmentDetails['fromAddress']['city']);
-            $labelRequest->addChild('FromState', $shipmentDetails['fromAddress']['state']);
-            $labelRequest->addChild('FromPostalCode', $shipmentDetails['fromAddress']['postalCode']);
+            $this->addSafeChild($labelRequest, 'FromCity', $shipmentDetails['fromAddress']['city'] ?? null);
+            $this->addSafeChild($labelRequest, 'FromState', $shipmentDetails['fromAddress']['state'] ?? null);
+            $this->addSafeChild($labelRequest, 'FromPostalCode', $shipmentDetails['fromAddress']['postalCode'] ?? null);
         }
 
-        if ($shipmentDetails['toAddress']) {
+        if (!empty($shipmentDetails['toAddress'])) {
             if(isset($shipmentDetails['is_return']) && $shipmentDetails['is_return'] != ''){
-                $labelRequest->addChild('ToCompany', $shipmentDetails['toAddress']['company'] ?? '');
-                $labelRequest->addChild('ToName', $shipmentDetails['toAddress']['name']);
+                $this->addSafeChild($labelRequest, 'ToCompany', $shipmentDetails['toAddress']['company'] ?? '');
+                $this->addSafeChild($labelRequest, 'ToName', $shipmentDetails['toAddress']['name'] ?? null);
             }else{
-                $labelRequest->addChild('ToCompany', htmlspecialchars($shipmentDetails['toAddress']['name'], ENT_XML1 | ENT_COMPAT, 'UTF-8'));
+                $this->addSafeChild($labelRequest, 'ToCompany', $shipmentDetails['toAddress']['name'] ?? '');
             }
 
 //            $labelRequest->addChild('', $shipmentDetails['toAddress']['company'] ?? '');
-            $labelRequest->addChild('ToAddress1', $shipmentDetails['toAddress']['address1']);
+            $this->addSafeChild($labelRequest, 'ToAddress1', $shipmentDetails['toAddress']['address1'] ?? null);
             if (isset($shipmentDetails['toAddress']['address2']) && $shipmentDetails['toAddress']['address2'] !== '') {
-                $labelRequest->addChild('ToAddress2', $shipmentDetails['toAddress']['address2']);
+                $this->addSafeChild($labelRequest, 'ToAddress2', $shipmentDetails['toAddress']['address2']);
             }
             if (isset($shipmentDetails['toAddress']['address3']) && $shipmentDetails['toAddress']['address3'] !== '') {
-                $labelRequest->addChild('ToAddress3', $shipmentDetails['toAddress']['address3']);
+                $this->addSafeChild($labelRequest, 'ToAddress3', $shipmentDetails['toAddress']['address3']);
             }
-            $labelRequest->addChild('ToCity', $shipmentDetails['toAddress']['city']);
-            $labelRequest->addChild('ToState', $shipmentDetails['toAddress']['state']);
-            $labelRequest->addChild('ToPostalCode', $shipmentDetails['toAddress']['postalCode']);
+            $this->addSafeChild($labelRequest, 'ToCity', $shipmentDetails['toAddress']['city'] ?? null);
+            $this->addSafeChild($labelRequest, 'ToState', $shipmentDetails['toAddress']['state'] ?? null);
+            $this->addSafeChild($labelRequest, 'ToPostalCode', $shipmentDetails['toAddress']['postalCode'] ?? null);
         }
 
         if (isset($shipmentDetails['returnAddress'])) {
@@ -416,25 +429,25 @@ class EndicialabelService
 //            $labelRequest->addChild('ReturnToState', $shipmentDetails['returnAddress']['state']);
 //            $labelRequest->addChild('ReturnToCountryCode', $shipmentDetails['returnAddress']['countryCode']);
 //            $labelRequest->addChild('ReturnToPostalCode', $shipmentDetails['returnAddress']['postalCode']);
-            $labelRequest->addChild('ReturnName', $shipmentDetails['fromAddress']['name']);
-            $labelRequest->addChild('ReturnCompany', $shipmentDetails['fromAddress']['company'] ?? '');
-            $labelRequest->addChild('ReturnAddress1', $shipmentDetails['fromAddress']['address1']);
+            $this->addSafeChild($labelRequest, 'ReturnName', $shipmentDetails['fromAddress']['name'] ?? null);
+            $this->addSafeChild($labelRequest, 'ReturnCompany', $shipmentDetails['fromAddress']['company'] ?? '');
+            $this->addSafeChild($labelRequest, 'ReturnAddress1', $shipmentDetails['fromAddress']['address1'] ?? null);
             if (isset($shipmentDetails['fromAddress']['address2']) && $shipmentDetails['fromAddress']['address2'] !== '') {
-                $labelRequest->addChild('ReturnAddress2', $shipmentDetails['fromAddress']['address2']);
+                $this->addSafeChild($labelRequest, 'ReturnAddress2', $shipmentDetails['fromAddress']['address2']);
             }
             if (isset($shipmentDetails['fromAddress']['address3']) && $shipmentDetails['fromAddress']['address3'] !== '') {
-                $labelRequest->addChild('ReturnAddress3', $shipmentDetails['fromAddress']['address3']);
+                $this->addSafeChild($labelRequest, 'ReturnAddress3', $shipmentDetails['fromAddress']['address3']);
             }
-            $labelRequest->addChild('ReturnToCity', $shipmentDetails['fromAddress']['city']);
-            $labelRequest->addChild('ReturnToState', $shipmentDetails['fromAddress']['state']);
-            $labelRequest->addChild('ReturnToPostalCode', $shipmentDetails['fromAddress']['postalCode']);
+            $this->addSafeChild($labelRequest, 'ReturnToCity', $shipmentDetails['fromAddress']['city'] ?? null);
+            $this->addSafeChild($labelRequest, 'ReturnToState', $shipmentDetails['fromAddress']['state'] ?? null);
+            $this->addSafeChild($labelRequest, 'ReturnToPostalCode', $shipmentDetails['fromAddress']['postalCode'] ?? null);
         }
 
         if (isset($shipmentDetails['RubberStamp1'])) {
-            $labelRequest->addChild('RubberStamp1', $shipmentDetails['RubberStamp1']);
+            $this->addSafeChild($labelRequest, 'RubberStamp1', $shipmentDetails['RubberStamp1']);
         }
         if (isset($shipmentDetails['RubberStamp2'])) {
-            $labelRequest->addChild('RubberStamp2', $shipmentDetails['RubberStamp2']);
+            $this->addSafeChild($labelRequest, 'RubberStamp2', $shipmentDetails['RubberStamp2']);
         }
 
         $orderOperation = OrderOperation::findOrFail($orderOperationId);
@@ -442,7 +455,7 @@ class EndicialabelService
 
         if (OrderOperationType::isReturn($operation_type)) {
             if (isset($shipmentDetails['RubberStamp3'])) {
-                $labelRequest->addChild('RubberStamp3', $shipmentDetails['RubberStamp3']);
+                $this->addSafeChild($labelRequest, 'RubberStamp3', $shipmentDetails['RubberStamp3']);
             }
         }
 
@@ -521,15 +534,15 @@ class EndicialabelService
         $request = $body->addChild('GetRefund', null, 'www.envmgr.com/LabelService');
         $labelRequest = $request->addChild('RefundRequest');
 
-        $labelRequest->addChild('RequesterID', $labelDetails['requesterId']);
-        $labelRequest->addChild('RequestID', $labelDetails['requestId']);
+        $this->addSafeChild($labelRequest, 'RequesterID', $labelDetails['requesterId'] ?? null);
+        $this->addSafeChild($labelRequest, 'RequestID', $labelDetails['requestId'] ?? null);
         $CertifiedIntermediary = $labelRequest->addChild('CertifiedIntermediary');
 
-        $CertifiedIntermediary->addChild('AccountID', $labelDetails['accountId']);
-        $CertifiedIntermediary->addChild('PassPhrase', $labelDetails['passPhrase']);
+        $this->addSafeChild($CertifiedIntermediary, 'AccountID', $labelDetails['accountId'] ?? null);
+        $this->addSafeChild($CertifiedIntermediary, 'PassPhrase', $labelDetails['passPhrase'] ?? null);
 
         $picNumbers = $labelRequest->addChild('PicNumbers');
-        $picNumbers->addChild('PicNumber', $labelDetails['pic_no']);
+        $this->addSafeChild($picNumbers, 'PicNumber', $labelDetails['pic_no'] ?? null);
 
         //$transactionIDs = $labelRequest->addChild('TransactionIds');
         //$transactionIDs->addChild('TransactionId', $labelDetails['transaction_id']);
@@ -545,12 +558,12 @@ class EndicialabelService
         $xmlrequest = $body->addChild('GetAccountStatus', null, 'www.envmgr.com/LabelService');
         $labelRequest = $xmlrequest->addChild('AccountStatusRequest');
 
-        $labelRequest->addChild('RequesterID', $request['requesterId']);
-        $labelRequest->addChild('RequestID', (string) Str::uuid());
+        $this->addSafeChild($labelRequest, 'RequesterID', $request['requesterId'] ?? null);
+        $this->addSafeChild($labelRequest, 'RequestID', (string) Str::uuid());
         $CertifiedIntermediary = $labelRequest->addChild('CertifiedIntermediary');
 
-        $CertifiedIntermediary->addChild('AccountID', $request['accountId']);
-        $CertifiedIntermediary->addChild('PassPhrase', $request['passPhrase']);
+        $this->addSafeChild($CertifiedIntermediary, 'AccountID', $request['accountId'] ?? null);
+        $this->addSafeChild($CertifiedIntermediary, 'PassPhrase', $request['passPhrase'] ?? null);
 
         $xmlString = $xml->asXML();
         Log::info('Endicia Purchase Credit Request XML: ' . $xmlString);
@@ -684,14 +697,14 @@ class EndicialabelService
         $request = $body->addChild('BuyPostage', null, 'www.envmgr.com/LabelService');
         $labelRequest = $request->addChild('RecreditRequest');
 
-        $labelRequest->addChild('RequesterID', $labelDetails['requesterId']);
-        $labelRequest->addChild('RequestID', (string) Str::uuid());
+        $this->addSafeChild($labelRequest, 'RequesterID', $labelDetails['requesterId'] ?? null);
+        $this->addSafeChild($labelRequest, 'RequestID', (string) Str::uuid());
         $CertifiedIntermediary = $labelRequest->addChild('CertifiedIntermediary');
 
-        $CertifiedIntermediary->addChild('AccountID', $labelDetails['accountId']);
-        $CertifiedIntermediary->addChild('PassPhrase', $labelDetails['passPhrase']);
+        $this->addSafeChild($CertifiedIntermediary, 'AccountID', $labelDetails['accountId'] ?? null);
+        $this->addSafeChild($CertifiedIntermediary, 'PassPhrase', $labelDetails['passPhrase'] ?? null);
 
-        $labelRequest->addChild('RecreditAmount',$labelDetails['credit']);
+        $this->addSafeChild($labelRequest, 'RecreditAmount',$labelDetails['credit'] ?? null);
 
         return $xml->asXML();
 
@@ -766,12 +779,12 @@ class EndicialabelService
         $transactionlist = $body->addChild('GetTransactionsListing', null,'www.envmgr.com/LabelService');
         $labelRequest = $transactionlist->addChild('GetTransactionsListingRequest');
 
-        $labelRequest->addChild('RequesterID', $transDetails['requesterId']);
-        $labelRequest->addChild('RequestID', (string) Str::uuid());
+        $this->addSafeChild($labelRequest, 'RequesterID', $transDetails['requesterId'] ?? null);
+        $this->addSafeChild($labelRequest, 'RequestID', (string) Str::uuid());
         $CertifiedIntermediary = $labelRequest->addChild('CertifiedIntermediary');
 
-        $CertifiedIntermediary->addChild('AccountID', $transDetails['accountId']);
-        $CertifiedIntermediary->addChild('PassPhrase', $transDetails['passPhrase']);
+        $this->addSafeChild($CertifiedIntermediary, 'AccountID', $transDetails['accountId'] ?? null);
+        $this->addSafeChild($CertifiedIntermediary, 'PassPhrase', $transDetails['passPhrase'] ?? null);
         $endTime = $transDetails['filter_end_date'];
         $startTime = $transDetails['filter_start_date'];
        //echo $startTime.'<br>';
@@ -788,7 +801,7 @@ class EndicialabelService
             }
         }*/
 
-        $labelRequest->addChild('IncludeTracking', 'Y');
+        $this->addSafeChild($labelRequest, 'IncludeTracking', 'Y');
         return $xml->asXML();
 
     }
@@ -865,17 +878,17 @@ class EndicialabelService
         $transactionlist = $body->addChild('StatusRequest', null,'www.envmgr.com/LabelService');
         $labelRequest = $transactionlist->addChild('PackageStatusRequest');
 
-        $labelRequest->addChild('RequesterID', $transDetails['requesterId']);
-        $labelRequest->addChild('RequestID', $transDetails['requestId']);
+        $this->addSafeChild($labelRequest, 'RequesterID', $transDetails['requesterId'] ?? null);
+        $this->addSafeChild($labelRequest, 'RequestID', $transDetails['requestId'] ?? null);
         $CertifiedIntermediary = $labelRequest->addChild('CertifiedIntermediary');
 
-        $CertifiedIntermediary->addChild('AccountID', $transDetails['accountId']);
-        $CertifiedIntermediary->addChild('PassPhrase', $transDetails['passPhrase']);
+        $this->addSafeChild($CertifiedIntermediary, 'AccountID', $transDetails['accountId'] ?? null);
+        $this->addSafeChild($CertifiedIntermediary, 'PassPhrase', $transDetails['passPhrase'] ?? null);
 
         $picNumbers = $labelRequest->addChild('PicNumbers');
 
         foreach($transDetails['transactions'] as $transaction){
-            $picNumbers->addChild('PicNumber', $transaction);
+            $this->addSafeChild($picNumbers, 'PicNumber', $transaction);
         }
 
         return $xml->asXML();

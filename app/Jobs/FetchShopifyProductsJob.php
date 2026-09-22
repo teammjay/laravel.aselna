@@ -155,17 +155,17 @@ class FetchShopifyProductsJob implements ShouldQueue
                     $listingItems = ListingItem::where('sku',$sku)->get();
                     if (count($listingItems) > 0) {
                         foreach ($listingItems as $listingItem) {
-                            if (isset($listingItem->storeProduct->product)) {
-                                $productData = $listingItem->storeProduct->product;
+                            $productData = $listingItem->storeProduct->product ?? $listingItem->product;
+                            if (isset($productData)) {
                                 $handle = $product['handle'];
                                 $product_code = $productData->product_sku;
                                 ManageMarketplaceProduct::updateOrCreate([
-                                    'product_id' => $listingItem->storeProduct->product_id,
+                                    'product_id' => $productData->product_id,
                                     'product_code' => $product_code,
                                     'store_id' => $store->id,
                                     'sku' => $sku,
                                 ], [
-                                    'product_id' => $listingItem->storeProduct->product_id,
+                                    'product_id' => $productData->product_id,
                                     'product_code' => $product_code,
                                     'sku' => $sku,
                                     'store_id' => $store->id,
@@ -183,6 +183,8 @@ class FetchShopifyProductsJob implements ShouldQueue
                                     'store_url' => $handle,
                                     'store_sku' => $replacedProductId . '-' . $replacedVariantId,
                                 ]);
+                            } else {
+                                Log::warning('No product resolved for Listing Item: ' . $listingItem->id . ' with SKU: ' . $sku . ' in Store: ' . $store->name);
                             }
 
                             $oldImages = $shopifyAuthService->getProductImages($product['id']);

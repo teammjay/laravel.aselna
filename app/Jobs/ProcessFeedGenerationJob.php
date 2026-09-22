@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Constants\FeedStatus;
 use App\Constants\WebStorePageType;
 use App\Models\Device;
 use App\Models\DeviceRating;
@@ -213,7 +214,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
             ]);
 
             $feedDetail->update([
-                'status' => 1,
+                'status' => FeedStatus::PROCESSED,
             ]);
 
             $this->updateTrackingRecord([
@@ -228,6 +229,11 @@ class ProcessFeedGenerationJob implements ShouldQueue
                 'output' => $e->getMessage(),
                 'finished_at' => now()
             ]);
+
+            // Without this the feed stays on Processing forever after a crash
+            if ($this->feed_id) {
+                Feed::where('id', $this->feed_id)->update(['status' => FeedStatus::ERROR]);
+            }
 
             \App\Helpers\ErrorLogger::log($e, __METHOD__);
 
@@ -244,7 +250,11 @@ class ProcessFeedGenerationJob implements ShouldQueue
     public function failed(\Throwable $exception)
     {
         Log::error('Feed generation job failed: ' . $exception->getMessage());
-        
+
+        if ($this->feed_id) {
+            Feed::where('id', $this->feed_id)->update(['status' => FeedStatus::FAILED]);
+        }
+
         $this->updateTrackingRecord([
             'status' => 'failed',
             'output' => $exception->getMessage(),
