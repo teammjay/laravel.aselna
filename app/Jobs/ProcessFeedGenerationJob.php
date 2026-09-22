@@ -4,6 +4,8 @@ namespace App\Jobs;
 
 use App\Constants\FeedStatus;
 use App\Constants\WebStorePageType;
+use App\Exceptions\UpcNotAvailableException;
+use App\Helpers\ErrorLogger;
 use App\Models\Device;
 use App\Models\DeviceRating;
 use App\Models\DevicesLinkedDevice;
@@ -231,9 +233,25 @@ class ProcessFeedGenerationJob implements ShouldQueue
                 'finished_at' => now()
             ]);
 
-            // Without this the feed stays on Processing forever after a crash
+            // Without this the feed stays on Processing forever after a crash. Running out of UPCs
+            // is a deliberate stop, so that feed is marked Failed.
             if ($this->feed_id) {
-                Feed::where('id', $this->feed_id)->update(['status' => FeedStatus::ERROR]);
+                Feed::where('id', $this->feed_id)->update([
+                    'status' => $e instanceof UpcNotAvailableException ? FeedStatus::FAILED : FeedStatus::ERROR,
+                ]);
+            }
+
+            if (is_resource($this->fileHandle)) {
+                fclose($this->fileHandle);
+            }
+
+            // Not a crash: the store ran out of UPCs. Log it once, in words the client can act on,
+            // against the store so it shows up under that store on the error log page.
+            if ($e instanceof UpcNotAvailableException) {
+                ErrorLogger::logMessage($e->getMessage(), __METHOD__, $this->store_id);
+                Log::error('Feed ' . $this->feed_id . ' stopped at listing item detail ' . $e->listingItemDetailId . ': ' . $e->getMessage());
+
+                return;
             }
 
             \App\Helpers\ErrorLogger::log($e, __METHOD__);
@@ -749,15 +767,15 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                     $item_detail = $this->insertListingItemDetail($product_code, $listitem, $device);
                                 }
 
-                                // Fill a missing UPC from upc_codes; if none are left, carry on without one.
+                                // Fill a missing UPC from upc_codes. If none are left, stop the whole feed
+                                // here: the client has to generate UPCs for the store first.
                                 if (empty($item_detail->upc)) {
                                     $newUpc = $this->claimUnusedUpc();
-                                    if ($newUpc) {
-                                        $item_detail->update(['upc' => $newUpc]);
-                                        Log::info('Assigned UPC ' . $newUpc . ' to listing item detail ID: ' . $item_detail->id);
-                                    } else {
-                                        Log::warning('No unused UPC available for store ' . $this->store_id . '; listing item detail ID: ' . $item_detail->id . ' left without UPC');
+                                    if (!$newUpc) {
+                                        throw new UpcNotAvailableException($this->store_id, $this->storeDetail->name ?? null, $item_detail->id);
                                     }
+                                    $item_detail->update(['upc' => $newUpc]);
+                                    Log::info('Assigned UPC ' . $newUpc . ' to listing item detail ID: ' . $item_detail->id);
                                 }
 
                                 $collection_url = '';

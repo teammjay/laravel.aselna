@@ -63,4 +63,39 @@ class ErrorLogger
             Log::error('Failed to log error: '.$ex->getMessage());
         }
     }
+
+    /**
+     * Log a plain message meant for the user, without the file / line / trace noise of log().
+     * Repeats of the same message for the same store bump error_count instead of adding rows.
+     */
+    public static function logMessage(string $message, string $operation, ?string $storeId = null, $errorLevel = '20', $errorSource = 50)
+    {
+        $hash = hash('sha256', $message . $operation . $storeId);
+
+        try {
+            $existing = ErrorLog::where('hash_string', $hash)->first();
+
+            if ($existing) {
+                $existing->increment('error_count');
+                $existing->update(['updated_at' => now(), 'status' => 0]);
+            } else {
+                ErrorLog::create([
+                    'id' => Str::uuid()->toString(),
+                    'update_at' => now(),
+                    'create_at' => now(),
+                    'store_id' => $storeId,
+                    'error_level' => $errorLevel,
+                    'error_source' => $errorSource,
+                    'operation' => $operation,
+                    'status' => 0,
+                    'message' => $message,
+                    'stack_trace' => null,
+                    'hash_string' => $hash,
+                    'error_count' => 1,
+                ]);
+            }
+        } catch (\Throwable $ex) {
+            Log::error('Failed to log error: '.$ex->getMessage());
+        }
+    }
 }
