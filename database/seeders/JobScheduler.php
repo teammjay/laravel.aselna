@@ -13,10 +13,87 @@ class JobScheduler extends Seeder
     public function run(): void
     {
         $jobs = [
+            // Fonus (fonus_db) single-table syncs, in the order FonusCombinedSyncJob runs them.
+            // Each one can be run on its own; later ones rely on rows the earlier ones wrote.
             [
-                'name' => 'Product Sync',
-                'description' => 'Sync all products',
+                'name' => 'Fonus Product Color Sync',
+                'description' => 'Sync product colors from Fonus (tbl_colors)',
+                'class_name' => 'App\Jobs\Fonus\ProductcolorSyncJob',
+            ],
+            [
+                'name' => 'Fonus Manufacturer Sync',
+                'description' => 'Sync manufacturers from Fonus (tbl_manufacturer)',
+                'class_name' => 'App\Jobs\Fonus\ManufacturerSyncJob',
+            ],
+            [
+                'name' => 'Fonus Carrier Sync',
+                'description' => 'Sync mobile carriers from Fonus (tbl_carrier)',
+                'class_name' => 'App\Jobs\Fonus\CarrierSyncJob',
+            ],
+            [
+                'name' => 'Fonus Product Sync',
+                'description' => 'Sync the product catalog and product key features from Fonus (tbl_product)',
                 'class_name' => 'App\Jobs\Fonus\ProductSyncJob',
+            ],
+            [
+                'name' => 'Fonus Interface Sync',
+                'description' => 'Sync compatibility interfaces (attributes) from Fonus (tbl_attributes)',
+                'class_name' => 'App\Jobs\Fonus\InterfacesSyncJob',
+            ],
+            [
+                'name' => 'Fonus Category Sync',
+                'description' => 'Sync product categories and sub-categories from Fonus (tbl_category, tbl_category_sub)',
+                'class_name' => 'App\Jobs\Fonus\CategorySyncJob',
+            ],
+            [
+                'name' => 'Fonus Brand Sync',
+                'description' => 'Sync device brands from Fonus (tbl_brand)',
+                'class_name' => 'App\Jobs\Fonus\BrandSyncJob',
+            ],
+            [
+                'name' => 'Fonus Device Type Sync',
+                'description' => 'Sync device types and sub-types from Fonus (tbl_device_type, tbl_device_type_sub)',
+                'class_name' => 'App\Jobs\Fonus\DeviceTypeSyncJob',
+            ],
+            [
+                'name' => 'Fonus Device Sync',
+                'description' => 'Sync devices and gadgets from Fonus (tbl_device, tbl_gadget)',
+                'class_name' => 'App\Jobs\Fonus\DevicesSyncJob',
+            ],
+            [
+                'name' => 'Fonus Device Carrier Sync',
+                'description' => 'Sync which carriers each device is sold on from Fonus (tbl_device_carriers)',
+                'class_name' => 'App\Jobs\Fonus\DeviceCarrierSyncJob',
+            ],
+            [
+                'name' => 'Fonus Device Interface Sync',
+                'description' => 'Sync device and gadget to interface links from Fonus (tbl_device_attributes, tbl_gadget_attributes)',
+                'class_name' => 'App\Jobs\Fonus\DevicesInterfacesSyncJob',
+            ],
+            [
+                'name' => 'Fonus Product Interface Sync',
+                'description' => 'Sync product to interface links from Fonus (tbl_product)',
+                'class_name' => 'App\Jobs\Fonus\ProductInterfacesSyncJob',
+            ],
+            [
+                'name' => 'Fonus Title Keyword Sync',
+                'description' => 'Sync product title keywords from Fonus (tbl_title_keywords)',
+                'class_name' => 'App\Jobs\Fonus\ProductTitleKeyword',
+            ],
+            [
+                'name' => 'Fonus Product Channel Sync',
+                'description' => 'Sync per-channel product details from Fonus (tbl_product_channels)',
+                'class_name' => 'App\Jobs\Fonus\ProductChannelSyncJob',
+            ],
+            [
+                'name' => 'Fonus Popular Devices Sync',
+                'description' => 'Sync the popular devices list from Fonus (tbl_popular_devices)',
+                'class_name' => 'App\Jobs\Fonus\PopularDevicesSyncJob',
+            ],
+            [
+                'name' => 'Fonus Product Specifications Sync',
+                'description' => 'Sync product specifications and their values from Fonus (tbl_features, tbl_category_feature_values, tbl_product_features)',
+                'class_name' => 'App\Jobs\Fonus\ProductSpecificationsSyncJob',
             ],
             [
                 'name' => 'Product Images Sync',
@@ -164,8 +241,8 @@ class JobScheduler extends Seeder
             ],
             [
                 //FonusCombinedSyncJob
-                'name' => 'Fonus Scheduler Cron Job',
-                'description' => 'Fonus Scheduler Cron Job',
+                'name' => 'Fonus Combined Cron Job',
+                'description' => 'Combined Fonus Scheduler Cron Job',
                 'class_name' => 'App\Jobs\Sync\FonusCombinedSyncJob',
             ],
             [
