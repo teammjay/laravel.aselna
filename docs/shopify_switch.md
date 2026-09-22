@@ -81,7 +81,7 @@ Each run logs, and writes to `job_statuses.output`, a summary like
 
 #### Store navigation pages (step 5)
 
-`TASK_STORE_NAVIGATION_PAGE` does for the three stores what `App\Jobs\StorePagesJobSync` does for
+`TASK_STORE_NAVIGATION_PAGE` does for the three stores what `App\Jobs\Oydera\StorePagesJobSync` does for
 every store at once: it copies oydera `store_navigation_page` into `store_navigation_page`, keeping
 the same id and the same columns. Unlike `StorePagesJobSync` (which only upserts) it also deletes
 the pages oydera no longer has for that store, so the counts end up equal. Device ids are matched
