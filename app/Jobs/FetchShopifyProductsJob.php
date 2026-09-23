@@ -29,10 +29,12 @@ class FetchShopifyProductsJob implements ShouldQueue
 
     /**
      * Create a new job instance.
+     *
+     * Pass a store id to fetch a single store only, e.g. scheduled_cron_jobs.parameters = {"store_id": "<uuid>"}.
      */
-    public function __construct()
-    {
-        //
+    public function __construct(
+        public ?string $storeId = null
+    ) {
     }
 
     /**
@@ -44,7 +46,7 @@ class FetchShopifyProductsJob implements ShouldQueue
             $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Shopify Products']);
 
             /* get active store jobs*/
-            $store_ids = Common::getActiveStoreJobs('FetchShopifyProductsJob','shopify');
+            $store_ids = isset($this->storeId) ? [$this->storeId] : Common::getActiveStoreJobs('FetchShopifyProductsJob','shopify');
             /* get active store jobs*/
 
             $query = Store::select('store.*','store_type.name as storeTypeName')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'shopify');
@@ -273,7 +275,13 @@ class FetchShopifyProductsJob implements ShouldQueue
                 if (ListingItemProductImage::where('listing_item_id', $listingItem->id)->where('path', $imageUrl)->exists()) {
                     continue;
                 }
-                if (ListingItemProductImage::where('listing_item_id', $listingItem->id)->where('reference_id', $imageIdReplaced)->exists()) {
+                $existingImage = ListingItemProductImage::where('listing_item_id', $listingItem->id)->where('reference_id', $imageIdReplaced)->first();
+                if (isset($existingImage)) {
+                    // Image was pushed before Shopify finished processing it, so the URL was never stored.
+                    if (empty($existingImage->path)) {
+                        Log::info('Filling missing image path for Listing Item: ' . $listingItem->id . ' Media: ' . $imageIdReplaced);
+                        $existingImage->update(['path' => $imageUrl]);
+                    }
                     continue;
                 }
                 if(isset($AlreadyImages) && array_key_exists($imageUrl,$AlreadyImages)){
