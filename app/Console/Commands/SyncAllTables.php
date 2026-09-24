@@ -194,7 +194,7 @@ class SyncAllTables extends Command
 //        FetchEbayOrders::dispatch();
 //        FetchEmailMessagesJob::dispatch();
 //        SubmitShopifyProductsJob::dispatch();
-//        FetchShopifyProductsJob::dispatch();
+        FetchShopifyProductsJob::dispatch('c2c8131f-c8a2-e082-9f89-3e8bf96b1049');
 //        FetchMagentoProductsJob::dispatch();
 //        MagentoProductsSyncJob::dispatch();
 //        FetchMagentoCategoriesJob::dispatch();
@@ -238,7 +238,7 @@ class SyncAllTables extends Command
 //        CategorySyncJob::dispatch();
 
 //        ProductInterfacesSyncJob::dispatch();
-        MagentoSyncJob::dispatch();
+//        MagentoSyncJob::dispatch();
 //        MagentoProductsSyncJob::dispatch();
 //        StorePagesJobSync::dispatch();
 //        FonusCombinedSyncJob::dispatch();

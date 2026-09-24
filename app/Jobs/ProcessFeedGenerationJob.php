@@ -189,6 +189,8 @@ class ProcessFeedGenerationJob implements ShouldQueue
             $this->fileNameBase = pathinfo($this->file_name, PATHINFO_FILENAME);
             $this->fileExtension = pathinfo($this->file_name, PATHINFO_EXTENSION);
 
+            $this->clearPreviousFeedFiles();
+
             $this->fileHandle = fopen($this->getFilePath($this->current_file_index), 'w');
             fputcsv($this->fileHandle, $this->columns);
 
@@ -305,34 +307,13 @@ class ProcessFeedGenerationJob implements ShouldQueue
             $sku = StoreTypeListing::generateUniqueAlphabeticSku($product_code, 6);
         }
 
-        if ($this->storeDetail->upc_usage_type) {
-            switch ($this->storeDetail->upc_usage_type) {
-                case 0:
-                    $upcCodes = UPCCodes::where('store', $this->store_id)->where('is_used', 0)->orderBy('sequence_id', 'asc')->first();
-                    break;
-                case 1:
-                    $upcCodes = UPCCodes::where('store', $this->store_id)->where('is_used', 0)->orderBy('sequence_id', 'asc')->first();
-                    break;
-                case 2:
-                    $upcCodes = GoodUpc::where('is_used', 0)->orderBy('upc', 'asc')->first();
-                    break;
-                case 3:
-                    $upcCodes = UPCCodes::where('store', $this->store_id)->where('is_used', 0)->orderBy('sequence_id', 'asc')->first();
-                    break;
-                case 'default':
-                    $upcCodes = UPCCodes::where('store', $this->store_id)->where('is_used', 0)->orderBy('sequence_id', 'asc')->first();
-                    break;
-            }
-        } else {
-            $upcCodes = UPCCodes::where('store', $this->store_id)->where('is_used', 0)->orderBy('sequence_id', 'asc')->first();
-        }
-
         $created_by = auth()->user()->name ?? 'admin';
 
         $itemDetail = array(
             'sku' => $sku,
             'title' => $listitem->title,
-            'upc' => isset($upcCodes->upc_code) ? $upcCodes->upc_code : '',
+            // Left empty when none are left; the caller then stops the feed with UpcNotAvailableException.
+            'upc' => $this->claimUnusedUpc() ?? '',
             'device_id' => $device->id,
             'listing_item_id' => $listitem->id,
             'device_carrier_id' => null,
@@ -346,34 +327,44 @@ class ProcessFeedGenerationJob implements ShouldQueue
     }
 
     /**
-     * Claim the next unused UPC for this store from upc_codes, skipping any code
-     * already assigned to a listing item detail, and mark it as used.
+     * Claim the next unused UPC and mark it as used. Stores on the UPC pool (upc_usage_type 2,
+     * "Upcpool") draw from good_upc; every other store draws from its own upc_codes.
      * Returns null when no UPC is available.
+     *
+     * The claim is an update that only matches while the code is still unused, so two jobs can't
+     * take the same code and no rows stay locked while searching. A code that is already on a
+     * listing item detail (its is_used flag was never set) stays marked used and the next is tried.
      */
     private function claimUnusedUpc(): ?string
     {
-        return DB::transaction(function () {
-            $upcCode = UPCCodes::where('store', $this->store_id)
-                ->where('is_used', 0)
-                ->whereNotNull('upc_code')
-                ->where('upc_code', '!=', '')
-                ->whereNotExists(function ($query) {
-                    $query->select(DB::raw(1))
-                        ->from('listing_item_detail')
-                        ->whereColumn('listing_item_detail.upc', 'upc_codes.upc_code');
-                })
-                ->orderBy('sequence_id', 'asc')
-                ->lockForUpdate()
-                ->first();
+        $usesUpcPool = (int) $this->storeDetail->upc_usage_type === 2;
 
-            if (!$upcCode) {
-                return null;
+        while (true) {
+            if ($usesUpcPool) {
+                $upc = GoodUpc::where('is_used', 0)->where('upc', '!=', '')->orderBy('upc', 'asc')->value('upc');
+                if ($upc === null) {
+                    return null;
+                }
+                // good_upc has no id or timestamp columns, so the update can't go through the model
+                $claimed = DB::table('good_upc')->where('upc', $upc)->where('is_used', 0)->update(['is_used' => 1]);
+            } else {
+                $upcCode = UPCCodes::where('store', $this->store_id)
+                    ->where('is_used', 0)
+                    ->where('upc_code', '!=', '')
+                    ->orderBy('sequence_id', 'asc')
+                    ->first(['id', 'upc_code']);
+                if (!$upcCode) {
+                    return null;
+                }
+                $upc = $upcCode->upc_code;
+                $claimed = UPCCodes::where('id', $upcCode->id)->where('is_used', 0)->update(['is_used' => 1]);
             }
 
-            $upcCode->update(['is_used' => 1]);
-
-            return $upcCode->upc_code;
-        });
+            // 0 rows updated means another job claimed it first
+            if ($claimed && !ListingItemDetail::where('upc', $upc)->exists()) {
+                return $upc;
+            }
+        }
     }
 
     private function generateProductDetail($product_id, $store_type_id)
@@ -563,6 +554,32 @@ class ProcessFeedGenerationJob implements ShouldQueue
     public function getFilePath($index)
     {
         return $this->directory . '/' . $this->fileNameBase . "_{$index}." . $this->fileExtension;
+    }
+
+    /**
+     * Remove the part files of the previous run for this store. A run that ends up with fewer parts
+     * than the last one only overwrites the parts it writes, so without this the leftover parts
+     * (feed_4.csv .. feed_7.csv after a 7 part run followed by a 3 part one) stay on disk and keep
+     * being served.
+     */
+    private function clearPreviousFeedFiles(): void
+    {
+        // Numbered parts only: feed_1.csv, feed_12.csv. Anything else named like a part, such as
+        // feed_1_asl.csv or a backup copy, is left alone.
+        $partPattern = '/^' . preg_quote($this->fileNameBase, '/') . '_\d+\.' . preg_quote($this->fileExtension, '/') . '$/';
+
+        $removed = 0;
+
+        foreach (glob($this->directory . '/' . $this->fileNameBase . '_*.' . $this->fileExtension) ?: [] as $oldFile) {
+            if (is_file($oldFile) && preg_match($partPattern, basename($oldFile))) {
+                @unlink($oldFile);
+                $removed++;
+            }
+        }
+
+        if ($removed > 0) {
+            Log::info('Removed ' . $removed . ' feed part file(s) of the previous run from ' . $this->directory);
+        }
     }
 
     private function getPartFilename($index)
@@ -812,6 +829,11 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                 $finalMainImage = $mainImage . '?device=' . $listitem->id;
 
                                 $upcCode = (isset($item_detail->upc)) ? $item_detail->upc : '';
+
+                                // Google wants the 14 digit GTIN, so a 12 digit UPC goes in padded.
+                                if (strtolower($feed_type) == 'google' && $upcCode != '' && !str_starts_with($upcCode, '00')) {
+                                    $upcCode = '00' . $upcCode;
+                                }
 
                                 /*if (!in_array($this->storeDetail->name,['UZID','NevaWireless','AccessoryWiz','OdeMobile','AccessoryChoice','GetAccessory'])) {
                                     $upcCode = $listitem->sku;
