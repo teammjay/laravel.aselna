@@ -254,7 +254,7 @@ class JobScheduler extends Seeder
             [
                 //OyderaMasterSwitch
                 'name' => 'Oydera Master Switch',
-                'description' => 'Sync store products, listing items, listing item details & listing item images from oydera for uzid, odemobile & accessorychoice',
+                'description' => 'Sync store products, listing items, listing item details, listing item images & navigation pages from oydera, then fetch the Shopify products, for uzid, odemobile & accessorychoice',
                 'class_name' => 'App\Jobs\Sync\OyderaMasterSwitch',
             ]
         ];

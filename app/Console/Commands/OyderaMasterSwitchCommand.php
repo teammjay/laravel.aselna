@@ -11,7 +11,7 @@ class OyderaMasterSwitchCommand extends Command
     protected $signature = 'oydera:master-switch
                             {store? : Store name or store id. Omit to sync every store in OyderaMasterSwitch::STORE_NAMES}';
 
-    protected $description = 'Sync store products, listing items, listing item details and listing item images from oydera for the Shopify stores.';
+    protected $description = 'Sync store products, listing items, listing item details, listing item images and navigation pages from oydera, then fetch the products already on Shopify, for the Shopify stores.';
 
     public function handle()
     {
