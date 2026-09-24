@@ -158,6 +158,7 @@ class FetchShopifyProductsJob implements ShouldQueue
                     if (count($listingItems) > 0) {
                         foreach ($listingItems as $listingItem) {
                             $productData = $listingItem->storeProduct->product ?? $listingItem->product;
+                            $storeProduct = StoreProduct::where('product_id', $productData->product_id)->where('store_id', $store->id)->first();
                             if (isset($productData)) {
                                 $handle = $product['handle'];
                                 $product_code = $productData->product_sku;
@@ -184,6 +185,10 @@ class FetchShopifyProductsJob implements ShouldQueue
                                 $listingItem->update([
                                     'store_url' => $handle,
                                     'store_sku' => $replacedProductId . '-' . $replacedVariantId,
+                                ]);
+
+                                $storeProduct->update([
+                                    'last_synch_date_time' => date('Y-m-d H:i:s')
                                 ]);
                             } else {
                                 Log::warning('No product resolved for Listing Item: ' . $listingItem->id . ' with SKU: ' . $sku . ' in Store: ' . $store->name);
@@ -288,7 +293,9 @@ class FetchShopifyProductsJob implements ShouldQueue
                 } else {
                     $altText = $mediaItem['alt'] ?? '';
                     Log::info('Image URL: ' . $imageUrl);
+                    // An image can have a row per alternate; the media already on Shopify is recorded against the original's.
                     $generatedImage = GenerateProductImage::where('product_image_id', $altText)
+                        ->orderByRaw('alt_product_image_id IS NULL DESC')
                         ->first();
                     if (isset($generatedImage)) {
                         ListingItemProductImage::updateOrCreate([

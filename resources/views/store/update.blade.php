@@ -313,10 +313,12 @@
                                 </div>
                                 <div class="row mt-3 g-3 align-items-center">
                                     <div class="col-md-5">
-                                        <label for="productaltimagenumber">Store.product altimage number</label>
+                                        <label for="product_alt_image_number">Alternate main image number</label>
                                     </div>
                                     <div class="col-md-7">
-                                        <input type="text" class="form-control" id="productaltimagenumber" name="productaltimagenumber" value="{{ old('productaltimagenumber',$store->productaltimagenumber) }}">
+                                        <input type="number" min="0" step="1" class="form-control" id="product_alt_image_number" name="product_alt_image_number" value="{{ old('product_alt_image_number',$store->product_alt_image_number) }}">
+                                        <small class="form-text text-muted">Shopify: push this alternate of the main image as the main image (1 = first alternate). Empty or 0 = original image.</small>
+                                        <span class="error-message text-danger" id="product_alt_image_number-error"></span>
                                     </div>
                                 </div>
 

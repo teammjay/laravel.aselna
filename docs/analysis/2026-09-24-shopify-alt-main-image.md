@@ -501,3 +501,61 @@ GROUP BY s.file_system_id;
 | `app/Models/GenerateProductImage.php`, `ListingItemProductImage.php`, `ProductImageAlternative.php`, `ProductImages.php` | Models |
 | `resources/views/store/update.blade.php` | :316-319, store setting input |
 | Oydera `ImageLoader.java` | :148-160, selection rules being copied |
+
+---
+
+## 9. Implementation status (2026-09-24)
+
+### Verification results (read-only SELECTs against the local database)
+
+| Check | Result | Consequence |
+|---|---|---|
+| Q1 store columns | `product_alt_image_number`: UZID = 1, AccessoryChoice = 2, NevaWireless = 2, AccessoryWiz = 3. `productaltimagenumber` is null on every store. | `product_alt_image_number` is the source of truth (R4). |
+| Q1 `auto_generate_listings` | NevaWireless = 1 (Aselna is pushing it live); UZID / AccessoryChoice / AccessoryWiz = 0. | NevaWireless is the only store the new code affects immediately. |
+| Q1/Q7 file systems | Every Shopify store with a file system uses the same one; AccessoryChoice and AccessoryWiz have none. | R3 does not produce broken URLs today. Aselna cannot push AccessoryChoice / AccessoryWiz images until they get a file system. |
+| Q4 `image_version` | No listing item of an alternate store has `image_version > 0` (only BuyFonus, which is inactive). | `image_version` is ignored (R6 does not apply). |
+| Alternate numbering | `version_number` runs 1..N per main image; alternates only hang off main images (0 on non-main). In a 300-product sample of UZID/AccessoryChoice products, all 21 that have alternates on both sides have the same first three version numbers in Oydera and Aselna; 1 has alternates only in Oydera. | Position rule gives the same file Oydera used (R5 is small). |
+| Q2 coverage | UZID 1146 / 2341 main images get an alternate; AccessoryChoice 1081 / 2321; NevaWireless 1081 / 2321; AccessoryWiz 994 / 1942. The rest fall back to the original. | |
+| Current Shopify files | NevaWireless main images are named `<product_image_id>.jpg` (Aselna pushed the **original**). UZID / AccessoryChoice have Oydera hash names. | NevaWireless will switch to alternate 2 as its products update; the Oydera stores need the backfill. |
+| Backfill dry run | UZID: 1146 rows to record, 0 re-pushes. AccessoryChoice: 1077 to record, 0 re-pushes. NevaWireless: nothing to record, **884 main images will be replaced with alternate 2**. AccessoryWiz: no listing images. | |
+
+### What was implemented (oydera's approach)
+
+The first version kept a `generated_product_image` row per store, recorded which alternate each
+Shopify image is, re-pushed when the store's number changed, and had a backfill command for the
+rows copied from oydera. That was dropped in favour of doing exactly what oydera's `ImageLoader`
+does:
+
+- **Which file**: for the **main image only**, if it has alternates and
+  `product_alt_image_number = N` with `N <= count`, the N-th alternate by position (ordered by
+  `version_number`); otherwise the original. Every other image always pushes the original
+  (oydera applied it to any image with alternates; in the data only main images have them). `listing_item.image_version` is not used (no alternate store has it set).
+- **When it is pushed**: a new image, or an image whose `product_images.updated_at` or selected
+  alternate's `updated_at` is newer than the listing image row. **Changing N does not re-push
+  existing images** (oydera B5, kept on purpose): the new number applies to images pushed from
+  then on. Setting NevaWireless to 1 therefore leaves what is on Shopify now as it is.
+- **Generated files** stay shared by all stores (no `store_id`): one `generated_product_image`
+  row per product image and alternate (`alt_product_image_id` null = the original), file
+  `<image>.jpg` or `<image>_<alt>.jpg`. Every Shopify store with a file system uses the same one,
+  so the file is the same whichever store generated it.
+
+| File | Change |
+|---|---|
+| `app/Models/Store.php` | `altImageNumber()` |
+| `app/Utils/ShopifyImageUtility.php` | `resolveImage`, `resolveAltImageId`, `pickAlternate` (position rule) |
+| `app/Jobs/SubmitShopifyProductsJob.php` | Generates/pushes the selected file; `generatedImagesFor()` picks each image's row for the store; `updateChangedImages()` re-pushes updated images with the selected file and records success only when `mediaUserErrors` is empty; `alt_product_image_id` is written on the listing image for information only |
+| `app/Jobs/FetchShopifyProductsJob.php` | Maps existing Shopify media to the original's generated row |
+| `resources/views/store/update.blade.php`, `app/Http/Controllers/StoreController.php` | Edits `product_alt_image_number` as a number, validated `nullable|integer|min:0` |
+| `tests/Utils/ShopifyImageUtilityTest.php` | 5 tests, run by path |
+
+No migration and no backfill.
+
+### Before turning it on per store
+
+1. UZID (1) and AccessoryChoice (2) have their number; **OdeMobile has none**, set it on the store screen.
+2. **AccessoryChoice has no file system**, so Aselna cannot generate or push its images until one is set.
+3. `auto_generate_listings` decides whether `SubmitShopifyProductsJob` touches a store at all.
+4. `php artisan queue:restart` after deploying.
+
+Still open: R8 (one writer per store), R9 (store-wide media delete check), R10 (verify
+`productUpdateMedia` replaces the file on one product first), R14 (`ListingItemImageCreate` duplicates).

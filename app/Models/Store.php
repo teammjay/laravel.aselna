@@ -65,6 +65,15 @@ class Store extends Model
         return $this->belongsTo(StoreType::class, 'store_type_id');
     }
 
+    /**
+     * Which alternate of the main image this store pushes as its main image (1 = the first
+     * alternate by version_number). 0 means the original image.
+     */
+    public function altImageNumber(): int
+    {
+        return max(0, (int) $this->product_alt_image_number);
+    }
+
     public function fileSystem()
     {
         return $this->belongsTo(FileSystem::class, 'file_system_id', 'id');

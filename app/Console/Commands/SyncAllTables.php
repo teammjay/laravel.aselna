@@ -194,7 +194,7 @@ class SyncAllTables extends Command
 //        FetchEbayOrders::dispatch();
 //        FetchEmailMessagesJob::dispatch();
 //        SubmitShopifyProductsJob::dispatch();
-        FetchShopifyProductsJob::dispatch('c2c8131f-c8a2-e082-9f89-3e8bf96b1049');
+//        FetchShopifyProductsJob::dispatch('c2c8131f-c8a2-e082-9f89-3e8bf96b1049');
 //        FetchMagentoProductsJob::dispatch();
 //        MagentoProductsSyncJob::dispatch();
 //        FetchMagentoCategoriesJob::dispatch();
@@ -244,6 +244,7 @@ class SyncAllTables extends Command
 //        FonusCombinedSyncJob::dispatch();
 //        ShopifyOnlySyncJob::dispatch();
 //        OdemobileListingItemSyncJob::dispatch();
+        ProductAlternativeImagesSyncJob::dispatch();
 
         $transactionIds = [
 ////            '9400150105798006163885',
