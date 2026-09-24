@@ -23,6 +23,7 @@ use App\Models\StoreType;
 use App\Models\UPCCodes;
 use App\Models\JobStatus;
 use App\Jobs\Sync\FonusCombinedSyncJob;
+use App\Jobs\Shopify\SyncShopifyMediaPathsJob;
 use App\Services\Auth\ShopifyAuthService;
 use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -285,7 +286,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
                     $path = '/store-images/' . $store->id . '/' . $productImage->id . '.jpg';
 
                     $imageData = [
-                        'product_id' => $productData->product_id,
+                          'product_id' => $productData->product_id,
                         'product_image_id' => $productImage->id,
                         'alt_product_image_id' => null,
                         'image_file_system_id' => $Image->id,
@@ -505,6 +506,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
             $locationId = $shopifyAuthService->getLocationId();
 
             $this->handleMediaImages($response['data']['productSet']['product'], $listingItem);
+//            $this->dispatchMediaPathSync($listingItem, $store, $productId);
 
             $storeProduct->update([
                 'last_synch_date_time' => date('Y-m-d H:i:s')
@@ -742,11 +744,15 @@ class SubmitShopifyProductsJob implements ShouldQueue
                         'originalSource' => $fileSystem->url_base_path . $productImage->path,
                     ];
                     $shopifyAuthService->updateMediaImage($proDetail->marketplace_product_id, $image->reference_id, $mediaData);
+                    // The replaced media gets a new URL once Shopify finishes processing it.
                     $image->update([
+                        'path' => null,
                         'updated_at' => now()
                     ]);
                 }
             }
+
+//            $this->dispatchMediaPathSync($listingItem, $store, $proDetail->marketplace_product_id);
 
 
             $storeProduct->update([
@@ -965,6 +971,22 @@ class SubmitShopifyProductsJob implements ShouldQueue
                     }
                 }
             }
+        }
+    }
+
+    /**
+     * Shopify processes media asynchronously, so images pushed in this run usually have no URL yet.
+     * Queue a delayed job to fill in the paths once Shopify is done.
+     */
+    private function dispatchMediaPathSync($listingItem, $store, $marketplaceProductId): void
+    {
+        $hasMissingPaths = ListingItemProductImage::where('listing_item_id', $listingItem->id)
+            ->whereNull('path')
+            ->whereNotNull('reference_id')
+            ->exists();
+
+        if ($hasMissingPaths) {
+            SyncShopifyMediaPathsJob::dispatch($listingItem->id, $store->id, $marketplaceProductId)->delay(now()->addSeconds(30));
         }
     }
 
