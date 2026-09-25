@@ -447,7 +447,8 @@ class ProcessFeedGenerationJob implements ShouldQueue
         // An unrated device has rating_id NULL, and both IN and NOT IN evaluate to
         // NULL for it, so it fails either test. Let it through explicitly.
         $query->where(function ($subQuery) use ($excludedRating, $includedRatings) {
-            $subQuery->where(function ($rated) use ($excludedRating, $includedRatings) {
+            $subQuery->whereNull('device.rating_id')
+                ->orWhere(function ($rated) use ($excludedRating, $includedRatings) {
                     $rated->whereNotIn('device.rating_id', $excludedRating)
                         ->whereIn('device.rating_id', $includedRatings);
                 });
