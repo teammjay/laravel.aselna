@@ -178,6 +178,13 @@ class SubmitShopifyProductsJob implements ShouldQueue
                             $join->on('products.product_id', '=', 'store_product.product_id')
                                 ->where('store_product.store_id', $store->id);
                         })
+                        ->whereExists(function ($query) use ($store) {
+                            $query->select(DB::raw(1))
+                                ->from('manage_marketplace_products')
+                                ->whereColumn('manage_marketplace_products.product_id', 'products.product_id')
+                                ->where('manage_marketplace_products.upload_status', 'success')
+                                ->where('manage_marketplace_products.store_id', $store->id);
+                        })
                         ->whereNotIn('product_type', $productTypes)
                         ->whereIn('product_type', $ceaProductTypes)
                         ->whereNull('parent_id')
