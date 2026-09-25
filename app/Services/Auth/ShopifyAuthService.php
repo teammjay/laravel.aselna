@@ -537,16 +537,22 @@ class ShopifyAuthService
     public function syncIndividualPage(mixed $StoreNavigationPage)
     {
         // A row without a handle still has to find its existing Shopify page; creating it instead
-        // makes Shopify save a copy under "<handle>-1".
-        $handle = !empty($StoreNavigationPage->url_path)
-            ? $StoreNavigationPage->url_path
-            : Navigationutility::pageHandle($StoreNavigationPage->title);
+        // makes Shopify save a copy under "<handle>-1". The handle from the title is not used when
+        // another page row already has it (e.g. "Galaxy S6 Edge+" vs "Galaxy S6 Edge"), so this row
+        // gets its own page instead of overwriting that one.
+        $handle = $StoreNavigationPage->url_path;
+        if (empty($handle)) {
+            $handle = Navigationutility::pageHandle($StoreNavigationPage->title);
+            if ($handle === '' || Navigationutility::isPageHandleTaken($StoreNavigationPage->store_id, $handle, $StoreNavigationPage->id)) {
+                $handle = null;
+            }
+        }
 
         $existingPageId = $this->findExistingPageId($StoreNavigationPage, $handle);
         $variables = ['page' => [
             'title' => $StoreNavigationPage->title,
             'body' => $StoreNavigationPage->generated_body,
-            'handle' => $handle !== '' ? $handle : null,
+            'handle' => $handle,
             'isPublished' => true,
         ]];
 
@@ -599,7 +605,7 @@ class ShopifyAuthService
      * The Shopify page this row already has, looked up by the stored page_id, then the stored
      * url_path, then the handle derived from the title. Null only when none of them exists.
      */
-    private function findExistingPageId(mixed $StoreNavigationPage, string $handle): ?string
+    private function findExistingPageId(mixed $StoreNavigationPage, ?string $handle): ?string
     {
         if (!empty($StoreNavigationPage->page_id)) {
             $response = $this->makeGraphQLRequest(ShopifyQueries::$pageById, [
