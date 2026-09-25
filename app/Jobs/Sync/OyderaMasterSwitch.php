@@ -3,6 +3,7 @@
 namespace App\Jobs\Sync;
 
 use App\Jobs\Concerns\TrackableJob;
+use App\Jobs\FetchShopifyProductsJob;
 use App\Jobs\Fonus\ChainCompletionJob;
 use App\Jobs\ListingItemProductImageSyncJob;
 use App\Jobs\Shopify\SyncShopifyItems;
@@ -104,6 +105,9 @@ class OyderaMasterSwitch implements ShouldQueue
 
                 // 5. store navigation pages
                 $chain[] = new SyncShopifyItems($store->id, SyncShopifyItems::TASK_STORE_NAVIGATION_PAGE);
+
+                // 6. the products already on Shopify: updating manage_marketplace_products rows
+                $chain[] = new FetchShopifyProductsJob($store->id, true);
             }
 
             $chain[] = new ChainCompletionJob($this->jobId);

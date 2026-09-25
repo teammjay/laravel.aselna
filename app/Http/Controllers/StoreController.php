@@ -215,6 +215,7 @@ class StoreController extends Controller
                 'name' => 'required',
                 'marketplace_name' => 'required',
                 //'store_url' => 'required'
+                'product_alt_image_number' => 'nullable|integer|min:0',
             ]);
 
             if ($validator->fails()) {
@@ -340,6 +341,7 @@ class StoreController extends Controller
                 'name' => 'required',
                 'marketplace_name' => 'required',
                 //'store_url' => 'required'
+                'product_alt_image_number' => 'nullable|integer|min:0',
             ]);
 
             if ($validator->fails()) {
