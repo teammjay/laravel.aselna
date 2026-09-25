@@ -711,10 +711,11 @@ GQL;
 
     public static $pageFetch = <<<GQL
 query getPageByHandle (\$handle: String!) {
-  pages (first: 1, query : \$handle) {
+  pages (first: 10, query : \$handle) {
     edges {
       node {
         id
+        handle
       }
     }
     pageInfo {
@@ -723,6 +724,15 @@ query getPageByHandle (\$handle: String!) {
       hasPreviousPage
       startCursor
     }
+  }
+}
+GQL;
+
+    public static $pageById = <<<GQL
+query getPageById (\$id: ID!) {
+  page (id: \$id) {
+    id
+    handle
   }
 }
 GQL;
