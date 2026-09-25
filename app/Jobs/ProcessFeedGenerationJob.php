@@ -73,6 +73,8 @@ class ProcessFeedGenerationJob implements ShouldQueue
     private $fileHandle;
     private $max_file_size;
     private $category_store_type_detail;
+    // public/ relative folder the part files go to, one sub folder per store
+    private $feedFolder = 'feeds/google-shopping';
 
     /**
      * Create a new job instance.
@@ -90,8 +92,8 @@ class ProcessFeedGenerationJob implements ShouldQueue
     {
         try {
 
-            $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Google/Microsoft Feed Generation']);
             $feed_type = $this->data['feed_type'];
+            $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => ucfirst(strtolower($feed_type)) . ' Feed Generation']);
             $this->store_id = $store_id = $this->data['store_id'];
             $fileType = $this->data['fileType'];
             $this->storeDetail = Store::with('storeType')->where('id', $store_id)->first();
@@ -100,6 +102,11 @@ class ProcessFeedGenerationJob implements ShouldQueue
             $this->category_store_type_detail = StoreType::where('code', 'googleShopping')->first();
 
             $this->max_file_size = 200 * 1024 * 1024;
+
+            // Meta takes at most 100 MB per uploaded feed file, so its parts are cut smaller.
+            if (strtolower($feed_type) == 'meta') {
+                $this->max_file_size = 100 * 1024 * 1024;
+            }
 
             if (env('APP_ENV') == 'local' || env('APP_ENV') == 'development') {
 //                $this->max_file_size = 1 * 1024 * 1024; // 1 MB for local testing
@@ -180,14 +187,22 @@ class ProcessFeedGenerationJob implements ShouldQueue
                 case 'microsoft':
                     $this->columns = ['id', 'title', 'description', 'product_category', 'product_type', 'link', 'image link', 'condition', 'availability', 'price', 'gtin', 'brand', 'mpn', 'item_group_id', 'gender', 'age_group', 'color', 'size', 'shipping', 'additional_image_link', 'inventory', 'return_policy_info', 'custom_label_0', 'custom_label_1', 'custom_label_2', 'custom_label_3', 'custom_label_4', 'product_detail'];
                     break;
+                case 'meta':
+                    // Columns of Meta's catalog template (docs/catalog_products.csv), followed by the
+                    // optional Meta fields we also fill for Google.
+                    $this->columns = ['id', 'title', 'description', 'availability', 'condition', 'link', 'image_link', 'brand', 'price', 'google_product_category', 'fb_product_category', 'quantity_to_sell_on_facebook', 'sale_price', 'sale_price_effective_date', 'item_group_id', 'gender', 'color', 'size', 'age_group', 'material', 'pattern', 'shipping', 'shipping_weight', 'offer_disclaimer', 'offer_disclaimer_url', 'video[0].url', 'video[0].tag[0]', 'gtin', 'product_tags[0]', 'product_tags[1]', 'style[0]', 'additional_image_link', 'product_type', 'mpn', 'custom_label_0', 'custom_label_1', 'custom_label_2', 'custom_label_3', 'custom_label_4'];
+                    $this->feedFolder = 'feeds/meta';
+                    break;
             }
 
             $this->current_file_index = 1;
-            $this->directory = public_path('feeds/google-shopping/'. $this->store_id);
+            $this->directory = public_path($this->feedFolder . '/' . $this->store_id);
             // ensure directory exists
             FileUtility::createDirectoryIfNotExists($this->directory);
             $this->fileNameBase = pathinfo($this->file_name, PATHINFO_FILENAME);
             $this->fileExtension = pathinfo($this->file_name, PATHINFO_EXTENSION);
+
+            $this->clearPreviousFeedFiles();
 
             $this->fileHandle = fopen($this->getFilePath($this->current_file_index), 'w');
             fputcsv($this->fileHandle, $this->columns);
@@ -305,34 +320,13 @@ class ProcessFeedGenerationJob implements ShouldQueue
             $sku = StoreTypeListing::generateUniqueAlphabeticSku($product_code, 6);
         }
 
-        if ($this->storeDetail->upc_usage_type) {
-            switch ($this->storeDetail->upc_usage_type) {
-                case 0:
-                    $upcCodes = UPCCodes::where('store', $this->store_id)->where('is_used', 0)->orderBy('sequence_id', 'asc')->first();
-                    break;
-                case 1:
-                    $upcCodes = UPCCodes::where('store', $this->store_id)->where('is_used', 0)->orderBy('sequence_id', 'asc')->first();
-                    break;
-                case 2:
-                    $upcCodes = GoodUpc::where('is_used', 0)->orderBy('upc', 'asc')->first();
-                    break;
-                case 3:
-                    $upcCodes = UPCCodes::where('store', $this->store_id)->where('is_used', 0)->orderBy('sequence_id', 'asc')->first();
-                    break;
-                case 'default':
-                    $upcCodes = UPCCodes::where('store', $this->store_id)->where('is_used', 0)->orderBy('sequence_id', 'asc')->first();
-                    break;
-            }
-        } else {
-            $upcCodes = UPCCodes::where('store', $this->store_id)->where('is_used', 0)->orderBy('sequence_id', 'asc')->first();
-        }
-
         $created_by = auth()->user()->name ?? 'admin';
 
         $itemDetail = array(
             'sku' => $sku,
             'title' => $listitem->title,
-            'upc' => isset($upcCodes->upc_code) ? $upcCodes->upc_code : '',
+            // Left empty when none are left; the caller then stops the feed with UpcNotAvailableException.
+            'upc' => $this->claimUnusedUpc() ?? '',
             'device_id' => $device->id,
             'listing_item_id' => $listitem->id,
             'device_carrier_id' => null,
@@ -346,34 +340,44 @@ class ProcessFeedGenerationJob implements ShouldQueue
     }
 
     /**
-     * Claim the next unused UPC for this store from upc_codes, skipping any code
-     * already assigned to a listing item detail, and mark it as used.
+     * Claim the next unused UPC and mark it as used. Stores on the UPC pool (upc_usage_type 2,
+     * "Upcpool") draw from good_upc; every other store draws from its own upc_codes.
      * Returns null when no UPC is available.
+     *
+     * The claim is an update that only matches while the code is still unused, so two jobs can't
+     * take the same code and no rows stay locked while searching. A code that is already on a
+     * listing item detail (its is_used flag was never set) stays marked used and the next is tried.
      */
     private function claimUnusedUpc(): ?string
     {
-        return DB::transaction(function () {
-            $upcCode = UPCCodes::where('store', $this->store_id)
-                ->where('is_used', 0)
-                ->whereNotNull('upc_code')
-                ->where('upc_code', '!=', '')
-                ->whereNotExists(function ($query) {
-                    $query->select(DB::raw(1))
-                        ->from('listing_item_detail')
-                        ->whereColumn('listing_item_detail.upc', 'upc_codes.upc_code');
-                })
-                ->orderBy('sequence_id', 'asc')
-                ->lockForUpdate()
-                ->first();
+        $usesUpcPool = (int) $this->storeDetail->upc_usage_type === 2;
 
-            if (!$upcCode) {
-                return null;
+        while (true) {
+            if ($usesUpcPool) {
+                $upc = GoodUpc::where('is_used', 0)->where('upc', '!=', '')->orderBy('upc', 'asc')->value('upc');
+                if ($upc === null) {
+                    return null;
+                }
+                // good_upc has no id or timestamp columns, so the update can't go through the model
+                $claimed = DB::table('good_upc')->where('upc', $upc)->where('is_used', 0)->update(['is_used' => 1]);
+            } else {
+                $upcCode = UPCCodes::where('store', $this->store_id)
+                    ->where('is_used', 0)
+                    ->where('upc_code', '!=', '')
+                    ->orderBy('sequence_id', 'asc')
+                    ->first(['id', 'upc_code']);
+                if (!$upcCode) {
+                    return null;
+                }
+                $upc = $upcCode->upc_code;
+                $claimed = UPCCodes::where('id', $upcCode->id)->where('is_used', 0)->update(['is_used' => 1]);
             }
 
-            $upcCode->update(['is_used' => 1]);
-
-            return $upcCode->upc_code;
-        });
+            // 0 rows updated means another job claimed it first
+            if ($claimed && !ListingItemDetail::where('upc', $upc)->exists()) {
+                return $upc;
+            }
+        }
     }
 
     private function generateProductDetail($product_id, $store_type_id)
@@ -565,6 +569,32 @@ class ProcessFeedGenerationJob implements ShouldQueue
         return $this->directory . '/' . $this->fileNameBase . "_{$index}." . $this->fileExtension;
     }
 
+    /**
+     * Remove the part files of the previous run for this store. A run that ends up with fewer parts
+     * than the last one only overwrites the parts it writes, so without this the leftover parts
+     * (feed_4.csv .. feed_7.csv after a 7 part run followed by a 3 part one) stay on disk and keep
+     * being served.
+     */
+    private function clearPreviousFeedFiles(): void
+    {
+        // Numbered parts only: feed_1.csv, feed_12.csv. Anything else named like a part, such as
+        // feed_1_asl.csv or a backup copy, is left alone.
+        $partPattern = '/^' . preg_quote($this->fileNameBase, '/') . '_\d+\.' . preg_quote($this->fileExtension, '/') . '$/';
+
+        $removed = 0;
+
+        foreach (glob($this->directory . '/' . $this->fileNameBase . '_*.' . $this->fileExtension) ?: [] as $oldFile) {
+            if (is_file($oldFile) && preg_match($partPattern, basename($oldFile))) {
+                @unlink($oldFile);
+                $removed++;
+            }
+        }
+
+        if ($removed > 0) {
+            Log::info('Removed ' . $removed . ' feed part file(s) of the previous run from ' . $this->directory);
+        }
+    }
+
     private function getPartFilename($index)
     {
         return $this->fileNameBase . "_{$index}." . $this->fileExtension;
@@ -572,7 +602,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
 
     private function getPartPath($index)
     {
-        return 'feeds/google-shopping/'. $this->store_id . '/' . $this->fileNameBase . "_{$index}." . $this->fileExtension;
+        return $this->feedFolder . '/' . $this->store_id . '/' . $this->fileNameBase . "_{$index}." . $this->fileExtension;
     }
 
     /**
@@ -813,6 +843,11 @@ class ProcessFeedGenerationJob implements ShouldQueue
 
                                 $upcCode = (isset($item_detail->upc)) ? $item_detail->upc : '';
 
+                                // Google wants the 14 digit GTIN, so a 12 digit UPC goes in padded.
+                                if (strtolower($feed_type) == 'google' && $upcCode != '' && !str_starts_with($upcCode, '00')) {
+                                    $upcCode = '00' . $upcCode;
+                                }
+
                                 /*if (!in_array($this->storeDetail->name,['UZID','NevaWireless','AccessoryWiz','OdeMobile','AccessoryChoice','GetAccessory'])) {
                                     $upcCode = $listitem->sku;
                                 }*/
@@ -820,36 +855,62 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                 if(isset($this->storeDetail->include_upc_in_feed) && $this->storeDetail->include_upc_in_feed != 1){
                                     $upcCode = $listitem->sku;
                                 }
-                                fputcsv($this->fileHandle, [
-                                    $item_detail->sku,
-                                    $productTitle,
-                                    $final_description,
-                                    $ptype_id,
-                                    $product_type,
-                                    $product_url,
-                                    (isset($finalMainImage)) ? $finalMainImage : '',
-                                    (isset($itemDetail->product->condition)) ? strtolower($itemDetail->product->condition->name) : '',
-                                    'in stock',
-                                    $product_price . ' USD',
-                                    $upcCode,
-                                    $manufacturer_name,
-                                    $item_detail->sku,
-                                    (isset($device) ? $itemGroupId : ''),
-                                    '',
-                                    '',
-                                    (isset($itemDetail->product->color->name)) ? $itemDetail->product->color->name : '',
-                                    (isset($itemDetail->product->size->value)) ? $itemDetail->product->size->value . ' ' . $itemDetail->product->size->value_unit : '',
-                                    'US::Standard:4.99 USD',
-                                    (isset($images) && count($images) > 0) ? implode(',', $images) : '',
-                                    (isset($listitem->qunatity)) ? $listitem->qunatity : 1000,
-                                    'return_policy_days: "30"',
-                                    (isset($item_detail->device->brand->name)) ? $item_detail->device->brand->name : '',
-                                    $custom_label_1,
-                                    $custom_label_2,
-                                    $custom_label_3,
-                                    (isset($itemDetail->product->product_sku)) ? $itemDetail->product->product_sku : '',
-                                    $prodDetail
-                                ]);
+                                if (strtolower($feed_type) == 'meta') {
+                                    fputcsv($this->fileHandle, $this->metaRow([
+                                        'id' => $item_detail->sku,
+                                        'title' => $productTitle,
+                                        'description' => $final_description,
+                                        'condition' => (isset($itemDetail->product->condition)) ? strtolower($itemDetail->product->condition->name) : '',
+                                        'link' => $product_url,
+                                        'image_link' => (isset($finalMainImage)) ? $finalMainImage : '',
+                                        'brand' => $manufacturer_name,
+                                        'price' => $product_price,
+                                        'google_product_category' => $ptype_id,
+                                        'quantity' => (isset($listitem->qunatity)) ? $listitem->qunatity : 1000,
+                                        'item_group_id' => (isset($device) ? $itemGroupId : ''),
+                                        'color' => (isset($itemDetail->product->color->name)) ? $itemDetail->product->color->name : '',
+                                        'size' => (isset($itemDetail->product->size->value)) ? $itemDetail->product->size->value . ' ' . $itemDetail->product->size->value_unit : '',
+                                        'gtin' => $upcCode,
+                                        'additional_images' => $images,
+                                        'product_type' => $product_type,
+                                        'custom_label_0' => (isset($item_detail->device->brand->name)) ? $item_detail->device->brand->name : '',
+                                        'custom_label_1' => $custom_label_1,
+                                        'custom_label_2' => $custom_label_2,
+                                        'custom_label_3' => $custom_label_3,
+                                        'custom_label_4' => (isset($itemDetail->product->product_sku)) ? $itemDetail->product->product_sku : '',
+                                    ]));
+                                } else {
+                                    fputcsv($this->fileHandle, [
+                                        $item_detail->sku,
+                                        $productTitle,
+                                        $final_description,
+                                        $ptype_id,
+                                        $product_type,
+                                        $product_url,
+                                        (isset($finalMainImage)) ? $finalMainImage : '',
+                                        (isset($itemDetail->product->condition)) ? strtolower($itemDetail->product->condition->name) : '',
+                                        'in stock',
+                                        $product_price . ' USD',
+                                        $upcCode,
+                                        $manufacturer_name,
+                                        $item_detail->sku,
+                                        (isset($device) ? $itemGroupId : ''),
+                                        '',
+                                        '',
+                                        (isset($itemDetail->product->color->name)) ? $itemDetail->product->color->name : '',
+                                        (isset($itemDetail->product->size->value)) ? $itemDetail->product->size->value . ' ' . $itemDetail->product->size->value_unit : '',
+                                        'US::Standard:4.99 USD',
+                                        (isset($images) && count($images) > 0) ? implode(',', $images) : '',
+                                        (isset($listitem->qunatity)) ? $listitem->qunatity : 1000,
+                                        'return_policy_days: "30"',
+                                        (isset($item_detail->device->brand->name)) ? $item_detail->device->brand->name : '',
+                                        $custom_label_1,
+                                        $custom_label_2,
+                                        $custom_label_3,
+                                        (isset($itemDetail->product->product_sku)) ? $itemDetail->product->product_sku : '',
+                                        $prodDetail
+                                    ]);
+                                }
 
                                 if (ftell($this->fileHandle) >= $this->max_file_size) {
                                     fclose($this->fileHandle);
@@ -876,6 +937,64 @@ class ProcessFeedGenerationJob implements ShouldQueue
                 }
             }
         }
+    }
+
+    /**
+     * One Meta feed line, in the order of the meta columns. Values are the ones the Google feed uses
+     * for the matching column; Meta fields we have no data for stay empty.
+     */
+    private function metaRow(array $v): array
+    {
+        $condition = in_array($v['condition'], ['new', 'refurbished', 'used']) ? $v['condition'] : 'new';
+        $price = $v['price'] !== '' && $v['price'] !== null ? number_format((float) $v['price'], 2, '.', '') . ' USD' : '';
+        // product tags are limited to 110 characters each
+        $tag0 = mb_substr($v['custom_label_0'], 0, 110);
+        $tag1 = mb_substr($v['custom_label_3'], 0, 110);
+        // Stores that keep UPCs out of the feed put the SKU in gtin. Meta rejects an invalid GTIN,
+        // so only real 8/12/13/14 digit codes are sent.
+        $gtin = preg_match('/^(\d{8}|\d{12,14})$/', (string) $v['gtin']) ? $v['gtin'] : '';
+
+        return [
+            mb_substr($v['id'], 0, 100),
+            mb_substr($v['title'], 0, 200),
+            mb_substr($v['description'], 0, 9999),
+            'in stock',
+            $condition,
+            $v['link'],
+            $v['image_link'],
+            mb_substr($v['brand'], 0, 100),
+            $price,
+            $v['google_product_category'],
+            '',                                    // fb_product_category
+            $v['quantity'],
+            '',                                    // sale_price
+            '',                                    // sale_price_effective_date
+            mb_substr($v['item_group_id'], 0, 100),
+            '',                                    // gender
+            mb_substr($v['color'], 0, 200),
+            mb_substr(trim($v['size']), 0, 200),
+            '',                                    // age_group
+            '',                                    // material
+            '',                                    // pattern
+            'US::Standard:4.99 USD',
+            '',                                    // shipping_weight
+            '',                                    // offer_disclaimer
+            '',                                    // offer_disclaimer_url
+            '',                                    // video[0].url
+            '',                                    // video[0].tag[0]
+            $gtin,
+            $tag0,
+            $tag1,
+            '',                                    // style[0]
+            implode(',', array_slice($v['additional_images'] ?? [], 0, 20)),
+            $v['product_type'],
+            $v['id'],                              // mpn
+            $v['custom_label_0'],
+            $v['custom_label_1'],
+            $v['custom_label_2'],
+            $v['custom_label_3'],
+            $v['custom_label_4'],
+        ];
     }
 
     public function getProductCategoryCode($id)

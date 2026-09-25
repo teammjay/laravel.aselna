@@ -28,11 +28,26 @@ class FetchShopifyProductsJob implements ShouldQueue
     public $timeout = 18000;
 
     /**
-     * Create a new job instance.
+     * Picked up by the Queue::createPayloadUsing hook in AppServiceProvider and used for the
+     * job_statuses tags. Only set for a single-store run.
      */
-    public function __construct()
-    {
-        //
+    public $store_name;
+
+    /**
+     * Create a new job instance.
+     *
+     * Pass a store id to fetch a single store only, e.g. scheduled_cron_jobs.parameters = {"store_id": "<uuid>"}.
+     *
+     * @param  bool  $ignoreAutoGenerate  Fetch the store even when auto_generate_listings is off. OyderaMasterSwitch
+     *                                    uses it to record the products oydera created, before Aselna takes the store over.
+     */
+    public function __construct(
+        public ?string $storeId = null,
+        public bool $ignoreAutoGenerate = false
+    ) {
+        if (!empty($storeId)) {
+            $this->store_name = Store::where('id', $storeId)->value('name') ?? $storeId;
+        }
     }
 
     /**
@@ -44,7 +59,7 @@ class FetchShopifyProductsJob implements ShouldQueue
             $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Shopify Products']);
 
             /* get active store jobs*/
-            $store_ids = Common::getActiveStoreJobs('FetchShopifyProductsJob','shopify');
+            $store_ids = isset($this->storeId) ? [$this->storeId] : Common::getActiveStoreJobs('FetchShopifyProductsJob','shopify');
             /* get active store jobs*/
 
             $query = Store::select('store.*','store_type.name as storeTypeName')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'shopify');
@@ -57,11 +72,12 @@ class FetchShopifyProductsJob implements ShouldQueue
 
             if (count($stores ?? []) > 0) {
                 foreach ($stores as $store) {
-                    if (env('APP_ENV') === 'local' && $store->name != 'GetAccessory') {
+                    // Locally only GetAccessory, unless a store was asked for.
+                    if (env('APP_ENV') === 'local' && empty($this->storeId) && $store->name != 'GetAccessory') {
                         continue;
                     }
 
-                    if (($store->auto_generate_listings ?? 0) == 0) {
+                    if (!$this->ignoreAutoGenerate && ($store->auto_generate_listings ?? 0) == 0) {
                         Log::info('Auto Generate Listings is disabled for store: ' . $store->name);
                         continue;
                     }
@@ -152,10 +168,20 @@ class FetchShopifyProductsJob implements ShouldQueue
 
 
                 if ($sku) {
-                    $listingItems = ListingItem::where('sku',$sku)->get();
+                    // Only this store's listing items: stores share skus (OdeMobile / OdeMobile-C), and the
+                    // Shopify ids written below belong to this store alone.
+                    $listingItems = ListingItem::select('listing_item.*')
+                        ->leftJoin('store_product', 'store_product.id', '=', 'listing_item.store_product_id')
+                        ->where('listing_item.sku', $sku)
+                        ->where(function ($query) use ($store) {
+                            $query->where('store_product.store_id', $store->id)
+                                ->orWhereNull('listing_item.store_product_id');
+                        })
+                        ->get();
                     if (count($listingItems) > 0) {
                         foreach ($listingItems as $listingItem) {
                             $productData = $listingItem->storeProduct->product ?? $listingItem->product;
+                            $storeProduct = StoreProduct::where('product_id', $productData->product_id)->where('store_id', $store->id)->first();
                             if (isset($productData)) {
                                 $handle = $product['handle'];
                                 $product_code = $productData->product_sku;
@@ -182,6 +208,10 @@ class FetchShopifyProductsJob implements ShouldQueue
                                 $listingItem->update([
                                     'store_url' => $handle,
                                     'store_sku' => $replacedProductId . '-' . $replacedVariantId,
+                                ]);
+
+                                $storeProduct?->update([
+                                    'last_synch_date_time' => date('Y-m-d H:i:s')
                                 ]);
                             } else {
                                 Log::warning('No product resolved for Listing Item: ' . $listingItem->id . ' with SKU: ' . $sku . ' in Store: ' . $store->name);
@@ -251,7 +281,25 @@ class FetchShopifyProductsJob implements ShouldQueue
         $shopifyMediaIds = [];
         foreach ($media as $node) {
             if ($node['mediaContentType'] == 'IMAGE') {
-                $shopifyMediaIds[] = str_replace('gid://shopify/MediaImage/', '', $node['id']);
+                $mediaId = str_replace('gid://shopify/MediaImage/', '', $node['id']);
+                $shopifyMediaIds[] = $mediaId;
+
+                // Rows copied from oydera hold the REST product image id, which is not the media id.
+                // The file is the same, so correct the id by it; otherwise the delete below removes them
+                // and productUpdateMedia is sent an id Shopify does not know. The ?v= part of the url
+                // changes when Shopify re-saves the image, so only the part before "?" is compared.
+                // Query builder, so updated_at (when the image was pushed) is left alone.
+                $imageUrl = $node['preview']['image']['url'] ?? null;
+                if (!empty($imageUrl)) {
+                    DB::table('listing_item_product_images')
+                        ->where('listing_item_id', $listingItem->id)
+                        ->whereRaw("SUBSTRING_INDEX(path, '?', 1) = ?", [strtok($imageUrl, '?')])
+                        ->where(function ($query) use ($mediaId) {
+                            $query->whereNull('reference_id')->orWhere('reference_id', '<>', $mediaId);
+                        })
+                        ->update(['reference_id' => $mediaId]);
+                    Log::info("updating image reference: " . $imageUrl);
+                }
             }
         }
 
@@ -273,14 +321,22 @@ class FetchShopifyProductsJob implements ShouldQueue
                 if (ListingItemProductImage::where('listing_item_id', $listingItem->id)->where('path', $imageUrl)->exists()) {
                     continue;
                 }
-                if (ListingItemProductImage::where('listing_item_id', $listingItem->id)->where('reference_id', $imageIdReplaced)->exists()) {
+                $existingImage = ListingItemProductImage::where('listing_item_id', $listingItem->id)->where('reference_id', $imageIdReplaced)->first();
+                if (isset($existingImage)) {
+                    // Image was pushed before Shopify finished processing it, so the URL was never stored.
+                    if (empty($existingImage->path)) {
+                        Log::info('Filling missing image path for Listing Item: ' . $listingItem->id . ' Media: ' . $imageIdReplaced);
+                        $existingImage->update(['path' => $imageUrl]);
+                    }
                     continue;
                 }
                 if(isset($AlreadyImages) && array_key_exists($imageUrl,$AlreadyImages)){
                 } else {
                     $altText = $mediaItem['alt'] ?? '';
                     Log::info('Image URL: ' . $imageUrl);
+                    // An image can have a row per alternate; the media already on Shopify is recorded against the original's.
                     $generatedImage = GenerateProductImage::where('product_image_id', $altText)
+                        ->orderByRaw('alt_product_image_id IS NULL DESC')
                         ->first();
                     if (isset($generatedImage)) {
                         ListingItemProductImage::updateOrCreate([

@@ -23,8 +23,10 @@ use App\Models\StoreType;
 use App\Models\UPCCodes;
 use App\Models\JobStatus;
 use App\Jobs\Sync\FonusCombinedSyncJob;
+use App\Jobs\Shopify\SyncShopifyMediaPathsJob;
 use App\Services\Auth\ShopifyAuthService;
 use App\Services\CriticalErrorService;
+use App\Utils\ShopifyImageUtility;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
@@ -65,6 +67,8 @@ class SubmitShopifyProductsJob implements ShouldQueue
 
         try {
             $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now()]);
+            // The worker is long-lived; alternates may have changed since the last run.
+            ShopifyImageUtility::flushCache();
             /* shopify stores*/
             $stores = Store::select('store.*')->with('fileSystem', 'storeType')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'shopify')->where('store.store_status', '<>', 0)->get();
 
@@ -292,35 +296,91 @@ class SubmitShopifyProductsJob implements ShouldQueue
             ->chunk(100, function ($productImages) use ($store, $productData) {
                 if (!isset($store->fileSystem)) return;
                 foreach ($productImages as $productImage) {
-                    $generatedImage = GenerateProductImage::where('product_image_id', $productImage->id)->first();
-                    if (isset($generatedImage) && $generatedImage->updated_at >= $productImage->updated_at) {
+                    // Stores with product_alt_image_number push an alternate of the image instead (oydera's rule).
+                    $resolved = ShopifyImageUtility::resolveImage($productImage, $store);
+                    $Image = $resolved['file'];
+                    $altImageId = $resolved['alt_product_image_id'];
+
+                    if (!isset($Image)) {
+                        Log::warning('Product image ' . $productImage->id . ' has no file, not generated for store ' . $store->name);
                         continue;
                     }
 
-                    $Image = $productImage->imageObj;
-                    $path = '/store-images/' . $store->id . '/' . $productImage->id . '.jpg';
+                    // One row per product image and alternate, shared by every store: the file is the same whichever store pushes it.
+                    $generatedImage = GenerateProductImage::where('product_image_id', $productImage->id)
+                        ->where('alt_product_image_id', $altImageId)
+                        ->first();
+                    if (isset($generatedImage)
+                        && $generatedImage->updated_at >= $productImage->updated_at
+                        && (!isset($resolved['alternate']) || $generatedImage->updated_at >= $resolved['alternate']->updated_at)) {
+                        continue;
+                    }
+
+                    // A different name per alternate, so the original and its alternates never overwrite each other.
+                    $path = '/store-images/' . $store->id . '/' . $productImage->id . (isset($altImageId) ? '_' . $altImageId : '') . '.jpg';
 
                     $imageData = [
                         'product_id' => $productData->product_id,
                         'product_image_id' => $productImage->id,
-                        'alt_product_image_id' => null,
+                        'alt_product_image_id' => $altImageId,
                         'image_file_system_id' => $Image->id,
+                        'main_image' => $productImage->main_image == 1 ? 1 : 0,
                         'path' => $path,
                         'reference_id' => '',
                     ];
 
                     Log::info("Main Image :: " . json_encode($productImage));
 
-                    if ($productImage->main_image == 1) {
-                        $imageData['main_image'] = 1;
-                    }
                     $this->uploadImage($store, $Image, $path);
 
-                    GenerateProductImage::updateOrCreate([
+                    $generatedImage = GenerateProductImage::updateOrCreate([
                         'product_image_id' => $productImage->id,
+                        'alt_product_image_id' => $altImageId,
                     ], $imageData);
+                    // updateOrCreate leaves updated_at alone when nothing changed; the file was uploaded again all the same.
+                    $generatedImage->touch();
                 }
             });
+    }
+
+    /**
+     * The generated image rows a store pushes for a product: per product image, the original or the
+     * alternate the store's product_alt_image_number selects. Main image first.
+     */
+    private function generatedImagesFor($store, $productId)
+    {
+        $generatedImages = collect();
+
+        foreach (ProductImages::where('product_id', $productId)->get() as $productImage) {
+            $generatedImage = GenerateProductImage::where('product_image_id', $productImage->id)
+                ->where('alt_product_image_id', ShopifyImageUtility::resolveAltImageId($productImage, $store))
+                ->first();
+
+            if (isset($generatedImage)) {
+                $generatedImages->push($generatedImage);
+            }
+        }
+
+        return $generatedImages->sortByDesc('main_image')->values();
+    }
+
+    /**
+     * The generated image row a store pushes for one product image.
+     */
+    private function generatedImageFor($store, $productImageId): ?GenerateProductImage
+    {
+        if (empty($productImageId)) {
+            return null;
+        }
+
+        $productImage = ProductImages::find($productImageId);
+        if (!isset($productImage)) {
+            return null;
+        }
+
+        return GenerateProductImage::where('product_image_id', $productImageId)
+            ->where('alt_product_image_id', ShopifyImageUtility::resolveAltImageId($productImage, $store))
+            ->first();
     }
 
     public function uploadImage($store, $Image, $path)
@@ -452,7 +512,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
 
         $this->generateProductImages($productData, $store);
 
-        $images = GenerateProductImage::where('product_id', $productData->product_id)->orderBy('main_image', 'desc')->get();
+        $images = $this->generatedImagesFor($store, $productData->product_id);
         $files = [];
         foreach ($images as $image) {
             $files[] = [
@@ -520,7 +580,8 @@ class SubmitShopifyProductsJob implements ShouldQueue
             $inventoryItemId = $shopifyAuthService->getInventoryItemId($variantId);
             $locationId = $shopifyAuthService->getLocationId();
 
-            $this->handleMediaImages($response['data']['productSet']['product'], $listingItem);
+            $this->handleMediaImages($response['data']['productSet']['product'], $listingItem, $store);
+//            $this->dispatchMediaPathSync($listingItem, $store, $productId);
 
             $storeProduct->update([
                 'last_synch_date_time' => date('Y-m-d H:i:s')
@@ -621,17 +682,11 @@ class SubmitShopifyProductsJob implements ShouldQueue
             'variant' => [$variantData],
         ];
 
-        $this->handleOldImages($shopifyAuthService, $proDetail->marketplace_product_id, $listingItem);
+        $this->handleOldImages($shopifyAuthService, $proDetail->marketplace_product_id, $listingItem, $store);
 
         $this->generateProductImages($productData, $store);
 
-        $images = GenerateProductImage::where('product_id', $productData->product_id)
-            ->whereIn('product_image_id', function ($subQuery) use ($productData) {
-                $subQuery->select('id')
-                    ->from('product_images')
-                    ->where('product_id', $productData->product_id);
-            })
-            ->orderBy('main_image', 'desc')->get();
+        $images = $this->generatedImagesFor($store, $productData->product_id);
         // Add Additional Images.
         $media = [];
         foreach ($images as $key => $image) {
@@ -707,7 +762,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
             }
 
             // Sync the Images Images. From 690
-            $this->handleMediaImages($response['data']['productUpdate']['product'], $listingItem);
+            $this->handleMediaImages($response['data']['productUpdate']['product'], $listingItem, $store);
             // Delete Any Image Whose entry is not there in Listing_product_image table
             $this->deleteOldProductImages($shopifyAuthService, $proDetail->marketplace_product_id, []);
             //Change the Main Image Order
@@ -734,35 +789,11 @@ class SubmitShopifyProductsJob implements ShouldQueue
                 }
             }
 
-            // handle The updated Image
-            $updatedImages = ListingItemProductImage::where('listing_item_id', $listingItem->id)
-                ->where(function ($query) use ($productData, $listingItem) {
-                    $query->where(function ($subQuery) use ($productData, $listingItem) {
-                            $subQuery->whereIn('product_image_id', function ($q) use ($productData) {
-                                $q->select('id')
-                                    ->from('product_images')
-                                    ->where('product_id', $productData->product_id);
-                            })
-                                ->whereRaw('listing_item_product_images.updated_at < (SELECT updated_at FROM product_images WHERE listing_item_product_images.product_image_id = product_images.id AND product_id = ? LIMIT 1)', [$productData->product_id])
-                                ->where('listing_item_id', $listingItem->id);
-                        });
-                })
-                ->get();
+            // handle The updated Image: re-push images updated since they were pushed, with the file the
+            // store selects (its product_alt_image_number alternate or the original).
+            $this->updateChangedImages($shopifyAuthService, $proDetail->marketplace_product_id, $productData, $listingItem, $store);
 
-            foreach ($updatedImages as $image) {
-                $productImage = GenerateProductImage::where('product_image_id', $image->product_image_id)->first();
-                if ($productImage) {
-                    $mediaData = [
-                        'alt' => $image->product_image_id,
-                        'mediaContentType' => 'IMAGE',
-                        'originalSource' => $fileSystem->url_base_path . $productImage->path,
-                    ];
-                    $shopifyAuthService->updateMediaImage($proDetail->marketplace_product_id, $image->reference_id, $mediaData);
-                    $image->update([
-                        'updated_at' => now()
-                    ]);
-                }
-            }
+//            $this->dispatchMediaPathSync($listingItem, $store, $proDetail->marketplace_product_id);
 
 
             $storeProduct->update([
@@ -1002,7 +1033,72 @@ class SubmitShopifyProductsJob implements ShouldQueue
         }
     }
 
-    private function handleMediaImages($product, $listingItem,$AlreadyImages = null)
+    /**
+     * Replace the Shopify media of every listing image whose image changed after it was pushed.
+     *
+     * Same test as oydera's ImageLoader: the product image, or the alternate the store selects,
+     * was updated after the listing image. The file sent is the one the store selects now, so an
+     * update never puts the original back over the alternate. Changing product_alt_image_number
+     * alone does not re-push anything; it applies to images pushed from then on.
+     */
+    private function updateChangedImages(ShopifyAuthService $shopifyAuthService, $marketplaceProductId, $productData, $listingItem, $store): void
+    {
+        $fileSystem = $store->fileSystem;
+        if (!isset($fileSystem)) {
+            return;
+        }
+
+        $productImages = ProductImages::where('product_id', $productData->product_id)->get()->keyBy('id');
+        $generatedImages = $this->generatedImagesFor($store, $productData->product_id)->keyBy('product_image_id');
+
+        $listingImages = ListingItemProductImage::where('listing_item_id', $listingItem->id)
+            ->whereIn('product_image_id', $productImages->keys()->all())
+            ->whereNotNull('reference_id')
+            ->where('reference_id', '<>', '')
+            ->get();
+
+        foreach ($listingImages as $image) {
+            $productImage = $productImages->get($image->product_image_id);
+            $generatedImage = $generatedImages->get($image->product_image_id);
+            if (!isset($productImage) || !isset($generatedImage)) {
+                continue;
+            }
+
+            $alternate = ShopifyImageUtility::resolveImage($productImage, $store)['alternate'];
+            $imageChanged = $image->updated_at < $productImage->updated_at
+                || (isset($alternate) && $image->updated_at < $alternate->updated_at);
+
+            if (!$imageChanged) {
+                continue;
+            }
+
+            Log::info('Replacing Shopify media ' . $image->reference_id . ' of image ' . $image->product_image_id
+                . ' (alternate ' . ($image->alt_product_image_id ?? 'none') . ' -> ' . ($generatedImage->alt_product_image_id ?? 'none') . ')');
+
+            $response = $shopifyAuthService->updateMediaImage($marketplaceProductId, $image->reference_id, [
+                'alt' => $image->product_image_id,
+                'mediaContentType' => 'IMAGE',
+                'originalSource' => $fileSystem->url_base_path . $generatedImage->path,
+            ]);
+
+            $errors = $response['data']['productUpdateMedia']['mediaUserErrors'] ?? null;
+            if (!isset($response['data']['productUpdateMedia']) || !empty($errors)) {
+                // Left as it is, so the next run tries again.
+                Log::warning('Shopify media ' . $image->reference_id . ' not replaced: ' . json_encode($errors ?? $response));
+                continue;
+            }
+
+            // The replaced media gets a new URL once Shopify finishes processing it.
+            $image->update([
+                'alt_product_image_id' => $generatedImage->alt_product_image_id,
+                'image_file_system_id' => $generatedImage->image_file_system_id,
+                'path' => null,
+                'updated_at' => now()
+            ]);
+        }
+    }
+
+    private function handleMediaImages($product, $listingItem, $store, $AlreadyImages = null)
     {
         if (!isset($product['media']['nodes'])) return;
         $media = $product['media']['nodes'];
@@ -1021,8 +1117,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
                 } else {
                     $altText = $mediaItem['alt'] ?? '';
                     Log::info('Image URL: ' . $imageUrl);
-                    $generatedImage = GenerateProductImage::where('product_image_id', $altText)
-                        ->first();
+                    $generatedImage = $this->generatedImageFor($store, $altText);
                     if (isset($generatedImage) && !ListingItemProductImage::where('listing_item_id', $listingItem->id)->where('product_image_id', $generatedImage->product_image_id)->whereNotNull('path')->exists()) {
                         ListingItemProductImage::updateOrCreate([
                             'listing_item_id' => $listingItem->id,
@@ -1032,6 +1127,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
                             'listing_item_id' => $listingItem->id,
                             'product_image_id' => $generatedImage->product_image_id,
                             'main_image' => $generatedImage->main_image,
+                            'alt_product_image_id' => $generatedImage->alt_product_image_id,
                             'image_file_system_id' => $generatedImage->image_file_system_id,
                             'reference_id' => $imageIdReplaced,
                             'path' => $imageUrl,
@@ -1039,6 +1135,22 @@ class SubmitShopifyProductsJob implements ShouldQueue
                     }
                 }
             }
+        }
+    }
+
+    /**
+     * Shopify processes media asynchronously, so images pushed in this run usually have no URL yet.
+     * Queue a delayed job to fill in the paths once Shopify is done.
+     */
+    private function dispatchMediaPathSync($listingItem, $store, $marketplaceProductId): void
+    {
+        $hasMissingPaths = ListingItemProductImage::where('listing_item_id', $listingItem->id)
+            ->whereNull('path')
+            ->whereNotNull('reference_id')
+            ->exists();
+
+        if ($hasMissingPaths) {
+            SyncShopifyMediaPathsJob::dispatch($listingItem->id, $store->id, $marketplaceProductId)->delay(now()->addSeconds(30));
         }
     }
 
@@ -1069,7 +1181,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
         $shopifyAuthService->deleteProductImage($mediaIds, $marketplace_product_id);
     }
 
-    private function handleOldImages(ShopifyAuthService $shopifyAuthService, $marketplace_product_id, $listingItem)
+    private function handleOldImages(ShopifyAuthService $shopifyAuthService, $marketplace_product_id, $listingItem, $store)
     {
         ListingItemProductImage::where('listing_item_id', $listingItem->id)->whereNull('product_image_id')->delete();
 
@@ -1091,7 +1203,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
 //        }
         $oldImages = $shopifyAuthService->getProductImages($marketplace_product_id);
         if (!isset($oldImages['data']['product'])) return;
-        $this->handleMediaImages($oldImages['data']['product'], $listingItem,$AlreadyImages);
+        $this->handleMediaImages($oldImages['data']['product'], $listingItem, $store, $AlreadyImages);
 
         //$this->deleteOldProductImages($shopifyAuthService, $marketplace_product_id,$AlreadyImages);
     }
