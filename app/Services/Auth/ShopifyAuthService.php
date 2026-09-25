@@ -4,6 +4,7 @@ namespace App\Services\Auth;
 
 use App\Constants\ShopifyQueries;
 use App\Services\CriticalErrorService;
+use App\Utils\Navigationutility;
 use GuzzleHttp\Client;
 use GuzzleHttp\Psr7\Request;
 use Illuminate\Support\Facades\Log;
@@ -535,18 +536,24 @@ class ShopifyAuthService
 
     public function syncIndividualPage(mixed $StoreNavigationPage)
     {
-        $isPageExists = $this->pageAlreadyExists($StoreNavigationPage->url_path);
+        // A row without a handle still has to find its existing Shopify page; creating it instead
+        // makes Shopify save a copy under "<handle>-1".
+        $handle = !empty($StoreNavigationPage->url_path)
+            ? $StoreNavigationPage->url_path
+            : Navigationutility::pageHandle($StoreNavigationPage->title);
+
+        $existingPageId = $this->findExistingPageId($StoreNavigationPage, $handle);
         $variables = ['page' => [
             'title' => $StoreNavigationPage->title,
             'body' => $StoreNavigationPage->generated_body,
-            'handle' => $StoreNavigationPage->url_path,
+            'handle' => $handle !== '' ? $handle : null,
             'isPublished' => true,
         ]];
 
-        if ($isPageExists['exists']) {
+        if ($existingPageId) {
             $query = ShopifyQueries::$pageUpdate;
 
-            $variables['id'] = $isPageExists['id'];
+            $variables['id'] = $existingPageId;
 
             $response = $this->makeGraphQLRequest($query, $variables);
 
@@ -564,14 +571,54 @@ class ShopifyAuthService
 
             $response = $this->makeGraphQLRequest($query, $variables);
 
-            if (isset($response['data']['pageCreate'])) {
+            if (isset($response['data']['pageCreate']['page'])) {
                 Log::info('Page Created: ' . json_encode($response['data']['pageCreate']));
                 $pageData = $response['data']['pageCreate']['page'];
+
+                if ($variables['page']['handle'] !== null && $pageData['handle'] !== $variables['page']['handle']) {
+                    CriticalErrorService::report('Shopify page created under a different handle, possible duplicate - EndPoint: ' . $this->endpoint, [
+                        'marketplace' => 'Shopify',
+                        'reason' => 'Requested handle ' . $variables['page']['handle'] . ', Shopify returned ' . $pageData['handle'],
+                        'method' => __METHOD__
+                    ], ['store_navigation_page_id' => $StoreNavigationPage->id]);
+                }
                 $StoreNavigationPage->page_id = str_replace('gid://shopify/Page/', '', $pageData['id']);
                 $StoreNavigationPage->url_path = $pageData['handle'];
                 $StoreNavigationPage->save();
 
                 return $response['data']['pageCreate'];
+            }
+
+            Log::error('Page Create failed: ' . json_encode($response));
+        }
+
+        return null;
+    }
+
+    /**
+     * The Shopify page this row already has, looked up by the stored page_id, then the stored
+     * url_path, then the handle derived from the title. Null only when none of them exists.
+     */
+    private function findExistingPageId(mixed $StoreNavigationPage, string $handle): ?string
+    {
+        if (!empty($StoreNavigationPage->page_id)) {
+            $response = $this->makeGraphQLRequest(ShopifyQueries::$pageById, [
+                'id' => 'gid://shopify/Page/' . $StoreNavigationPage->page_id
+            ], '2025-07');
+
+            if (!isset($response['data'])) {
+                throw new \RuntimeException('Shopify page lookup failed for page id ' . $StoreNavigationPage->page_id);
+            }
+
+            if (!empty($response['data']['page']['id'])) {
+                return $response['data']['page']['id'];
+            }
+        }
+
+        foreach (array_unique(array_filter([$StoreNavigationPage->url_path, $handle])) as $candidate) {
+            $isPageExists = $this->pageAlreadyExists($candidate);
+            if ($isPageExists['exists']) {
+                return $isPageExists['id'];
             }
         }
 
@@ -590,13 +637,23 @@ class ShopifyAuthService
 
         $getPageData = $this->makeGraphQLRequest($query, $variables, '2025-07');
         Log::info('Get Page Data: ' . json_encode($getPageData));
+
+        // A failed lookup must not be read as "no page", or the caller creates a duplicate.
+        if (!isset($getPageData['data']['pages']['edges'])) {
+            throw new \RuntimeException('Shopify page lookup failed for handle ' . $url_path);
+        }
+
         $existingPages = $getPageData['data']['pages']['edges'];
         Log::info('Existing Pages: ' . json_encode($existingPages));
-        if (count($existingPages) > 0) {
-            return ['exists' => true, 'id' => $existingPages[0]['node']['id']];
-        } else {
-            return ['exists' => false];
+
+        // The handle filter is a search, so only accept an exact handle match (not "<handle>-1").
+        foreach ($existingPages as $existingPage) {
+            if (($existingPage['node']['handle'] ?? null) === $url_path) {
+                return ['exists' => true, 'id' => $existingPage['node']['id']];
+            }
         }
+
+        return ['exists' => false];
     }
 
     public function deleteProductImage(mixed $mediaIds,$productId)
