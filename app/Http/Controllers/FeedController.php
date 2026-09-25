@@ -141,6 +141,11 @@ class FeedController extends Controller
                         $fileName = 'microsoft_feed_' . $fname . '.' . $fileType;
                         $filePath = 'feeds/microsoft/' . $fileName;
                         break;
+                    case 'meta':
+                        $fname = date('Y-m-d-H-i-s');
+                        $fileName = 'meta_feed_' . $fname . '.' . $fileType;
+                        $filePath = 'feeds/meta/' . $fileName;
+                        break;
                     default:
                         throw new \Exception('Invalid feed type');
                 }
@@ -298,6 +303,11 @@ class FeedController extends Controller
                         $fname = date('Y-m-d-H-i-s');
                         $fileName = 'microsoft_feed_' . $fname . '.' . $fileType;
                         $filePath = 'feeds/microsoft/' . $fileName;
+                        break;
+                    case 'meta':
+                        $fname = date('Y-m-d-H-i-s');
+                        $fileName = 'meta_feed_' . $fname . '.' . $fileType;
+                        $filePath = 'feeds/meta/' . $fileName;
                         break;
                 }
 

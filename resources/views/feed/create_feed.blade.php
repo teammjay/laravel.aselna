@@ -181,6 +181,9 @@
                                     <div>
                                         <input type="radio" name="feed_type" value="Microsoft"> Microsoft
                                     </div>
+                                    <div>
+                                        <input type="radio" name="feed_type" value="Meta"> Meta (Facebook)
+                                    </div>
                                 </div>
                             </div>
                             <div class="border p-2" style="width: 20%;">
