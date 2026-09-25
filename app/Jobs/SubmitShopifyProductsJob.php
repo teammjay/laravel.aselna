@@ -76,7 +76,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
                 $tags = [];
                 foreach ($stores as $store) {
                     Log::info('Store : ' . $store->name);
-                    if (env('APP_ENV') == 'local' && trim(strtolower($store->name)) != strtolower('GetAccessory')) {
+                    if (env('APP_ENV') == 'local' && trim(strtolower($store->name)) != strtolower('odemobile-c')) {
                         continue;
                     }
                     if (($store->auto_generate_listings ?? 0) == 0) {
@@ -565,7 +565,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
             $locationId = $shopifyAuthService->getLocationId();
 
             $this->handleMediaImages($response['data']['productSet']['product'], $listingItem, $store);
-//            $this->dispatchMediaPathSync($listingItem, $store, $productId);
+            $this->dispatchMediaPathSync($listingItem, $store, $productId);
 
             $storeProduct->update([
                 'last_synch_date_time' => date('Y-m-d H:i:s')
@@ -777,7 +777,7 @@ class SubmitShopifyProductsJob implements ShouldQueue
             // store selects (its product_alt_image_number alternate or the original).
             $this->updateChangedImages($shopifyAuthService, $proDetail->marketplace_product_id, $productData, $listingItem, $store);
 
-//            $this->dispatchMediaPathSync($listingItem, $store, $proDetail->marketplace_product_id);
+            $this->dispatchMediaPathSync($listingItem, $store, $proDetail->marketplace_product_id);
 
 
             $storeProduct->update([
