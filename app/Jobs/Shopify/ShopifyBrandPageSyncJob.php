@@ -508,6 +508,7 @@ class ShopifyBrandPageSyncJob implements ShouldQueue
                             'product_type_id' => $productType->id,
                         ], $request->all());
                     }
+                    break;
                 case WebStorePageType::ALL_BRANDS:
                     $links = Navigationutility::getLinks($this->store_id, $this->page_type, $request);
                     $request['title'] = $links['final_title'];
