@@ -158,20 +158,22 @@ class ProcessFeedGenerationJob implements ShouldQueue
             $query->whereNull('products.parent_id');
             $query->where('product_status', '=', 'active');
 
-            if (isset($this->data['product_code']) && $this->data['product_code'] != '') {
+            // !empty(): a saved template stores an unused filter as [], and [] != '' is true, which
+            // filtered on an empty list and gave a feed with no products.
+            if (!empty($this->data['product_code'])) {
 
                 $query->whereIn('products.product_sku', $this->data['product_code']);
             }
 
-            if (isset($this->data['device']) && $this->data['device'] != '') {
-                if (!isset($this->data['interface']) || $this->data['interface'] == '') {
+            if (!empty($this->data['device'])) {
+                if (empty($this->data['interface'])) {
                     $query->leftJoin('product_interface', 'product_interface.product_id', '=', 'store_product.product_id');
                 }
                 $query->leftJoin('device_interface', 'device_interface.interface_id', '=', 'product_interface.interface_id');
                 $query->whereIn('device_interface.device_id', $this->data['device']);
             }
 
-            if (isset($this->data['device_series']) && $this->data['device_series'] != '') {
+            if (!empty($this->data['device_series'])) {
                 $devices = DevicesLinkedDevice::select('device_id')->whereIn('device_series_id', $this->data['device_series'])->get();
                 $query->leftJoin('product_interface', 'product_interface.product_id', '=', 'store_product.product_id');
                 $query->leftJoin('device_interface', 'device_interface.interface_id', '=', 'product_interface.interface_id');
