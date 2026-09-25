@@ -283,4 +283,24 @@ class Navigationutility
 
         return $finalLinkArray;
     }
+
+    /**
+     * The handle Shopify gives a page created from this title. Every run of non-alphanumeric
+     * characters becomes one hyphen (so "SGH-I987" stays "sgh-i987"), unlike the collection
+     * handle generator in ShopifyBrandPageSyncJob, which drops them.
+     */
+    public static function pageHandle(?string $title): string
+    {
+        $handle = mb_strtolower((string)$title, 'UTF-8');
+
+        // Normalize accented characters (e.g., é → e)
+        $handle = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $handle);
+
+        // Apostrophes and ampersands are dropped, not turned into hyphens
+        $handle = str_replace(["'", '&'], '', $handle);
+
+        $handle = preg_replace('/[^a-z0-9]+/', '-', $handle);
+
+        return trim($handle, '-');
+    }
 }

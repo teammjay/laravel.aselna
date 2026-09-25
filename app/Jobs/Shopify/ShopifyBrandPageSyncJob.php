@@ -99,7 +99,7 @@ class ShopifyBrandPageSyncJob implements ShouldQueue
                         $request['generated_body'] = Navigationutility::fillTemplateWithData($template->template_code, $data);
                         Log::info('Brand :: ' . $brand->name . ' Generated Body :: ' . $request['generated_body']);
 
-                        StoreNavigationPage::updateOrCreate([
+                        $this->saveIndividualPage([
                             'store_id' => $this->store_id,
                             'page_type' => $page_type,
                             'device_brand_id' => $brand->id,
@@ -352,7 +352,7 @@ class ShopifyBrandPageSyncJob implements ShouldQueue
                             ];
                             $request['generated_body'] = Navigationutility::fillTemplateWithData($template->template_code, $data);
 
-                            StoreNavigationPage::updateOrCreate([
+                            $this->saveIndividualPage([
                                 'store_id' => $this->store_id,
                                 'page_type' => $page_type,
                                 'device_brand_id' => $device->brand->id,
@@ -502,7 +502,7 @@ class ShopifyBrandPageSyncJob implements ShouldQueue
                         Log::info('Request Title :: ' . json_encode($request['title']));
                         $request['generated_body'] = Navigationutility::fillTemplateWithData($template->template_code, $data);
 
-                        StoreNavigationPage::updateOrCreate([
+                        $this->saveIndividualPage([
                             'store_id' => $this->store_id,
                             'page_type' => $page_type,
                             'product_type_id' => $productType->id,
@@ -549,6 +549,23 @@ class ShopifyBrandPageSyncJob implements ShouldQueue
                 'method' => __METHOD__
             ],['store_id' => $this->store_id, 'page_type' => $this->page_type, 'template_id' => $this->template_id]);
         }
+    }
+
+    /**
+     * Saves a row that ShopifyIndvPagesSyncJob pushes as a Shopify page. A row without a url_path
+     * gets the handle Shopify uses for its title, so the push finds the page Shopify already has
+     * instead of creating "<handle>-1". An existing url_path is never changed.
+     */
+    private function saveIndividualPage(array $keys, array $data): void
+    {
+        $existing = StoreNavigationPage::where($keys)->first();
+
+        if (empty($existing?->url_path)) {
+            $handle = Navigationutility::pageHandle($data['title'] ?? null);
+            $data['url_path'] = $handle !== '' ? $handle : null;
+        }
+
+        StoreNavigationPage::updateOrCreate($keys, $data);
     }
 
     private function setVariables()
