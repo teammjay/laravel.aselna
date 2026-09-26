@@ -555,6 +555,10 @@ class ShopifyBrandPageSyncJob implements ShouldQueue
      * Saves a row that ShopifyIndvPagesSyncJob pushes as a Shopify page. A row without a url_path
      * gets the handle Shopify uses for its title, so the push finds the page Shopify already has
      * instead of creating "<handle>-1". An existing url_path is never changed.
+     *
+     * The handle is left empty when another page row of the store already has it: two titles can
+     * give the same handle ("Galaxy S6 Edge+" and "Galaxy S6 Edge"), and sharing it would make this
+     * row overwrite the other device's page. Shopify then picks "<handle>-1" for it, as before.
      */
     private function saveIndividualPage(array $keys, array $data): void
     {
@@ -562,7 +566,10 @@ class ShopifyBrandPageSyncJob implements ShouldQueue
 
         if (empty($existing?->url_path)) {
             $handle = Navigationutility::pageHandle($data['title'] ?? null);
-            $data['url_path'] = $handle !== '' ? $handle : null;
+            $takenByAnotherPage = $handle !== ''
+                && Navigationutility::isPageHandleTaken($keys['store_id'], $handle, $existing?->id);
+
+            $data['url_path'] = ($handle !== '' && !$takenByAnotherPage) ? $handle : null;
         }
 
         StoreNavigationPage::updateOrCreate($keys, $data);

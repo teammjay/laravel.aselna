@@ -303,4 +303,18 @@ class Navigationutility
 
         return trim($handle, '-');
     }
+
+    /**
+     * Whether another row of the store already uses this handle for a Shopify page. Device, brand
+     * and product type rows are collections, which have their own handles on Shopify, so they are
+     * not counted ("fujitsu" can be both a brand collection and a brand page).
+     */
+    public static function isPageHandleTaken(string $storeId, string $handle, ?string $exceptId = null): bool
+    {
+        return StoreNavigationPage::where('store_id', $storeId)
+            ->whereNotIn('page_type', [WebStorePageType::DEVICE, WebStorePageType::BRAND, WebStorePageType::PRODUCT_TYPE])
+            ->where('url_path', $handle)
+            ->when($exceptId, fn ($query) => $query->where('id', '<>', $exceptId))
+            ->exists();
+    }
 }
