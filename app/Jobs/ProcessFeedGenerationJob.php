@@ -417,14 +417,6 @@ class ProcessFeedGenerationJob implements ShouldQueue
         $excludedRating = $this->data['excluded_ratings'] ?? [];
         $includedRatings = $this->data['included_ratings'] ?? [];
 
-        if (empty($excludedRating)) {
-            $excludedRating = DeviceRating::whereIn('value', [8])->pluck('id')->toArray();
-        }
-
-        if (empty($includedRatings)) {
-            $includedRatings = DeviceRating::whereIn('value', [1, 2, 9, 10])->pluck('id')->toArray();
-        }
-
         Log::info('Excluded Device Ratings: ' . json_encode($excludedRating));
         $query = Device::select('device.*', 'product_interface.product_id')->with('brand', 'rating')->with('deviceType', 'deviceSeries');
         $query->leftJoin('device_interface', 'device_interface.device_id', '=', 'device.id');
