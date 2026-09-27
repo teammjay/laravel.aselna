@@ -88,6 +88,7 @@ class FetchShopifyProductsJob implements ShouldQueue, StoreScopedJob
 
             if (count($stores ?? []) > 0) {
                 foreach ($stores as $store) {
+                    $this->trackCurrentStore($store, count($stores));
                     // Locally only GetAccessory, unless a store was asked for.
                     if (env('APP_ENV') === 'local' && empty($this->storeIds) && $store->name != 'GetAccessory') {
                         continue;

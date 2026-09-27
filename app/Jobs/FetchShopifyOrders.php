@@ -79,6 +79,7 @@ class FetchShopifyOrders implements ShouldQueue, StoreScopedJob
             if (count($stores ?? []) > 0) {
                 $tags = [];
                 foreach ($stores as $store) {
+                    $this->trackCurrentStore($store, count($stores));
                     if ($store->secret_key == '' || $store->service_url == '') {
                         continue;
                     }

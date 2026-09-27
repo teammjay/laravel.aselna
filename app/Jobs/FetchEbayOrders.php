@@ -59,6 +59,7 @@ class FetchEbayOrders implements ShouldQueue, StoreScopedJob
             if (count($stores ?? []) > 0) {
 
                 foreach ($stores as $store) {
+                    $this->trackCurrentStore($store, count($stores));
 
                     if (env('APP_ENV') === 'local' && $store->name != 'phonil') {
                         continue;

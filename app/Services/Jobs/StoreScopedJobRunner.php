@@ -120,7 +120,7 @@ class StoreScopedJobRunner
         $params = array_values($params);
 
         if ($storeIds === null || !$this->isStoreScoped($class)) {
-            return new $class(...$params);
+            return $this->markTriggeredBy(new $class(...$params));
         }
 
         $eligibleIds = $this->eligibleStoresFor($class)->pluck('id')->all();
@@ -130,7 +130,19 @@ class StoreScopedJobRunner
             return null;
         }
 
-        return new $class($ids, ...array_slice($params, 1));
+        return $this->markTriggeredBy(new $class($ids, ...array_slice($params, 1)));
+    }
+
+    /**
+     * Store-scoped jobs show "Manual run by <user>" in their job_statuses tags.
+     */
+    private function markTriggeredBy(object $job): object
+    {
+        if (property_exists($job, 'triggeredBy')) {
+            $job->triggeredBy = auth()->user()->name ?? null;
+        }
+
+        return $job;
     }
 
     /**

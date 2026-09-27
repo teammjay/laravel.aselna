@@ -73,6 +73,7 @@ class EbayListingItemSyncJob implements ShouldQueue, StoreScopedJob
             }
 
             foreach ($ebay_store_ids as $storeId) {
+                $this->trackCurrentStore($storeId, count($ebay_store_ids));
                 $store = Store::find($storeId);
 
                 if (!isset($store->user_id)) continue;

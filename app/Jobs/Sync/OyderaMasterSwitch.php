@@ -78,7 +78,7 @@ class OyderaMasterSwitch implements ShouldQueue, StoreScopedJob
             $this->storeIds = [$this->storeId];
         }
 
-        $tags = trim(($this->store_name ?? '') . ' Oydera Master Switch');
+        $tags = 'Oydera Master Switch';
 
         $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => $tags]);
 

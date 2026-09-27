@@ -83,6 +83,7 @@ class SubmitShopifyProductsJob implements ShouldQueue, StoreScopedJob
             if (count($stores ?? []) > 0) {
                 $tags = [];
                 foreach ($stores as $store) {
+                    $this->trackCurrentStore($store, count($stores));
                     Log::info('Store : ' . $store->name);
                     if (env('APP_ENV') == 'local' && trim(strtolower($store->name)) != strtolower('odemobile-c')) {
                         continue;

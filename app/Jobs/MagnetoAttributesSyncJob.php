@@ -67,6 +67,7 @@ class MagnetoAttributesSyncJob implements ShouldQueue, StoreScopedJob
             $stores = $query->get();
 
             foreach ($stores as $store) {
+                $this->trackCurrentStore($store, count($stores));
                 $this->SyncAttributesIfNeeded($store);
             }
 

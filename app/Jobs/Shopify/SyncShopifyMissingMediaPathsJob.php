@@ -63,7 +63,6 @@ class SyncShopifyMissingMediaPathsJob implements ShouldQueue, StoreScopedJob
                 ]);
                 return;
             }
-            $tags = $storeNames->implode(' ') . ' ' . $tags;
         }
 
         $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => $tags]);

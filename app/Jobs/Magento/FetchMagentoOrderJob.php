@@ -54,6 +54,7 @@ class FetchMagentoOrderJob implements ShouldQueue, StoreScopedJob
 
             if (count($stores ?? []) > 0) {
                 foreach ($stores as $store) {
+                    $this->trackCurrentStore($store, count($stores));
                     $created_by = auth()->user()->name ?? 'admin';
                     /* create order synchronization*/
                     $synchronizeArr = [

@@ -58,6 +58,7 @@ class FetchTemuOrders implements ShouldQueue, StoreScopedJob
             if(count($stores ?? []) > 0) {
                 $tags = [];
                 foreach ($stores as $store) {
+                    $this->trackCurrentStore($store, count($stores));
 
                     if (env('APP_ENV') === 'local' && $store->name != 'phonil') {
                         continue;

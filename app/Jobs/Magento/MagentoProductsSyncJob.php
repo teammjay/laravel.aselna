@@ -79,6 +79,7 @@ class MagentoProductsSyncJob implements ShouldQueue, StoreScopedJob
             if (count($stores ?? []) > 0) {
                 $tags = [];
                 foreach ($stores as $store) {
+                    $this->trackCurrentStore($store, count($stores));
                     Log::info('Store : ' . $store->name);
                     $tags[] = $store->name;
 

@@ -87,6 +87,11 @@ trait TrackableJob
 
     public function updateTrackingRecord(array $updates): void
     {
+        // Store-scoped jobs (ScopesToStores) add the task, current store, stores and who started the run
+        if (method_exists($this, 'withStoreTrackingTags')) {
+            $updates = $this->withStoreTrackingTags($updates);
+        }
+
         Log::info('Updates:'.json_encode($updates));
         JobStatus::where('job_id', $this->jobId ?? null)->update($updates);
     }

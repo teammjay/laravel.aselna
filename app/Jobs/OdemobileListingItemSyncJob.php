@@ -84,6 +84,7 @@ class OdemobileListingItemSyncJob implements ShouldQueue, StoreScopedJob
             }
 
             foreach ($odemobileStores as $store) {
+                $this->trackCurrentStore($store, count($odemobileStores));
                 Log::info("Starting Odemobile Listing Item Sync for Store: " . $store->name . " (" . $store->id . ")");
 
                 // Query Oydera database for listing items belonging to this store
