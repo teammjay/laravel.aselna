@@ -6,7 +6,7 @@ use App\Constants\FeedStatus;
 use App\Jobs\ProcessFeedGenerationJob;
 use App\Models\Brand;
 use App\Models\Catalog;
-use App\Models\DevicesLinkedDevice;
+use App\Models\Device;
 use App\Models\DeviceRating;
 use App\Models\DeviceTypes;
 use App\Models\Feed;
@@ -64,8 +64,9 @@ class FeedController extends Controller
 
             $filters = [
                 'product_code' => $request->input('product_code', []),
-                'device_series' => $request->input('device_series', []),
+                'excluded_product_code' => $request->input('excluded_product_code', []),
                 'device' => $request->input('device', []),
+                'excluded_device' => $request->input('excluded_device', []),
                 'included_ratings' => $request->input('included_ratings', []),
                 'excluded_ratings' => $request->input('excluded_ratings', []),
                 'manufacturer' => $request->input('manufacturer', []),
@@ -102,6 +103,18 @@ class FeedController extends Controller
         }
         $configurations = $query->orderBy('created_at', 'desc')->get();
 
+        // Device filters store ids only; send the names so "Load" can show them
+        $deviceIds = $configurations->flatMap(fn ($config) => array_merge(
+            (array) ($config->filters['device'] ?? []),
+            (array) ($config->filters['excluded_device'] ?? [])
+        ))->filter()->unique()->values();
+        $deviceNames = Device::whereIn('id', $deviceIds)->pluck('name', 'id');
+
+        foreach ($configurations as $config) {
+            $ids = array_merge((array) ($config->filters['device'] ?? []), (array) ($config->filters['excluded_device'] ?? []));
+            $config->setAttribute('device_names', (object) collect($ids)->mapWithKeys(fn ($id) => [$id => $deviceNames[$id] ?? $id])->all());
+        }
+
         return response()->json(['success' => true, 'data' => $configurations]);
     }
 
@@ -120,8 +133,9 @@ class FeedController extends Controller
                 'feed_type' => $feed_type,
                 'fileType' => $fileType,
                 'product_code' => $filters['product_code'] ?? [],
+                'excluded_product_code' => $filters['excluded_product_code'] ?? [],
                 'device' => $filters['device'] ?? [],
-                'device_series' => $filters['device_series'] ?? [],
+                'excluded_device' => $filters['excluded_device'] ?? [],
                 'included_ratings' => $filters['included_ratings'] ?? [],
                 'excluded_ratings' => $filters['excluded_ratings'] ?? [],
                 'manufacturer' => $filters['manufacturer'] ?? [],
@@ -286,7 +300,8 @@ class FeedController extends Controller
                 'product_code' => $product_code,
                 'device' => $request->input('device'),
                 'interface' => $request->input('interface'),
-                'device_series' => $request->input('device_series'),
+                'excluded_device' => $request->input('excluded_device', []),
+                'excluded_product_code' => $request->input('excluded_product_code', []),
                 'included_ratings' => $request->input('included_ratings'),
                 'excluded_ratings' => $request->input('excluded_ratings'),
             ];

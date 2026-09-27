@@ -8,7 +8,6 @@ use App\Exceptions\UpcNotAvailableException;
 use App\Helpers\ErrorLogger;
 use App\Models\Device;
 use App\Models\DeviceRating;
-use App\Models\DevicesLinkedDevice;
 use App\Models\Feed;
 use App\Models\GenerateProductImage;
 use App\Models\GoodUpc;
@@ -173,11 +172,8 @@ class ProcessFeedGenerationJob implements ShouldQueue
                 $query->whereIn('device_interface.device_id', $this->data['device']);
             }
 
-            if (!empty($this->data['device_series'])) {
-                $devices = DevicesLinkedDevice::select('device_id')->whereIn('device_series_id', $this->data['device_series'])->get();
-                $query->leftJoin('product_interface', 'product_interface.product_id', '=', 'store_product.product_id');
-                $query->leftJoin('device_interface', 'device_interface.interface_id', '=', 'product_interface.interface_id');
-                $query->whereIn('device_interface.device_id', $devices);
+            if (!empty($this->data['excluded_product_code'])) {
+                $query->whereNotIn('products.product_sku', $this->data['excluded_product_code']);
             }
 
             $query->orderBy('products.product_sku', 'asc');
@@ -412,8 +408,9 @@ class ProcessFeedGenerationJob implements ShouldQueue
     }
 
 
-    private function getCompatibleDevices($product_id, $devices, $deviceSeries)
+    private function getCompatibleDevices($product_id, $devices)
     {
+        $excludedDevices = $this->data['excluded_device'] ?? [];
         $excludedRating = $this->data['excluded_ratings'] ?? [];
         $includedRatings = $this->data['included_ratings'] ?? [];
 
@@ -427,6 +424,10 @@ class ProcessFeedGenerationJob implements ShouldQueue
 
         if ($devices) {
             $query->whereIn('device.id', $devices);
+        }
+
+        if (!empty($excludedDevices)) {
+            $query->whereNotIn('device.id', $excludedDevices);
         }
 
         if (isset($this->compatibleDeviceTypes)) {
@@ -446,10 +447,6 @@ class ProcessFeedGenerationJob implements ShouldQueue
                 });
         });
 
-        if ($deviceSeries) {
-            $devices = DevicesLinkedDevice::select('device_id')->whereIn('device_series_id', $deviceSeries)->get();
-            $query->whereIn('device.id', $devices);
-        }
         $query->orderBy('brands.name', 'asc');
         $query->orderBy('device.name', 'asc');
 
@@ -731,7 +728,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
                         Log::info('Main image for listing item ID ' . $listitem->id . ': ' . $mainImage);
                         Log::info('Additional images for listing item ID ' . $listitem->id . ': ' . json_encode($images));
 
-                        $compatibledevices = $this->getCompatibleDevices($itemDetail->product_id, $this->data['device'], $this->data['device_series']);
+                        $compatibledevices = $this->getCompatibleDevices($itemDetail->product_id, $this->data['device'] ?? []);
 
                         if ($compatibledevices) {
 
