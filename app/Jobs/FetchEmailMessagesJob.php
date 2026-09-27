@@ -25,22 +25,30 @@ use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Jobs\Concerns\TrackableJob;
+use App\Jobs\Concerns\ScopesToStores;
+use App\Jobs\Contracts\StoreScopedJob;
 use Illuminate\Support\Str;
 
-class   FetchEmailMessagesJob implements ShouldQueue
+class   FetchEmailMessagesJob implements ShouldQueue, StoreScopedJob
 {
-    use Queueable, TrackableJob {
+    use Queueable, ScopesToStores, TrackableJob {
         TrackableJob::withChain insteadof Queueable;
         Queueable::withChain as queueableWithChain;
     }
 
     public $timeout = 30000;
 
+    public static function eligibleStoreTypes(): array
+    {
+        return [];
+    }
+
     /**
      * Create a new job instance.
      */
-    public function __construct()
+    public function __construct(string|array|null $storeIds = null)
     {
+        $this->initStoreScope($storeIds);
         $this->chainId = (string) Str::uuid();
     }
 
@@ -59,7 +67,7 @@ class   FetchEmailMessagesJob implements ShouldQueue
             $chain = [];
 
             /* get active store jobs*/
-            $store_ids = Common::getActiveStoreJobs('FetchEmailMessagesJob');
+            $store_ids = $this->resolveStoreIds();
             /* get active store jobs*/
             Log::info('Store ids for FetchEmailMessagesJob: ' . json_encode($store_ids));
 

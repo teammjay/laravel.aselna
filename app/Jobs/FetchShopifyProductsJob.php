@@ -17,10 +17,12 @@ use App\Models\Store;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Jobs\Concerns\TrackableJob;
+use App\Jobs\Concerns\ScopesToStores;
+use App\Jobs\Contracts\StoreScopedJob;
 
-class FetchShopifyProductsJob implements ShouldQueue
+class FetchShopifyProductsJob implements ShouldQueue, StoreScopedJob
 {
-    use Queueable, TrackableJob {
+    use Queueable, ScopesToStores, TrackableJob {
         TrackableJob::withChain insteadof Queueable;
         Queueable::withChain as queueableWithChain;
     }
@@ -28,26 +30,37 @@ class FetchShopifyProductsJob implements ShouldQueue
     public $timeout = 18000;
 
     /**
-     * Picked up by the Queue::createPayloadUsing hook in AppServiceProvider and used for the
-     * job_statuses tags. Only set for a single-store run.
+     * Legacy single-store id. Only set on jobs queued before $storeIds existed; read as a fallback.
      */
-    public $store_name;
+    public ?string $storeId = null;
+
+    public static function eligibleStoreTypes(): array
+    {
+        return ['shopify'];
+    }
+
+    /**
+     * The store query below does not filter on store_status.
+     */
+    public static function onlyActiveStores(): bool
+    {
+        return false;
+    }
 
     /**
      * Create a new job instance.
      *
-     * Pass a store id to fetch a single store only, e.g. scheduled_cron_jobs.parameters = {"store_id": "<uuid>"}.
+     * Pass a store id (or a list of store ids) to fetch only those stores,
+     * e.g. scheduled_cron_jobs.parameters = {"store_id": "<uuid>"}.
      *
      * @param  bool  $ignoreAutoGenerate  Fetch the store even when auto_generate_listings is off. OyderaMasterSwitch
      *                                    uses it to record the products oydera created, before Aselna takes the store over.
      */
     public function __construct(
-        public ?string $storeId = null,
+        string|array|null $storeIds = null,
         public bool $ignoreAutoGenerate = false
     ) {
-        if (!empty($storeId)) {
-            $this->store_name = Store::where('id', $storeId)->value('name') ?? $storeId;
-        }
+        $this->initStoreScope($storeIds);
     }
 
     /**
@@ -59,7 +72,10 @@ class FetchShopifyProductsJob implements ShouldQueue
             $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Shopify Products']);
 
             /* get active store jobs*/
-            $store_ids = isset($this->storeId) ? [$this->storeId] : Common::getActiveStoreJobs('FetchShopifyProductsJob','shopify');
+            if (empty($this->storeIds) && !empty($this->storeId)) {
+                $this->storeIds = [$this->storeId];
+            }
+            $store_ids = $this->resolveStoreIds();
             /* get active store jobs*/
 
             $query = Store::select('store.*','store_type.name as storeTypeName')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'shopify');
@@ -73,7 +89,7 @@ class FetchShopifyProductsJob implements ShouldQueue
             if (count($stores ?? []) > 0) {
                 foreach ($stores as $store) {
                     // Locally only GetAccessory, unless a store was asked for.
-                    if (env('APP_ENV') === 'local' && empty($this->storeId) && $store->name != 'GetAccessory') {
+                    if (env('APP_ENV') === 'local' && empty($this->storeIds) && $store->name != 'GetAccessory') {
                         continue;
                     }
 

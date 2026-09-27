@@ -4,6 +4,8 @@ namespace App\Jobs;
 
 use App\Helpers\Common;
 use App\Jobs\Concerns\TrackableJob;
+use App\Jobs\Concerns\ScopesToStores;
+use App\Jobs\Contracts\StoreScopedJob;
 use App\Constants\OrderStatus;
 use App\Models\ListingItem;
 use App\Models\Order;
@@ -16,21 +18,26 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
 
-class FetchAmazonOrdersJob implements ShouldQueue
+class FetchAmazonOrdersJob implements ShouldQueue, StoreScopedJob
 {
-    use Queueable, TrackableJob {
+    use Queueable, ScopesToStores, TrackableJob {
         TrackableJob::withChain insteadof Queueable;
         Queueable::withChain as queueableWithChain;
     }
 
     public $timeout = 3000;
 
+    public static function eligibleStoreTypes(): array
+    {
+        return ['amazon'];
+    }
+
     /**
      * Create a new job instance.
      */
-    public function __construct()
+    public function __construct(string|array|null $storeIds = null)
     {
-        //
+        $this->initStoreScope($storeIds);
     }
 
     /**
@@ -43,7 +50,7 @@ class FetchAmazonOrdersJob implements ShouldQueue
 
         try {
             /* get active store jobs*/
-            $store_ids = Common::getActiveStoreJobs('FetchAmazonOrdersJob', 'amazon');
+            $store_ids = $this->resolveStoreIds();
             /* get active store jobs*/
 
             /* get amazon stores*/

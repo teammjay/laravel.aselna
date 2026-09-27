@@ -13,10 +13,12 @@ use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Jobs\Concerns\TrackableJob;
+use App\Jobs\Concerns\ScopesToStores;
+use App\Jobs\Contracts\StoreScopedJob;
 
-class OdemobileListingItemSyncJob implements ShouldQueue
+class OdemobileListingItemSyncJob implements ShouldQueue, StoreScopedJob
 {
-    use Queueable, TrackableJob {
+    use Queueable, ScopesToStores, TrackableJob {
         TrackableJob::withChain insteadof Queueable;
         Queueable::withChain as queueableWithChain;
     }
@@ -24,11 +26,38 @@ class OdemobileListingItemSyncJob implements ShouldQueue
     public $timeout = 3600;
 
     /**
+     * The Shopify stores synced when no stores are given.
+     */
+    public const STORE_NAMES = ['UZID', 'AccessoryChoice', 'OdeMobile'];
+
+    public static function eligibleStoreTypes(): array
+    {
+        return ['shopify'];
+    }
+
+    /**
+     * The store query below does not filter on store_status.
+     */
+    public static function onlyActiveStores(): bool
+    {
+        return false;
+    }
+
+    public static function defaultStoreIds(): ?array
+    {
+        return Store::join('store_type', 'store_type.id', '=', 'store.store_type_id')
+            ->where('store_type.code', 'shopify')
+            ->whereIn('store.name', self::STORE_NAMES)
+            ->pluck('store.id')
+            ->all();
+    }
+
+    /**
      * Create a new job instance.
      */
-    public function __construct()
+    public function __construct(string|array|null $storeIds = null)
     {
-        //
+        $this->initStoreScope($storeIds);
     }
 
     /**
@@ -42,7 +71,11 @@ class OdemobileListingItemSyncJob implements ShouldQueue
             // Find all local stores with "odemobile" in their name (case-insensitive)
             $odemobileStores = Store::join('store_type', 'store_type.id', '=', 'store.store_type_id')
                 ->where('store_type.code', 'shopify')
-                ->whereIn('store.name',['UZID','AccessoryChoice','OdeMobile'])
+                ->when(
+                    !empty($this->storeIds),
+                    fn ($query) => $query->whereIn('store.id', $this->storeIds),
+                    fn ($query) => $query->whereIn('store.name', self::STORE_NAMES)
+                )
                 ->select('store.id', 'store.name')
                 ->get();
 

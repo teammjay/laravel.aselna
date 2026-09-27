@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\RunJobRequest;
 use App\Models\Job;
 use App\Models\ScheduledJob;
 use App\Models\ScheduleParentJob;
+use App\Services\Jobs\StoreScopedJobRunner;
 use App\Utils\Queue;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Bus;
@@ -12,29 +14,60 @@ use Illuminate\Support\Facades\Log;
 
 class JobSchedulerController extends Controller
 {
+    public function __construct(private StoreScopedJobRunner $runner)
+    {
+    }
+
     public function index()
     {
         $jobs = ScheduledJob::all();
-        return view('jobs.index', compact('jobs'));
+
+        // Jobs whose chain (parents + itself) can be run for chosen stores get the store popup
+        $storeScopedJobIds = $jobs->filter(fn ($job) => !empty($this->runner->scopedClasses($this->chainClasses($job))))
+            ->pluck('id')
+            ->all();
+
+        return view('jobs.index', compact('jobs', 'storeScopedJobIds'));
     }
 
-    public function run(ScheduledJob $job)
+    /**
+     * Stores the job's chain can be run for (JSON for the Run Now popup).
+     */
+    public function storeOptions(ScheduledJob $job)
     {
+        return response()->json($this->runner->storeOptions($this->chainClasses($job)));
+    }
+
+    public function run(ScheduledJob $job, RunJobRequest $request)
+    {
+        $storeIds = $request->storeIds();
+        $classes = $this->chainClasses($job);
+
+        if ($storeIds !== null) {
+            $this->runner->assertEligible($classes, $storeIds);
+        }
+
         try {
-
-            $allJobs = $this->getAllParents($job->id);
-            // create a bus of jobs
-
+            // create a bus of jobs: every parent first, then the job itself
             $arrayClasses = [];
 
-            foreach ($allJobs as $parentJob) {
-                $jobClass = $parentJob->class_name;
+            foreach ($classes as $jobClass) {
                 Log::info('Job Class: ' . $jobClass);
-                $arrayClasses[] = new $jobClass();
+                $instance = $this->runner->build($jobClass, $storeIds);
+
+                // A store-scoped job none of the selected stores apply to is skipped, not run for every store
+                if ($instance === null) {
+                    Log::info('Skipping ' . $jobClass . ': none of the selected stores are eligible for it.');
+                    continue;
+                }
+
+                $arrayClasses[] = $instance;
             }
-            Log::info('Job Class: ' . json_encode($arrayClasses));
-            $arrayClasses[] = new $job->class_name();
             Log::info('All Jobs: ' . json_encode($arrayClasses));
+
+            if (empty($arrayClasses)) {
+                return back()->with('error', 'None of the jobs can run for the selected stores.');
+            }
 
             Bus::chain($arrayClasses)->dispatch();
 
@@ -42,7 +75,12 @@ class JobSchedulerController extends Controller
                 'last_run' => now(),
             ]);
 
-            return back()->with('success', 'Job queued successfully');
+            $message = 'Job queued successfully';
+            if ($storeIds !== null) {
+                $message .= ' for ' . implode(', ', $this->runner->storeNames($storeIds));
+            }
+
+            return back()->with('success', $message);
         } catch (\Exception $e) {
             return back()->with('error', 'Job start failed: ' . $e->getMessage(). ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine());
         }
@@ -72,6 +110,21 @@ class JobSchedulerController extends Controller
     {
         $jobs = Job::all();
         return view('jobs.running', compact('jobs'));
+    }
+
+    /**
+     * Class names in the order Run Now chains them: every parent, then the job itself.
+     *
+     * @return string[]
+     */
+    private function chainClasses(ScheduledJob $job): array
+    {
+        return $this->getAllParents($job->id)
+            ->pluck('class_name')
+            ->push($job->class_name)
+            ->filter()
+            ->values()
+            ->all();
     }
 
     private function getAllParents(mixed $id)

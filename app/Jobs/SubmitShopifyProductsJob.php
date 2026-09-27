@@ -33,10 +33,12 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use phpseclib3\File\ASN1\Element;
 use App\Jobs\Concerns\TrackableJob;
+use App\Jobs\Concerns\ScopesToStores;
+use App\Jobs\Contracts\StoreScopedJob;
 
-class SubmitShopifyProductsJob implements ShouldQueue
+class SubmitShopifyProductsJob implements ShouldQueue, StoreScopedJob
 {
-    use Queueable, TrackableJob {
+    use Queueable, ScopesToStores, TrackableJob {
         TrackableJob::withChain insteadof Queueable;
         Queueable::withChain as queueableWithChain;
     }
@@ -44,12 +46,17 @@ class SubmitShopifyProductsJob implements ShouldQueue
     public $timeout = 30000;
     private array $publications;
 
+    public static function eligibleStoreTypes(): array
+    {
+        return ['shopify'];
+    }
+
     /**
      * Create a new job instance.
      */
-    public function __construct()
+    public function __construct(string|array|null $storeIds = null)
     {
-        //
+        $this->initStoreScope($storeIds);
     }
 
     /**
@@ -70,7 +77,8 @@ class SubmitShopifyProductsJob implements ShouldQueue
             // The worker is long-lived; alternates may have changed since the last run.
             ShopifyImageUtility::flushCache();
             /* shopify stores*/
-            $stores = Store::select('store.*')->with('fileSystem', 'storeType')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'shopify')->where('store.store_status', '<>', 0)->get();
+            $store_ids = $this->resolveStoreIds();
+            $stores = Store::select('store.*')->with('fileSystem', 'storeType')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'shopify')->where('store.store_status', '<>', 0)->when(!empty($store_ids), fn ($query) => $query->whereIn('store.id', $store_ids))->get();
 
             if (count($stores ?? []) > 0) {
                 $tags = [];

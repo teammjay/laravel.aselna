@@ -6,6 +6,8 @@ use App\Constants\ListingStatus;
 use App\Constants\MarketPlaceUploadStatus;
 use App\Helpers\Common;
 use App\Jobs\Concerns\TrackableJob;
+use App\Jobs\Concerns\ScopesToStores;
+use App\Jobs\Contracts\StoreScopedJob;
 use App\Constants\WebStorePageType;
 use App\Models\Catalog;
 use App\Models\ListingItem;
@@ -24,9 +26,9 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
 
-class MagentoProductsSyncJob implements ShouldQueue
+class MagentoProductsSyncJob implements ShouldQueue, StoreScopedJob
 {
-    use Queueable, TrackableJob {
+    use Queueable, ScopesToStores, TrackableJob {
         TrackableJob::withChain insteadof Queueable;
         Queueable::withChain as queueableWithChain;
     }
@@ -37,12 +39,17 @@ class MagentoProductsSyncJob implements ShouldQueue
 
     public MagentoService $magentoService;
 
+    public static function eligibleStoreTypes(): array
+    {
+        return ['magento'];
+    }
+
     /**
      * Create a new job instance.
      */
-    public function __construct()
+    public function __construct(string|array|null $storeIds = null)
     {
-
+        $this->initStoreScope($storeIds);
     }
 
     public function handle(): void
@@ -53,7 +60,7 @@ class MagentoProductsSyncJob implements ShouldQueue
             }
 
             /* get active store jobs*/
-            $store_ids = Common::getActiveStoreJobs('MagentoProductsSyncJob', 'magento');
+            $store_ids = $this->resolveStoreIds();
 
             $query = Store::select('store.*')->with('fileSystem', 'storeType')
                 ->join('store_type', 'store_type.id', '=', 'store.store_type_id')

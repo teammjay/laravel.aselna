@@ -116,6 +116,10 @@
 
                     </div>
                     <div class="col-md-6">
+                        <p class="text-muted small mb-2">
+                            Stores the scheduled run is limited to. No stores ticked = the job runs for its default stores (usually every eligible store).
+                            "Run Now" can still pick different stores for a one-off run.
+                        </p>
                         <div style="max-height: 100vh; overflow-y: scroll">
                             <table class="table table-bordered" id="store_list">
                                 <thead>

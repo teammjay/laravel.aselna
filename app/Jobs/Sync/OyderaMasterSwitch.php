@@ -2,7 +2,9 @@
 
 namespace App\Jobs\Sync;
 
+use App\Jobs\Concerns\ScopesToStores;
 use App\Jobs\Concerns\TrackableJob;
+use App\Jobs\Contracts\StoreScopedJob;
 use App\Jobs\FetchShopifyProductsJob;
 use App\Jobs\Fonus\ChainCompletionJob;
 use App\Jobs\ListingItemProductImageSyncJob;
@@ -16,9 +18,9 @@ use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
-class OyderaMasterSwitch implements ShouldQueue
+class OyderaMasterSwitch implements ShouldQueue, StoreScopedJob
 {
-    use Queueable, TrackableJob {
+    use Queueable, ScopesToStores, TrackableJob {
         TrackableJob::withChain insteadof Queueable;
         Queueable::withChain as queueableWithChain;
     }
@@ -29,24 +31,42 @@ class OyderaMasterSwitch implements ShouldQueue
     public const STORE_NAMES = ['UZID', 'OdeMobile', 'AccessoryChoice'];
 
     /**
-     * Picked up by the Queue::createPayloadUsing hook in AppServiceProvider and used for the
-     * job_statuses tags. Only set for a single-store run.
+     * Legacy single-store id. Only set on jobs queued before $storeIds existed; read as a fallback.
      */
-    public $store_name;
+    public ?string $storeId = null;
+
+    public static function eligibleStoreTypes(): array
+    {
+        return ['shopify'];
+    }
+
+    /**
+     * The store query below does not filter on store_status.
+     */
+    public static function onlyActiveStores(): bool
+    {
+        return false;
+    }
+
+    public static function defaultStoreIds(): ?array
+    {
+        return Store::join('store_type', 'store_type.id', '=', 'store.store_type_id')
+            ->where('store_type.code', 'shopify')
+            ->whereIn('store.name', self::STORE_NAMES)
+            ->pluck('store.id')
+            ->all();
+    }
 
     /**
      * Create a new job instance.
      *
-     * @param  string|null  $storeId  Sync only this store; null syncs every store in STORE_NAMES.
+     * @param  string|array|null  $storeIds  Sync only these stores; null syncs every store in STORE_NAMES.
      */
-    public function __construct(
-        public ?string $storeId = null
-    ) {
+    public function __construct(string|array|null $storeIds = null)
+    {
         $this->chainId = (string) Str::uuid();
 
-        if (!empty($storeId)) {
-            $this->store_name = Store::where('id', $storeId)->value('name') ?? $storeId;
-        }
+        $this->initStoreScope($storeIds);
     }
 
     /**
@@ -54,6 +74,10 @@ class OyderaMasterSwitch implements ShouldQueue
      */
     public function handle(): void
     {
+        if (empty($this->storeIds) && !empty($this->storeId)) {
+            $this->storeIds = [$this->storeId];
+        }
+
         $tags = trim(($this->store_name ?? '') . ' Oydera Master Switch');
 
         $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => $tags]);
@@ -63,8 +87,8 @@ class OyderaMasterSwitch implements ShouldQueue
                 ->join('store_type', 'store_type.id', '=', 'store.store_type_id')
                 ->where('store_type.code', 'shopify');
 
-            if (!empty($this->storeId)) {
-                $storesQ->where('store.id', $this->storeId);
+            if (!empty($this->storeIds)) {
+                $storesQ->whereIn('store.id', $this->storeIds);
             } else {
                 $storesQ->whereIn('store.name', self::STORE_NAMES);
             }
@@ -72,7 +96,7 @@ class OyderaMasterSwitch implements ShouldQueue
             $stores = $storesQ->get();
 
             // Keep the stores in the order they are listed in STORE_NAMES
-            if (empty($this->storeId)) {
+            if (empty($this->storeIds)) {
                 $stores = $stores->sortBy(fn ($store) => array_search($store->name, self::STORE_NAMES))->values();
             }
 

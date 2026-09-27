@@ -4,6 +4,8 @@ namespace App\Jobs;
 
 use App\Helpers\Common;
 use App\Jobs\Concerns\TrackableJob;
+use App\Jobs\Concerns\ScopesToStores;
+use App\Jobs\Contracts\StoreScopedJob;
 use App\Models\Store;
 use App\Services\Marketplace\Service\TemuService;
 use App\Services\CriticalErrorService;
@@ -11,21 +13,26 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
 
-class FetchTemuOrders implements ShouldQueue
+class FetchTemuOrders implements ShouldQueue, StoreScopedJob
 {
-    use Queueable, TrackableJob {
+    use Queueable, ScopesToStores, TrackableJob {
         TrackableJob::withChain insteadof Queueable;
         Queueable::withChain as queueableWithChain;
     }
 
     public $timeout = 3000;
 
+    public static function eligibleStoreTypes(): array
+    {
+        return ['temu'];
+    }
+
     /**
      * Create a new job instance.
      */
-    public function __construct()
+    public function __construct(string|array|null $storeIds = null)
     {
-        //
+        $this->initStoreScope($storeIds);
     }
 
     /**
@@ -37,7 +44,7 @@ class FetchTemuOrders implements ShouldQueue
             $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Temu Orders']);
 
             /* get active store jobs*/
-            $store_ids = Common::getActiveStoreJobs('FetchTemuOrders','temu');
+            $store_ids = $this->resolveStoreIds();
             /* get active store jobs*/
 
             /* get temu stores*/

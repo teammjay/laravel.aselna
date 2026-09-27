@@ -18,21 +18,29 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
 use App\Jobs\Concerns\TrackableJob;
+use App\Jobs\Concerns\ScopesToStores;
+use App\Jobs\Contracts\StoreScopedJob;
 
-class FetchWalmartOrdersJob implements ShouldQueue
+class FetchWalmartOrdersJob implements ShouldQueue, StoreScopedJob
 {
-    use Queueable, TrackableJob {
+    use Queueable, ScopesToStores, TrackableJob {
         TrackableJob::withChain insteadof Queueable;
         Queueable::withChain as queueableWithChain;
     }
 
     public $timeout = 3000;
 
+    public static function eligibleStoreTypes(): array
+    {
+        return ['walmart'];
+    }
+
     /**
      * Create a new job instance.
      */
-    public function __construct()
-    {}
+    public function __construct(string|array|null $storeIds = null)
+    {
+        $this->initStoreScope($storeIds);}
 
     /**
      * Execute the job.
@@ -44,7 +52,7 @@ class FetchWalmartOrdersJob implements ShouldQueue
 
         try {
             /* get active store jobs*/
-            $store_ids = Common::getActiveStoreJobs('FetchWalmartOrdersJob', 'walmart');
+            $store_ids = $this->resolveStoreIds();
             /* get active store jobs*/
 
             $query = Store::select('store.*', 'store_type.name as storeTypeName')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'walmart')->where('store.store_status', '<>', 0);
