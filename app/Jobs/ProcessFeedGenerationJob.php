@@ -437,6 +437,15 @@ class ProcessFeedGenerationJob implements ShouldQueue
 
         $query->where('device.status', 'active');
 
+        // Only devices that have a device page in this store.
+        $query->whereExists(function ($pageQuery) {
+            $pageQuery->select(DB::raw(1))
+                ->from('store_navigation_page')
+                ->whereColumn('store_navigation_page.device_id', 'device.id')
+                ->where('store_navigation_page.store_id', $this->store_id)
+                ->where('store_navigation_page.page_type', WebStorePageType::DEVICE);
+        });
+
         // An unrated device has rating_id NULL, and both IN and NOT IN evaluate to
         // NULL for it, so it fails either test. Let it through explicitly.
         $query->where(function ($subQuery) use ($excludedRating, $includedRatings) {
@@ -834,9 +843,10 @@ class ProcessFeedGenerationJob implements ShouldQueue
 
                                 $upcCode = (isset($item_detail->upc)) ? $item_detail->upc : '';
 
-                                // Google wants the 14 digit GTIN, so a 12 digit UPC goes in padded.
-                                if (strtolower($feed_type) == 'google' && $upcCode != '' && !str_starts_with($upcCode, '00')) {
-                                    $upcCode = '00' . $upcCode;
+                                // Google wants the 14 digit GTIN, so the UPC goes in zero-padded to 14 digits.
+                                // Meta gets the same UPC unpadded.
+                                if (strtolower($feed_type) == 'google' && preg_match('/^\d{8,13}$/', $upcCode)) {
+                                    $upcCode = str_pad($upcCode, 14, '0', STR_PAD_LEFT);
                                 }
 
                                 /*if (!in_array($this->storeDetail->name,['UZID','NevaWireless','AccessoryWiz','OdeMobile','AccessoryChoice','GetAccessory'])) {
