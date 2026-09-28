@@ -104,7 +104,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
 
             // Meta takes at most 100 MB per uploaded feed file, so its parts are cut smaller.
             if (strtolower($feed_type) == 'meta') {
-                $this->max_file_size = 100 * 1024 * 1024;
+                $this->max_file_size = 98 * 1024 * 1024;
             }
 
             if (env('APP_ENV') == 'local' || env('APP_ENV') == 'development') {
