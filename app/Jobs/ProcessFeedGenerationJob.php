@@ -8,7 +8,6 @@ use App\Exceptions\UpcNotAvailableException;
 use App\Helpers\ErrorLogger;
 use App\Models\Device;
 use App\Models\DeviceRating;
-use App\Models\DevicesLinkedDevice;
 use App\Models\Feed;
 use App\Models\GenerateProductImage;
 use App\Models\GoodUpc;
@@ -105,7 +104,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
 
             // Meta takes at most 100 MB per uploaded feed file, so its parts are cut smaller.
             if (strtolower($feed_type) == 'meta') {
-                $this->max_file_size = 100 * 1024 * 1024;
+                $this->max_file_size = 98 * 1024 * 1024;
             }
 
             if (env('APP_ENV') == 'local' || env('APP_ENV') == 'development') {
@@ -173,11 +172,8 @@ class ProcessFeedGenerationJob implements ShouldQueue
                 $query->whereIn('device_interface.device_id', $this->data['device']);
             }
 
-            if (!empty($this->data['device_series'])) {
-                $devices = DevicesLinkedDevice::select('device_id')->whereIn('device_series_id', $this->data['device_series'])->get();
-                $query->leftJoin('product_interface', 'product_interface.product_id', '=', 'store_product.product_id');
-                $query->leftJoin('device_interface', 'device_interface.interface_id', '=', 'product_interface.interface_id');
-                $query->whereIn('device_interface.device_id', $devices);
+            if (!empty($this->data['excluded_product_code'])) {
+                $query->whereNotIn('products.product_sku', $this->data['excluded_product_code']);
             }
 
             $query->orderBy('products.product_sku', 'asc');
@@ -412,8 +408,9 @@ class ProcessFeedGenerationJob implements ShouldQueue
     }
 
 
-    private function getCompatibleDevices($product_id, $devices, $deviceSeries)
+    private function getCompatibleDevices($product_id, $devices)
     {
+        $excludedDevices = $this->data['excluded_device'] ?? [];
         $excludedRating = $this->data['excluded_ratings'] ?? [];
         $includedRatings = $this->data['included_ratings'] ?? [];
 
@@ -429,12 +426,25 @@ class ProcessFeedGenerationJob implements ShouldQueue
             $query->whereIn('device.id', $devices);
         }
 
+        if (!empty($excludedDevices)) {
+            $query->whereNotIn('device.id', $excludedDevices);
+        }
+
         if (isset($this->compatibleDeviceTypes)) {
             Log::info('Compatible Device Types: ' . json_encode($this->compatibleDeviceTypes));
             $query->whereIn('device_type_id', $this->compatibleDeviceTypes);
         }
 
         $query->where('device.status', 'active');
+
+        // Only devices that have a device page in this store.
+        $query->whereExists(function ($pageQuery) {
+            $pageQuery->select(DB::raw(1))
+                ->from('store_navigation_page')
+                ->whereColumn('store_navigation_page.device_id', 'device.id')
+                ->where('store_navigation_page.store_id', $this->store_id)
+                ->where('store_navigation_page.page_type', WebStorePageType::DEVICE);
+        });
 
         // An unrated device has rating_id NULL, and both IN and NOT IN evaluate to
         // NULL for it, so it fails either test. Let it through explicitly.
@@ -446,14 +456,10 @@ class ProcessFeedGenerationJob implements ShouldQueue
                 });
         });
 
-        if ($deviceSeries) {
-            $devices = DevicesLinkedDevice::select('device_id')->whereIn('device_series_id', $deviceSeries)->get();
-            $query->whereIn('device.id', $devices);
-        }
         $query->orderBy('brands.name', 'asc');
         $query->orderBy('device.name', 'asc');
 
-        Log::info('Compatible Devices Query: ' . $query->toSql());
+        Log::info('Compatible Devices Query: ' . $query->toRawSql());
 
         $devices = $query->get();
 
@@ -731,7 +737,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
                         Log::info('Main image for listing item ID ' . $listitem->id . ': ' . $mainImage);
                         Log::info('Additional images for listing item ID ' . $listitem->id . ': ' . json_encode($images));
 
-                        $compatibledevices = $this->getCompatibleDevices($itemDetail->product_id, $this->data['device'], $this->data['device_series']);
+                        $compatibledevices = $this->getCompatibleDevices($itemDetail->product_id, $this->data['device'] ?? []);
 
                         if ($compatibledevices) {
 
@@ -837,9 +843,10 @@ class ProcessFeedGenerationJob implements ShouldQueue
 
                                 $upcCode = (isset($item_detail->upc)) ? $item_detail->upc : '';
 
-                                // Google wants the 14 digit GTIN, so a 12 digit UPC goes in padded.
-                                if (strtolower($feed_type) == 'google' && $upcCode != '' && !str_starts_with($upcCode, '00')) {
-                                    $upcCode = '00' . $upcCode;
+                                // Google wants the 14 digit GTIN, so the UPC goes in zero-padded to 14 digits.
+                                // Meta gets the same UPC unpadded.
+                                if (strtolower($feed_type) == 'google' && preg_match('/^\d{8,13}$/', $upcCode)) {
+                                    $upcCode = str_pad($upcCode, 14, '0', STR_PAD_LEFT);
                                 }
 
                                 /*if (!in_array($this->storeDetail->name,['UZID','NevaWireless','AccessoryWiz','OdeMobile','AccessoryChoice','GetAccessory'])) {
