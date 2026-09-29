@@ -134,6 +134,60 @@
             vertical-align: middle;
             cursor: help;
         }
+        /* Selected values of the product / device filters, as compact chips */
+        .filter-chip-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+        .filter-chip {
+            display: inline-flex;
+            align-items: center;
+            max-width: 100%;
+            padding: 1px 2px 1px 8px;
+            border: 1px solid #b6d4fe;
+            border-radius: 12px;
+            background: #e7f1ff;
+            color: #084298;
+            line-height: 1.5;
+        }
+        #frmproductfilter .filter-chip span {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-size: 13px !important;
+        }
+        .filter-chip-list-exclude .filter-chip {
+            border-color: #f5c2c7;
+            background: #fdecea;
+            color: #842029;
+        }
+        /* Only the first few chips show in the column; the rest are in the "show all" dialog */
+        .filter-chip-list > .filter-chip:nth-child(n+6) {
+            display: none;
+        }
+        .filter-chip-remove, .filter-modal-remove {
+            border: 0;
+            background: transparent;
+            color: inherit;
+            opacity: .6;
+            padding: 0 5px;
+            font-size: 16px;
+            line-height: 1;
+            cursor: pointer;
+        }
+        .filter-chip-remove:hover, .filter-modal-remove:hover {
+            opacity: 1;
+        }
+        .filter-count {
+            font-size: 12px !important;
+            font-weight: 600;
+            vertical-align: middle;
+        }
+        #filterListItems {
+            max-height: 60vh;
+            overflow-y: auto;
+        }
         .multi-select-filter input[type="button"] {
             padding: 0px 4px;
             border: 2px solid #ccc;
@@ -205,40 +259,32 @@
                                 </div>
                             </div>
                             <div class="border p-2" style="width: 20%;">
-                                <label>Product Code Filter</label>
+                                <label>Product Code Filter <span class="badge badge-pill badge-primary filter-count"></span></label>
                                 <div class="form-group d-flex position-relative">
                                     <input type="text" class="form-control" id="product_code_filter" placeholder="Search...."><i class="fa fa-search position-absolute" style="top: 50%;right: 5px;transform: translateY(-50%);"></i>
                                 </div>
-                                <div id="pro_code_list">
-
-                                </div>
+                                <div id="pro_code_list" class="filter-chip-list" data-title="Product Code Filter"></div>
                             </div>
                             <div class="border p-2" style="width: 20%;">
-                                <label>Exclude Products <i class="fas fa-exclamation-triangle feed-exclude-icon" title="Selected products are left out of the feed"></i></label>
+                                <label>Exclude Products <i class="fas fa-exclamation-triangle feed-exclude-icon" title="Selected products are left out of the feed"></i> <span class="badge badge-pill badge-danger filter-count"></span></label>
                                 <div class="form-group d-flex position-relative">
                                     <input type="text" class="form-control" id="excluded_product_code_filter" placeholder="Search...."><i class="fa fa-search position-absolute" style="top: 50%;right: 5px;transform: translateY(-50%);"></i>
                                 </div>
-                                <div id="excluded_pro_code_list">
-
-                                </div>
+                                <div id="excluded_pro_code_list" class="filter-chip-list filter-chip-list-exclude" data-title="Excluded Products"></div>
                             </div>
                             <div class="border p-2 " style="width: 20%;">
-                                <label>Device Filter</label>
+                                <label>Device Filter <span class="badge badge-pill badge-primary filter-count"></span></label>
                                 <div class="form-group d-flex position-relative">
                                     <input type="text" class="form-control" id="device_filter" placeholder="Search...."><i class="fa fa-search position-absolute" style="top: 50%;right: 5px;transform: translateY(-50%);"></i>
                                 </div>
-                                <div id="device_list">
-
-                                </div>
+                                <div id="device_list" class="filter-chip-list" data-title="Device Filter"></div>
                             </div>
                             <div class="border p-2" style="width: 20%;">
-                                <label>Exclude Devices <i class="fas fa-exclamation-triangle feed-exclude-icon" title="Selected devices are left out of the feed"></i></label>
+                                <label>Exclude Devices <i class="fas fa-exclamation-triangle feed-exclude-icon" title="Selected devices are left out of the feed"></i> <span class="badge badge-pill badge-danger filter-count"></span></label>
                                 <div class="form-group d-flex position-relative">
                                     <input type="text" class="form-control" id="excluded_device_filter" placeholder="Search...."><i class="fa fa-search position-absolute" style="top: 50%;right: 5px;transform: translateY(-50%);"></i>
                                 </div>
-                                <div id="excluded_device_list">
-
-                                </div>
+                                <div id="excluded_device_list" class="filter-chip-list filter-chip-list-exclude" data-title="Excluded Devices"></div>
                             </div>
 
                             <div class="border p-2" style="width: 20%;">
@@ -398,6 +444,30 @@
             </div>
         </div>
     </div>
+    {{-- Every selected value of one product / device filter, opened from its "more" link --}}
+    <div class="modal fade" id="filterListModal" tabindex="-1" aria-labelledby="filterListModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="filterListModalLabel"></h5>
+                    <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group position-relative">
+                        <input type="text" class="form-control" id="filterListSearch" placeholder="Search selected...." autocomplete="off"><i class="fa fa-search position-absolute" style="top: 50%;right: 10px;transform: translateY(-50%);"></i>
+                    </div>
+                    <ul class="list-group" id="filterListItems"></ul>
+                </div>
+                <div class="modal-footer justify-content-between">
+                    <span class="text-muted" id="filterListCount"></span>
+                    <div>
+                        <button type="button" class="btn btn-outline-danger btn-sm" id="filterListClear">Remove all</button>
+                        <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Done</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 @stop
 
 @section('adminlte_js')
@@ -537,7 +607,7 @@
                 if (config.filters) {
                     if (config.filters.product_code) {
                         config.filters.product_code.forEach(val => {
-                            $('#pro_code_list').append('<div class="border bg-blue d-flex justify-content-between p-1 mt-1"><input type="hidden" name="product_code[]" value="' + val + '">' + val + '<i class="fa fa-window-close float-right mt-1"></i></div>');
+                            $('#pro_code_list').append(filterChip('product_code[]', val, val));
                         });
                     }
                     if (config.filters.excluded_product_code) {
@@ -900,7 +970,7 @@
                 minLength:1,
                 select : function(event, ui){
                     $('#product_code_filter').val('');
-                    $('#pro_code_list').append('<div class="border bg-blue d-flex justify-content-between p-1 mt-1"><input type="hidden" name="product_code[]" value="'+ui.item.value+'">'+ui.item.value+'<i class="fa fa-window-close float-right mt-1"></i></div>');
+                    $('#pro_code_list').append(filterChip('product_code[]', ui.item.value, ui.item.value));
                     return false;
                 }
             }).focus(function () {
@@ -937,7 +1007,7 @@
                 minLength: 1,
                 select : function(event, ui){
                     $('#device_filter').val('');
-                    $('#device_list').append('<div class="border bg-blue d-flex justify-content-between p-1 mt-1"><input type="hidden" name="device[]" value="'+ui.item.value+'">'+ui.item.label+' <i class="fa fa-window-close float-right mt-1"></i></div>');
+                    $('#device_list').append(filterChip('device[]', ui.item.value, ui.item.label));
                     return false;
                 }
             }).focus(function () {
@@ -1012,20 +1082,98 @@
                 }
             });
 
-            $(document).on('click','.fa-window-close',function () {
-                $(this).parent('.border').remove();
+            $(document).on('click', '.filter-chip-remove', function () {
+                $(this).closest('.filter-chip').remove();
+            });
+
+            // Keep each list's count badge and "more" link in step with its chips, however they
+            // get added or removed (autocomplete, loading a configuration, the dialog).
+            $('.filter-chip-list').each(function () {
+                let $list = $(this);
+                new MutationObserver(function () {
+                    refreshChipList($list);
+                }).observe(this, {childList: true});
+                refreshChipList($list);
+            });
+
+            $(document).on('click', '.filter-show-all', function () {
+                $filterModalList = $(this).prev('.filter-chip-list');
+                $('#filterListModalLabel').text($filterModalList.data('title'));
+                $('#filterListSearch').val('');
+                renderFilterListModal();
+                $('#filterListModal').modal('show');
+            });
+
+            $('#filterListModal').on('shown.bs.modal', function () {
+                $('#filterListSearch').trigger('focus');
+            });
+
+            $('#filterListSearch').on('input', renderFilterListModal);
+
+            $(document).on('click', '.filter-modal-remove', function () {
+                $($(this).data('chip')).remove();
+                renderFilterListModal();
+            });
+
+            $('#filterListClear').on('click', function () {
+                let count = $filterModalList.children('.filter-chip').length;
+                if (!confirm('Remove all ' + count + ' selected item(s) from ' + $filterModalList.data('title') + '?')) return;
+                $filterModalList.children('.filter-chip').remove();
+                $('#filterListModal').modal('hide');
             });
         });
 
 
 
-        // A selected value in the Device / Exclude Devices / Exclude Products lists
+        // Chips shown in a filter column; the rest are reachable through the "more" link.
+        // Keep in step with the .filter-chip:nth-child(n+6) rule in the styles.
+        const FILTER_CHIPS_SHOWN = 5;
+
+        // The list whose values the "show all" dialog is showing
+        let $filterModalList = $();
+
+        // A selected value in the Product Code / Exclude Products / Device / Exclude Devices lists
         function filterChip(inputName, id, label) {
-            let $chip = $('<div class="border bg-blue d-flex justify-content-between p-1 mt-1"></div>');
+            let $chip = $('<div class="filter-chip"></div>').attr('title', label);
             $chip.append($('<input type="hidden">').attr('name', inputName).val(id));
             $chip.append($('<span></span>').text(label));
-            $chip.append('<i class="fa fa-window-close float-right mt-1"></i>');
+            $chip.append('<button type="button" class="filter-chip-remove" title="Remove">&times;</button>');
             return $chip;
+        }
+
+        function refreshChipList($list) {
+            let count = $list.children('.filter-chip').length;
+            $list.closest('.border').find('.filter-count').text(count || '');
+
+            let $more = $list.next('.filter-show-all');
+            if (!$more.length) {
+                $more = $('<button type="button" class="btn btn-link btn-sm p-0 mt-2 filter-show-all"></button>').insertAfter($list);
+            }
+            $more.text('+' + (count - FILTER_CHIPS_SHOWN) + ' more · View all').toggle(count > FILTER_CHIPS_SHOWN);
+        }
+
+        function renderFilterListModal() {
+            let term = $('#filterListSearch').val().trim().toLowerCase();
+            let $chips = $filterModalList.children('.filter-chip');
+            let $items = $('#filterListItems').empty();
+            let shown = 0;
+
+            $chips.each(function () {
+                let label = $(this).children('span').text();
+                let value = String($(this).children('input').val());
+                if (term && label.toLowerCase().indexOf(term) === -1 && value.toLowerCase().indexOf(term) === -1) return;
+                shown++;
+                let $row = $('<li class="list-group-item d-flex justify-content-between align-items-center py-1"></li>');
+                $row.append($('<span class="text-truncate"></span>').text(label).attr('title', label));
+                $row.append($('<button type="button" class="filter-modal-remove text-danger" title="Remove">&times;</button>').data('chip', this));
+                $items.append($row);
+            });
+
+            if (!shown) {
+                $items.append($('<li class="list-group-item text-muted text-center"></li>').text(term ? 'No matches' : 'Nothing selected'));
+            }
+            $('#filterListCount').text(term ? shown + ' of ' + $chips.length + ' shown' : $chips.length + ' selected');
+            $('#filterListClear').prop('disabled', $chips.length === 0);
         }
 
         function getStoreManufacturer(element){
