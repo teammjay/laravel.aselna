@@ -459,7 +459,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
         $query->orderBy('brands.name', 'asc');
         $query->orderBy('device.name', 'asc');
 
-        Log::info('Compatible Devices Query: ' . $query->toSql());
+        Log::info('Compatible Devices Query: ' . $query->toRawSql());
 
         $devices = $query->get();
 
