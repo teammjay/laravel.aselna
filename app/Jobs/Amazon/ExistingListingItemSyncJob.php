@@ -5,6 +5,8 @@ namespace App\Jobs\Amazon;
 use App\Constants\ListingStatus;
 use App\Helpers\Common;
 use App\Jobs\Concerns\TrackableJob;
+use App\Jobs\Concerns\ScopesToStores;
+use App\Jobs\Contracts\StoreScopedJob;
 use App\Models\ListingItem;
 use App\Models\ListingItemLink;
 use App\Models\Store;
@@ -14,21 +16,34 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
 
-class ExistingListingItemSyncJob implements ShouldQueue
+class ExistingListingItemSyncJob implements ShouldQueue, StoreScopedJob
 {
-    use Queueable, TrackableJob {
+    use Queueable, ScopesToStores, TrackableJob {
         TrackableJob::withChain insteadof Queueable;
         Queueable::withChain as queueableWithChain;
     }
 
     public $timeout = 7200;
 
+    public static function eligibleStoreTypes(): array
+    {
+        return ['amazon'];
+    }
+
+    /**
+     * Shares the store mapping of the AmazonListingItemSyncJob cron job.
+     */
+    public static function storeMappingClass(): string
+    {
+        return \App\Jobs\AmazonListingItemSyncJob::class;
+    }
+
     /**
      * Create a new job instance.
      */
-    public function __construct()
+    public function __construct(string|array|null $storeIds = null)
     {
-        //
+        $this->initStoreScope($storeIds);
     }
 
     /**
@@ -41,7 +56,7 @@ class ExistingListingItemSyncJob implements ShouldQueue
 
             Log::info('AmazonExistingListingItemSyncJob started');
 
-            $store_ids = Common::getActiveStoreJobs('AmazonListingItemSyncJob', 'Amazon');
+            $store_ids = $this->resolveStoreIds();
 
             $query = Store::where('store_type_id', function ($subquery) {
                 return $subquery->select('id')

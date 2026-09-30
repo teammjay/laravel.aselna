@@ -2,7 +2,9 @@
 
 namespace App\Jobs\Shopify;
 
+use App\Jobs\Concerns\ScopesToStores;
 use App\Jobs\Concerns\TrackableJob;
+use App\Jobs\Contracts\StoreScopedJob;
 use App\Models\Store;
 use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -15,37 +17,52 @@ use Illuminate\Support\Facades\Log;
  * (have a reference_id) but never got a path back, and queues a media path sync for each
  * listing item. Meant to be scheduled via scheduled_cron_jobs.
  *
- * Pass a store id to limit the run to one store, e.g. scheduled_cron_jobs.parameters = {"store_id": "<uuid>"}.
+ * Pass a store id (or a list of store ids) to limit the run to those stores, e.g. scheduled_cron_jobs.parameters = {"store_id": "<uuid>"}.
  */
-class SyncShopifyMissingMediaPathsJob implements ShouldQueue
+class SyncShopifyMissingMediaPathsJob implements ShouldQueue, StoreScopedJob
 {
-    use Queueable, TrackableJob {
+    use Queueable, ScopesToStores, TrackableJob {
         TrackableJob::withChain insteadof Queueable;
         Queueable::withChain as queueableWithChain;
     }
 
     public $timeout = 3600;
 
-    public function __construct(
-        public ?string $storeId = null
-    ) {
+    /**
+     * Legacy single-store id. Only set on jobs queued before $storeIds existed; read as a fallback.
+     */
+    public ?string $storeId = null;
+
+    public static function eligibleStoreTypes(): array
+    {
+        return ['shopify'];
+    }
+
+    public function __construct(string|array|null $storeIds = null)
+    {
+        $this->initStoreScope($storeIds);
     }
 
     public function handle(): void
     {
+        if (empty($this->storeIds) && !empty($this->storeId)) {
+            $this->storeIds = [$this->storeId];
+        }
+
+        $storeIds = $this->resolveStoreIds();
+
         $tags = 'Shopify Missing Media Paths';
-        if (isset($this->storeId)) {
-            $store = Store::find($this->storeId);
-            if (!$store) {
+        if (!empty($storeIds)) {
+            $storeNames = Store::whereIn('id', $storeIds)->pluck('name');
+            if ($storeNames->isEmpty()) {
                 $this->updateTrackingRecord([
                     'status' => 'failed',
-                    'output' => 'Store not found: ' . $this->storeId,
+                    'output' => 'Store not found: ' . implode(', ', $storeIds),
                     'started_at' => now(),
                     'finished_at' => now(),
                 ]);
                 return;
             }
-            $tags = $store->name . ' ' . $tags;
         }
 
         $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => $tags]);
@@ -66,8 +83,8 @@ class SyncShopifyMissingMediaPathsJob implements ShouldQueue
                 ->whereNull('lipi.path')
                 ->whereNotNull('lipi.reference_id')
                 ->whereNotNull('mmp.marketplace_product_id')
-                ->when(isset($this->storeId), function ($query) {
-                    $query->where('sp.store_id', $this->storeId);
+                ->when(!empty($storeIds), function ($query) use ($storeIds) {
+                    $query->whereIn('sp.store_id', $storeIds);
                 })
                 ->select('lipi.listing_item_id', 'sp.store_id', 'mmp.marketplace_product_id')
                 ->distinct()

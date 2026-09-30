@@ -4,6 +4,8 @@ namespace App\Jobs\Magento;
 
 use App\Constants\OrderStatus;
 use App\Jobs\Concerns\TrackableJob;
+use App\Jobs\Concerns\ScopesToStores;
+use App\Jobs\Contracts\StoreScopedJob;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\OrderOperation;
@@ -16,21 +18,26 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
 
-class FetchMagentoOrderJob implements ShouldQueue
+class FetchMagentoOrderJob implements ShouldQueue, StoreScopedJob
 {
-    use Queueable, TrackableJob {
+    use Queueable, ScopesToStores, TrackableJob {
         TrackableJob::withChain insteadof Queueable;
         Queueable::withChain as queueableWithChain;
     }
 
     public $timeout = 3000;
 
+    public static function eligibleStoreTypes(): array
+    {
+        return ['magento'];
+    }
+
     /**
      * Create a new job instance.
      */
-    public function __construct()
+    public function __construct(string|array|null $storeIds = null)
     {
-        //
+        $this->initStoreScope($storeIds);
     }
 
     /**
@@ -42,10 +49,12 @@ class FetchMagentoOrderJob implements ShouldQueue
 
         try {
             /* get amazon stores*/
-            $stores = Store::select('store.*')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'magento')->where('store.store_status', '<>', 0)->get();
+            $store_ids = $this->resolveStoreIds();
+            $stores = Store::select('store.*')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'magento')->where('store.store_status', '<>', 0)->when(!empty($store_ids), fn ($query) => $query->whereIn('store.id', $store_ids))->get();
 
             if (count($stores ?? []) > 0) {
                 foreach ($stores as $store) {
+                    $this->trackCurrentStore($store, count($stores));
                     $created_by = auth()->user()->name ?? 'admin';
                     /* create order synchronization*/
                     $synchronizeArr = [

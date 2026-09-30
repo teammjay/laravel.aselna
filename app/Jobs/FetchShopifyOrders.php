@@ -4,6 +4,8 @@ namespace App\Jobs;
 
 use App\Helpers\Common;
 use App\Jobs\Concerns\TrackableJob;
+use App\Jobs\Concerns\ScopesToStores;
+use App\Jobs\Contracts\StoreScopedJob;
 use App\Constants\OrderOperationStatus;
 use App\Constants\OrderOperationType;
 use App\Constants\OrderStatus;
@@ -30,21 +32,26 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
 
-class FetchShopifyOrders implements ShouldQueue
+class FetchShopifyOrders implements ShouldQueue, StoreScopedJob
 {
-    use Queueable, TrackableJob {
+    use Queueable, ScopesToStores, TrackableJob {
         TrackableJob::withChain insteadof Queueable;
         Queueable::withChain as queueableWithChain;
     }
 
     public $timeout = 3000;
 
+    public static function eligibleStoreTypes(): array
+    {
+        return ['shopify'];
+    }
+
     /**
      * Create a new job instance.
      */
-    public function __construct()
+    public function __construct(string|array|null $storeIds = null)
     {
-        //
+        $this->initStoreScope($storeIds);
     }
 
     /**
@@ -58,7 +65,7 @@ class FetchShopifyOrders implements ShouldQueue
             $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Shopify Orders']);
 
             /* get active store jobs*/
-            $store_ids = Common::getActiveStoreJobs('FetchShopifyOrders','shopify');
+            $store_ids = $this->resolveStoreIds();
             /* get active store jobs*/
 
             $query = Store::select('store.*','store_type.name as storeTypeName')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'shopify')->where('store.store_status','<>',0);
@@ -72,6 +79,7 @@ class FetchShopifyOrders implements ShouldQueue
             if (count($stores ?? []) > 0) {
                 $tags = [];
                 foreach ($stores as $store) {
+                    $this->trackCurrentStore($store, count($stores));
                     if ($store->secret_key == '' || $store->service_url == '') {
                         continue;
                     }

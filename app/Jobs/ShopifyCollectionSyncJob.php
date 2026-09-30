@@ -8,20 +8,35 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
 use App\Jobs\Concerns\TrackableJob;
+use App\Jobs\Concerns\ScopesToStores;
+use App\Jobs\Contracts\StoreScopedJob;
 
-class ShopifyCollectionSyncJob implements ShouldQueue
+class ShopifyCollectionSyncJob implements ShouldQueue, StoreScopedJob
 {
-    use Queueable, TrackableJob {
+    use Queueable, ScopesToStores, TrackableJob {
         TrackableJob::withChain insteadof Queueable;
         Queueable::withChain as queueableWithChain;
+    }
+
+    public static function eligibleStoreTypes(): array
+    {
+        return ['shopify'];
+    }
+
+    /**
+     * The store query below does not filter on store_status.
+     */
+    public static function onlyActiveStores(): bool
+    {
+        return false;
     }
 
     /**
      * Create a new job instance.
      */
-    public function __construct()
+    public function __construct(string|array|null $storeIds = null)
     {
-        //
+        $this->initStoreScope($storeIds);
     }
 
     /**
@@ -32,7 +47,8 @@ class ShopifyCollectionSyncJob implements ShouldQueue
         try {
             $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Shopify Collection']);
 
-            $stores = Store::select('store.*')->with('fileSystem', 'storeType')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'shopify')->get();
+            $store_ids = $this->resolveStoreIds();
+            $stores = Store::select('store.*')->with('fileSystem', 'storeType')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'shopify')->when(!empty($store_ids), fn ($query) => $query->whereIn('store.id', $store_ids))->get();
 
             if (count($stores ?? []) > 0) {
                 foreach ($stores as $store) {

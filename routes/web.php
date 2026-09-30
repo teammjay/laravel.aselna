@@ -517,6 +517,8 @@ Route::middleware('auth')->group(function () {
         Route::post('/orders/getcustomerdetail', 'getCustomerDetail')->name('order.getcustomerdetail');
         Route::post('/orders/savecustomer', 'saveCustomer')->name('order.savecustomer');
         Route::post('/orders/reprintLabel', 'reprintLabel')->name('order.reprintlabel');
+        Route::post('/orders/shippedshipment', 'getShippedShipmentDetail')->name('order.shippedshipment');
+        Route::post('/orders/updatetrackingnumber', 'updateTrackingNumber')->name('order.updatetrackingnumber');
         Route::post('/orders/getorderitemattributes', 'getOrderItemAttributes')->name('order.getorderitemattributes');
     });
 
@@ -749,8 +751,17 @@ Route::middleware('auth')->group(function () {
         Route::post('/scheduled_jobs/edit/{id}', 'update')->name('scheduled_jobs.update');
         Route::get('/scheduled_jobs/delete/{id}', 'destroy')->name('scheduled_jobs.delete');
         Route::post('/scheduled_jobs/{job}/run', 'run')->name('scheduled_jobs.run');
+        Route::get('/scheduled_jobs/{job}/stores', 'storeOptions')->name('scheduled_jobs.stores');
         Route::post('/scheduled_jobs/getstore', 'getStore')->name('scheduled_jobs.getstore');
     });
+
+    Route::get('/jobs', [JobSchedulerController::class, 'index'])->name('jobs.index');
+    Route::post('/jobs/{job}/run', [JobSchedulerController::class, 'run'])->name('jobs.run');
+    Route::get('/jobs/{job}/stores', [JobSchedulerController::class, 'storeOptions'])->name('jobs.stores');
+    Route::get('/jobs/{job}/edit', [JobSchedulerController::class, 'edit'])->name('jobs.edit');
+    Route::post('/jobs/{job}/update', [JobSchedulerController::class, 'update'])->name('jobs.update');
+    Route::post('/jobs/add', [JobSchedulerController::class, 'add'])->name('jobs.add');
+    Route::post('/jobs/running', [JobSchedulerController::class, 'running'])->name('jobs.running');
 
     Route::controller(ErrorlogDashboardController::class)->group(function () {
         Route::get('/error_logs', 'index')->name('error_logs.index');
@@ -776,10 +787,4 @@ Route::post('/forgot-password', [ResetPasswordController::class, 'sendResetLink'
 Route::get('/reset-password/{token}', [ResetPasswordController::class, 'showResetForm'])->name('password.reset');
 Route::post('/reset-password', [ResetPasswordController::class, 'resetPassword'])->name('password.update');
 
-Route::get('/jobs', [JobSchedulerController::class, 'index'])->name('jobs.index');
-Route::post('/jobs/{job}/run', [JobSchedulerController::class, 'run'])->name('jobs.run');
-Route::get('/jobs/{job}/edit', [JobSchedulerController::class, 'edit'])->name('jobs.edit');
-Route::post('/jobs/{job}/update', [JobSchedulerController::class, 'update'])->name('jobs.update');
-Route::post('/jobs/add', [JobSchedulerController::class, 'add'])->name('jobs.add');
-Route::post('/jobs/running', [JobSchedulerController::class, 'running'])->name('jobs.running');
 

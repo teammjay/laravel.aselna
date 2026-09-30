@@ -1,5 +1,7 @@
 @extends('adminlte::page')
 
+@section('plugins.Select2', true)
+
 @section('content_header')
     <h1>Cron Jobs</h1>
 @stop
@@ -11,6 +13,9 @@
     @endif
     @if(session('error'))
         <div class="alert alert-danger">{{ session('error') }}</div>
+    @endif
+    @if($errors->any())
+        <div class="alert alert-danger">{{ $errors->first() }}</div>
     @endif
     <div class="row my-3">
         <div class="col-md-3">
@@ -46,20 +51,32 @@
                     <a href="{{ route('scheduled_jobs.delete', $job->id) }}" class="btn btn-danger" title="Remove">
                         <i class="fas fa-fw fa-trash"></i>
                     </a>
-                    <form method="POST" action="{{ route('scheduled_jobs.run', $job->id) }}">
-                        @csrf
-                        <button class="btn btn-primary px-3 ml-1">
-                            Run Now
+                    @if(in_array($job->id, $storeScopedJobIds))
+                        <button type="button" class="btn btn-primary px-3 ml-1 js-run-stores"
+                                data-run-url="{{ route('scheduled_jobs.run', $job->id) }}"
+                                data-stores-url="{{ route('scheduled_jobs.stores', $job->id) }}"
+                                data-job-name="{{ $job->name }}">
+                            Run Now...
                         </button>
-                    </form>
+                    @else
+                        <form method="POST" action="{{ route('scheduled_jobs.run', $job->id) }}">
+                            @csrf
+                            <button class="btn btn-primary px-3 ml-1">
+                                Run Now
+                            </button>
+                        </form>
+                    @endif
                 </td>
             </tr>
         @endforeach
         </tbody>
     </table>
+
+    @include('jobs.run_stores_modal')
 @endsection
 
 @section('adminlte_js')
+    @include('jobs.run_stores_js')
     <script>
         $(document).ready(function () {
             $('#scheduled-jobs').DataTable({

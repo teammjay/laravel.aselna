@@ -127,6 +127,11 @@ class AppServiceProvider extends ServiceProvider
                     $extra['store_type'] = $job->store_type;
                 }
 
+                // Store-scoped jobs describe themselves: task | stores | who started the run
+                if (method_exists($job, 'buildTrackingTags')) {
+                    $extra = ['tags' => $job->buildTrackingTags('')];
+                }
+
 //                $jobData = json_decode($job);
                 $jobId = $job->getJobId() ?? (string) Str::uuid();
 

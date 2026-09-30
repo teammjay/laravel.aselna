@@ -83,18 +83,29 @@ class Common
         return false;
     }
 
+    /**
+     * Store ids mapped to the active cron job for $job_name (store_scheduled_cron_jobs).
+     *
+     * @param  string  $job_name  Fully-qualified job class (exact match) or its short class name.
+     */
     public static function getActiveStoreJobs($job_name, $storeType=''){
 
         if($job_name) {
-            $scheduleJob = ScheduledJobs::whereLike('class_name', '%'.$job_name.'%')->where('is_active', 1)->first();
+            if (str_contains($job_name, '\\')) {
+                $scheduleJob = ScheduledJobs::where('class_name', ltrim($job_name, '\\'))->where('is_active', 1)->first();
+            } else {
+                // Short name: match the class basename exactly, not any class containing the name
+                $scheduleJob = ScheduledJobs::whereLike('class_name', '%'.$job_name)->where('is_active', 1)->get()
+                    ->first(fn ($row) => class_basename($row->class_name) === $job_name);
+            }
 
             if ($scheduleJob) {
                 $query = StoreScheduledCronJobs::select('store_id')->where('scheduled_job_id', $scheduleJob->id);
                 if($storeType){
-                    $query->where('store_type_id', function ($subquery) use ($storeType) {
+                    $query->whereIn('store_type_id', function ($subquery) use ($storeType) {
                         return $subquery->select('id')
                             ->from('store_type')
-                            ->where('code', $storeType)->get();
+                            ->where('code', $storeType);
                     });
                 }
                 $store_ids = $query->get()->pluck('store_id')->toArray();

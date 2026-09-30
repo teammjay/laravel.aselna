@@ -4,6 +4,8 @@ namespace App\Jobs\Sync;
 
 use App\Constants\WebStorePageType;
 use App\Jobs\Concerns\TrackableJob;
+use App\Jobs\Concerns\ScopesToStores;
+use App\Jobs\Contracts\StoreScopedJob;
 use App\Jobs\Shopify\ShopifyBrandPageSyncJob;
 use App\Jobs\ShopifyIndvPagesSyncJob;
 use App\Jobs\Oydera\DeviceCarrierSyncJob;
@@ -27,18 +29,33 @@ use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
-class ShopifyOnlySyncJob implements ShouldQueue
+class ShopifyOnlySyncJob implements ShouldQueue, StoreScopedJob
 {
-    use Queueable, TrackableJob {
+    use Queueable, ScopesToStores, TrackableJob {
         TrackableJob::withChain insteadof Queueable;
         Queueable::withChain as queueableWithChain;
+    }
+
+    public static function eligibleStoreTypes(): array
+    {
+        return ['shopify'];
+    }
+
+    /**
+     * The store query below does not filter on store_status.
+     */
+    public static function onlyActiveStores(): bool
+    {
+        return false;
     }
 
     /**
      * Create a new job instance.
      */
-    public function __construct()
+    public function __construct(string|array|null $storeIds = null)
     {
+        $this->initStoreScope($storeIds);
+
         $this->chainId = (string) Str::uuid();
     }
 
@@ -59,7 +76,8 @@ class ShopifyOnlySyncJob implements ShouldQueue
 
         try {
             $chain = [];
-            $stores = Store::select('store.*')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'shopify')->get();
+            $store_ids = $this->resolveStoreIds();
+            $stores = Store::select('store.*')->join('store_type', 'store_type.id', '=', 'store.store_type_id')->where('store_type.code', 'shopify')->when(!empty($store_ids), fn ($query) => $query->whereIn('store.id', $store_ids))->get();
 
             if (count($stores ?? []) > 0) {
                 foreach ($stores as $store) {

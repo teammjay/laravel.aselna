@@ -14,20 +14,35 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
 use App\Jobs\Concerns\TrackableJob;
+use App\Jobs\Concerns\ScopesToStores;
+use App\Jobs\Contracts\StoreScopedJob;
 
-class MagnetoAttributesSyncJob implements ShouldQueue
+class MagnetoAttributesSyncJob implements ShouldQueue, StoreScopedJob
 {
-    use Queueable, TrackableJob {
+    use Queueable, ScopesToStores, TrackableJob {
         TrackableJob::withChain insteadof Queueable;
         Queueable::withChain as queueableWithChain;
+    }
+
+    public static function eligibleStoreTypes(): array
+    {
+        return ['magento'];
+    }
+
+    /**
+     * The store query below does not filter on store_status.
+     */
+    public static function onlyActiveStores(): bool
+    {
+        return false;
     }
 
     /**
      * Create a new job instance.
      */
-    public function __construct()
+    public function __construct(string|array|null $storeIds = null)
     {
-        //
+        $this->initStoreScope($storeIds);
     }
 
     /**
@@ -39,7 +54,7 @@ class MagnetoAttributesSyncJob implements ShouldQueue
 
         try {
             /* get active store jobs*/
-            $store_ids = Common::getActiveStoreJobs('MagnetoAttributesSyncJob', 'magento');
+            $store_ids = $this->resolveStoreIds();
             /* get active store jobs*/
 
             $storeType = StoreType::where('name', 'magento')->first();
@@ -52,6 +67,7 @@ class MagnetoAttributesSyncJob implements ShouldQueue
             $stores = $query->get();
 
             foreach ($stores as $store) {
+                $this->trackCurrentStore($store, count($stores));
                 $this->SyncAttributesIfNeeded($store);
             }
 

@@ -1,5 +1,7 @@
 @extends('adminlte::page')
 
+@section('plugins.Select2', true)
+
 @section('content_header')
     <h1>Scheduled Jobs</h1>
 @stop
@@ -11,6 +13,9 @@
     @endif
     @if(session('error'))
         <div class="alert alert-danger">{{ session('error') }}</div>
+    @endif
+    @if($errors->any())
+        <div class="alert alert-danger">{{ $errors->first() }}</div>
     @endif
 
     <table id="stored-jobs" class="table table-bordered table-striped table-hover">
@@ -32,20 +37,32 @@
                     <a href="{{ route('jobs.edit', $job) }}" class="btn btn-warning btn-sm">
                         Edit
                     </a>
-                    <form method="POST" action="{{ route('jobs.run', $job) }}">
-                        @csrf
-                        <button type="submit" class="btn btn-primary btn-sm">
-                            Run Now
+                    @if(in_array($job->id, $storeScopedJobIds))
+                        <button type="button" class="btn btn-primary btn-sm js-run-stores"
+                                data-run-url="{{ route('jobs.run', $job) }}"
+                                data-stores-url="{{ route('jobs.stores', $job) }}"
+                                data-job-name="{{ $job->name }}">
+                            Run Now...
                         </button>
-                    </form>
+                    @else
+                        <form method="POST" action="{{ route('jobs.run', $job) }}">
+                            @csrf
+                            <button type="submit" class="btn btn-primary btn-sm">
+                                Run Now
+                            </button>
+                        </form>
+                    @endif
                 </td>
             </tr>
         @endforeach
         </tbody>
     </table>
+
+    @include('jobs.run_stores_modal')
 @endsection
 
 @section('adminlte_js')
+    @include('jobs.run_stores_js')
     <script>
         $(document).ready(function () {
             $('#stored-jobs').DataTable({
