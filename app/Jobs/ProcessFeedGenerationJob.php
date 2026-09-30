@@ -476,6 +476,28 @@ class ProcessFeedGenerationJob implements ShouldQueue
         return implode(' > ', array_reverse($path));
     }
 
+    /**
+     * Main product type = the category directly below the root of the type tree.
+     * e.g. Consumer Electronics Accessories > Armbands > Armband  =>  Armbands
+     */
+    private function getMainProductTypeName($category)
+    {
+        if (!$category) return '';
+        $path = [];
+        while ($category) {
+            $path[] = $category->name;
+            $category = $category->parent;
+        }
+        $path = array_reverse($path);
+        return $path[1] ?? $path[0];
+    }
+
+    private function isNevaWirelessStore()
+    {
+        return str_contains(strtolower($this->storeDetail->name ?? ''), 'nevawireless')
+            || str_contains(strtolower($this->storeDetail->store_url ?? ''), 'nevawireless');
+    }
+
     public function generateProductImages($productData, $store)
     {
         //Log::info('Filesystem : ' . json_encode($store->fileSystem));
@@ -713,6 +735,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
 
                         $typeDetail = ProductType::with('parent')->where('id', $itemDetail->product->product_type)->first();
                         $product_type = $this->getCategoryPath($typeDetail);
+                        $main_product_type = $this->getMainProductTypeName($typeDetail);
 
                         $listingItemImages = ListingItemProductImage::where('listing_item_id', $listitem->id)->orderBy('main_image','desc')->limit(5)->get();
                         $mainImage = null;
@@ -834,6 +857,11 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                     $custom_label_2 = (isset($item_detail->device->name)) ? $item_detail->device->name : '';
                                 } else {
                                     $custom_label_1 = (isset($item_detail->device->name)) ? $item_detail->device->name : '';
+                                }
+
+                                // NevaWireless only: custom_label_2 carries the main product type (e.g. Armbands)
+                                if ($this->isNevaWirelessStore()) {
+                                    $custom_label_2 = $main_product_type;
                                 }
 
                                 // item group id logic

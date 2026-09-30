@@ -29,6 +29,7 @@ use App\Services\CriticalErrorService;
 use App\Utils\ShopifyImageUtility;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use phpseclib3\File\ASN1\Element;
@@ -68,6 +69,17 @@ class SubmitShopifyProductsJob implements ShouldQueue, StoreScopedJob
             Log::info('Skipping SubmitShopifyProductsJob: FonusCombinedSyncJob is currently running.');
             $this->updateTrackingRecord([
                 'status' => 'failed', 'output' => 'Skipping SubmitShopifyProductsJob: FonusCombinedSyncJob is currently running.','started_at' => now(), 'finished_at' => now()
+            ]);
+            return;
+        }
+
+        // Only one run at a time. The lock expires after $timeout, so a worker killed mid-run
+        // can't block the job forever.
+        $lock = Cache::lock(self::class, $this->timeout);
+        if (!$lock->get()) {
+            Log::info('Skipping SubmitShopifyProductsJob: another SubmitShopifyProductsJob is currently running.');
+            $this->updateTrackingRecord([
+                'status' => 'failed', 'output' => 'Skipping SubmitShopifyProductsJob: another SubmitShopifyProductsJob is currently running.','started_at' => now(), 'finished_at' => now()
             ]);
             return;
         }
@@ -253,6 +265,8 @@ class SubmitShopifyProductsJob implements ShouldQueue, StoreScopedJob
 
             Log::error('Error: ' . $e->getMessage());
 
+        } finally {
+            $lock->release();
         }
     }
 
