@@ -7,6 +7,7 @@ use App\Constants\HdTicketTypeCode;
 use App\Constants\OrderOperationStatus;
 use App\Constants\OrderOperationType;
 use App\Constants\OrderStatus;
+use App\Constants\ShippingLabelCreationType;
 use App\Jobs\ProcessStoreMessageAccountJob;
 use App\Models\Catalog;
 use App\Models\Customer;
@@ -21,15 +22,18 @@ use App\Models\OrderItemAttribute;
 use App\Models\OrderOperation;
 use App\Models\OrderOperationItem;
 use App\Models\OrderSynchronization;
+use App\Models\ShippingCarrier;
 use App\Models\ShippingPackage;
 use App\Models\Store;
 use App\Services\Marketplace\Service\AmazonService;
 use App\Services\Marketplace\Service\EbayService;
+use App\Utils\order\OrderOperationUtility;
 use App\Utils\shipment\ShipmentDocumentsCreator;
 use Illuminate\Http\Request;
 use App\Helpers\QueryFilters;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 
 class OrdersController extends Controller
@@ -46,7 +50,9 @@ class OrdersController extends Controller
         echo '</pre>';die;*/
         $stores = Store::with('storeType')->where('store_status', 1)->orderBy('name', 'asc')->get();
 
-        return view('orders.list',compact('perPage','stores'));
+        $shippingCarrier = ShippingCarrier::orderBy('name', 'asc')->get();
+
+        return view('orders.list',compact('perPage','stores','shippingCarrier'));
     }
 
     public function filter(Request $request)
@@ -245,7 +251,131 @@ class OrdersController extends Controller
         print_r($orderDetail);
         echo '</pre>';die;*/
         $orderOperations = OrderOperation::with('carrier','shipFrom')->where('order_id',$id)->get();
-        return view('orders.detail',compact('orderDetail', 'orderOperations'));
+        $pendingShipment = $this->getPendingShipment($id);
+        $shippingCarrier = ShippingCarrier::orderBy('name', 'asc')->get();
+        return view('orders.detail',compact('orderDetail', 'orderOperations', 'pendingShipment', 'shippingCarrier'));
+    }
+
+    /**
+     * The open shipment of an order, for the Update Tracking Number popup to prefill its carrier and service.
+     */
+    public function getPendingShipmentDetail(Request $request)
+    {
+        $orderOperation = $this->getPendingShipment($request->input('order_id'));
+        if (!$orderOperation) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This order has no open shipment. It may already be shipped or canceled.'
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'order_number' => $orderOperation->order->order_id ?? '',
+            'carrier_id' => $orderOperation->shipping_carrier_id,
+            'carrier_service_id' => $orderOperation->shipping_carrier_service_id,
+        ]);
+    }
+
+    /**
+     * Mark the order shipped with a tracking number from a label made outside Aselna. Same flow as
+     * "Mark as shipped" on the shipment screen: the shipment operation gets the carrier, service and
+     * tracking number, then OrderOperationUtility::createShipment pushes it to the marketplace and
+     * marks the operation, order and items shipped.
+     */
+    public function updateTrackingNumber(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'order_id' => 'required',
+            'carrier_name' => 'required',
+            'shipping_carrier_service' => 'required',
+            'tracking_number' => 'required|string|max:100',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            $orderOperation = $this->getPendingShipment($request->input('order_id'));
+            if (!$orderOperation) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No open shipment found for this order.'
+                ]);
+            }
+
+            if (isset($orderOperation->order->contingent) && $orderOperation->order->contingent) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Contingent order cannot be processed.'
+                ]);
+            }
+
+            $storeType = strtolower($orderOperation->store->storeType->name ?? '');
+            if (!in_array($storeType, ['amazon', 'shopify', 'ebay', 'walmart', 'temu'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Updating the tracking number is not supported for ' . ($orderOperation->store->storeType->name ?? 'this') . ' stores.'
+                ]);
+            }
+
+            $trackingNumber = trim($request->input('tracking_number'));
+            $orderOperation->update([
+                'tracking_number' => $trackingNumber,
+                'shipping_carrier_id' => $request->input('carrier_name'),
+                'shipping_carrier_service_id' => $request->input('shipping_carrier_service'),
+                'label_creation_type' => ShippingLabelCreationType::MarkAsShipped,
+                'updated_by' => auth()->user()->name ?? null,
+            ]);
+            // Orders merged into this shipment go out in the same box, under the same tracking number.
+            OrderOperation::where('is_merged', true)
+                ->where('merged_with', $orderOperation->id)
+                ->update(['tracking_number' => $trackingNumber]);
+
+            Log::info('Manual tracking number ' . $trackingNumber . ' for order operation: ' . $orderOperation->id);
+
+            $orderOperation = OrderOperation::with('order', 'order.orderItem', 'order.customer', 'order.customerAddress', 'store', 'store.storeType', 'carrier', 'carrierService', 'shipFrom', 'operationItem', 'operationItem.orderItem')->where('id', $orderOperation->id)->first();
+            $successRes = OrderOperationUtility::createShipment($orderOperation);
+
+            if (!$successRes['success']) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $successRes['message'] ?: 'The tracking number was saved, but the marketplace did not accept the shipment. Please try again.'
+                ]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Tracking number updated and order marked as shipped.'
+            ]);
+        } catch (\Exception $exception) {
+            Log::error('Update tracking number error: ' . $exception->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => $exception->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * The order's shipment operation that has not been shipped or canceled yet. Operations merged
+     * into another shipment are skipped, they are shipped through the one they are merged with.
+     */
+    private function getPendingShipment($orderId)
+    {
+        return OrderOperation::with('order', 'store', 'store.storeType')
+            ->where('order_id', $orderId)
+            ->where('operation_type', OrderOperationType::OrderShipment)
+            ->where(function ($q) {
+                $q->whereNull('is_merged')->orWhere('is_merged', false);
+            })
+            ->whereNotIn('status', [OrderOperationStatus::MarkAsShipped, OrderOperationStatus::InTransit, OrderOperationStatus::Delivered, OrderOperationStatus::Canceled, OrderOperationStatus::CanceledRequested])
+            ->orderBy('created_at', 'desc')
+            ->first();
     }
 
     public function create_message(Request $request)

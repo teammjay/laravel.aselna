@@ -85,6 +85,9 @@
             <button type="button" class="btn btn-default" id="create_message" disabled="">
                 <i class="fas fa-fw fa-envelope"></i> Create Message
             </button>
+            <button type="button" class="btn btn-default" id="update_tracking_number" disabled="">
+                <i class="fas fa-fw fa-truck"></i> Update Tracking Number
+            </button>
         </div>
         <div class="col-md-2">
             <span id="clear_session_filter" class="btn btn-secondary float-right mr-2">Clear Filter</span>
@@ -344,11 +347,13 @@
                     ele.find('.pro-id').prop('checked', true);
                     $('#edit_order').removeAttr('disabled');
                     $('#create_message').removeAttr('disabled');
+                    $('#update_tracking_number').removeAttr('disabled');
                 }
 
                 if (!$('.pro-id:checked').length) {
                     $('#edit_product').attr('disabled', true);
                     $('#create_message').attr('disabled', true);
+                    $('#update_tracking_number').attr('disabled', true);
                 }
             });
 
@@ -375,6 +380,13 @@
                         //location.href = "{{ url('orders/create_message') }}/" + selectedId;
                     }
                 });
+            });
+
+            $('#update_tracking_number').on('click', function () {
+                let selectedId = $('.pro-id:checked').first().val();
+                if (selectedId) {
+                    openTrackingNumberModal(selectedId);
+                }
             });
 
             $('#saveTicket').on('click', function () {
@@ -601,6 +613,5 @@
             $.fn.dataTable.ext.errMode = 'throw';
         }
     </script>
+    @include('orders.partials.update_tracking_number_modal')
 @stop
-
-

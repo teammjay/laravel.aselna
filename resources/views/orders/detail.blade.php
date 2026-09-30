@@ -262,8 +262,11 @@
             </div>
 
             <div class="card">
-                <div class="card-header">
+                <div class="card-header d-flex align-items-center">
                     Operations
+                    @if(isset($pendingShipment))
+                        <button class="btn btn-primary btn-sm ml-auto" type="button" id="updateTrackingNumberBtn"><i class="fas fa-fw fa-truck"></i> Update Tracking Number</button>
+                    @endif
                 </div>
 
                 <div class="card-body">
@@ -630,6 +633,10 @@
                 }
             });
 
+            $(document).on('click', '#updateTrackingNumberBtn', function () {
+                openTrackingNumberModal('{{ $orderDetail->id }}');
+            });
+
             $(document).on('click', '.show_attributes', function () {
                 var order_item_id = $(this).data('id');
                 if (order_item_id != '' && order_item_id != null) {
@@ -678,4 +685,5 @@
             });
         });
     </script>
+    @include('orders.partials.update_tracking_number_modal')
 @stop
