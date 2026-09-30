@@ -6,6 +6,8 @@ use App\Constants\ListingStatus;
 use App\Constants\ListingSyncStatus;
 use App\Helpers\Common;
 use App\Jobs\Concerns\TrackableJob;
+use App\Jobs\Concerns\ScopesToStores;
+use App\Jobs\Contracts\StoreScopedJob;
 use App\Models\ListingItemLink;
 use App\Models\Store;
 use App\Services\Auth\WalmartAuthService;
@@ -14,21 +16,34 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
 
-class ExistingListingItemSyncJob implements ShouldQueue
+class ExistingListingItemSyncJob implements ShouldQueue, StoreScopedJob
 {
-    use Queueable, TrackableJob {
+    use Queueable, ScopesToStores, TrackableJob {
         TrackableJob::withChain insteadof Queueable;
         Queueable::withChain as queueableWithChain;
     }
 
     public $timeout = 14400;
 
+    public static function eligibleStoreTypes(): array
+    {
+        return ['walmart'];
+    }
+
+    /**
+     * Shares the store mapping of the WalmartListingItemSyncJob cron job.
+     */
+    public static function storeMappingClass(): string
+    {
+        return \App\Jobs\WalmartListingItemSyncJob::class;
+    }
+
     /**
      * Create a new job instance.
      */
-    public function __construct()
+    public function __construct(string|array|null $storeIds = null)
     {
-        //
+        $this->initStoreScope($storeIds);
     }
 
     /**
@@ -40,7 +55,7 @@ class ExistingListingItemSyncJob implements ShouldQueue
             $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now()]);
             Log::info('WalmartExistingListingItemSyncJob started');
 
-            $store_ids = Common::getActiveStoreJobs('WalmartListingItemSyncJob', 'walmart');
+            $store_ids = $this->resolveStoreIds();
 
             $query = Store::where('store_type_id', function ($subquery) {
                 return $subquery->select('id')

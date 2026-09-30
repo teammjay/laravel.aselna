@@ -5,6 +5,8 @@ namespace App\Jobs;
 use App\Constants\FeedTypes;
 use App\Helpers\Common;
 use App\Jobs\Concerns\TrackableJob;
+use App\Jobs\Concerns\ScopesToStores;
+use App\Jobs\Contracts\StoreScopedJob;
 use App\Constants\FeedStatus;
 use App\Constants\ListingStatus;
 use App\Constants\ListingSyncStatus;
@@ -17,21 +19,26 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
 
-class EbayListingItemSyncJob implements ShouldQueue
+class EbayListingItemSyncJob implements ShouldQueue, StoreScopedJob
 {
-    use Queueable, TrackableJob {
+    use Queueable, ScopesToStores, TrackableJob {
         TrackableJob::withChain insteadof Queueable;
         Queueable::withChain as queueableWithChain;
     }
 
     public $timeout = 3000;
 
+    public static function eligibleStoreTypes(): array
+    {
+        return ['ebay'];
+    }
+
     /**
      * Create a new job instance.
      */
-    public function __construct()
+    public function __construct(string|array|null $storeIds = null)
     {
-        //
+        $this->initStoreScope($storeIds);
     }
 
     /**
@@ -44,7 +51,7 @@ class EbayListingItemSyncJob implements ShouldQueue
 
         try {
             /* get active store jobs*/
-            $store_ids = Common::getActiveStoreJobs('EbayListingItemSyncJob', 'ebay');
+            $store_ids = $this->resolveStoreIds();
             /* get active store jobs*/
 
             $query = Store::where('store_type_id', function ($subquery) {
@@ -66,6 +73,7 @@ class EbayListingItemSyncJob implements ShouldQueue
             }
 
             foreach ($ebay_store_ids as $storeId) {
+                $this->trackCurrentStore($storeId, count($ebay_store_ids));
                 $store = Store::find($storeId);
 
                 if (!isset($store->user_id)) continue;

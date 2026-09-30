@@ -9,38 +9,44 @@ use Illuminate\Console\Command;
 class OyderaMasterSwitchCommand extends Command
 {
     protected $signature = 'oydera:master-switch
-                            {store? : Store name or store id. Omit to sync every store in OyderaMasterSwitch::STORE_NAMES}';
+                            {store?* : One or more store names or store ids. Omit to sync every store in OyderaMasterSwitch::STORE_NAMES}';
 
     protected $description = 'Sync store products, listing items, listing item details, listing item images and navigation pages from oydera, then fetch the products already on Shopify, for the Shopify stores.';
 
     public function handle()
     {
-        $store = $this->argument('store');
+        $stores = $this->argument('store');
 
-        if (empty($store)) {
+        if (empty($stores)) {
             OyderaMasterSwitch::dispatch();
             $this->info('Queued OyderaMasterSwitch for: ' . implode(', ', OyderaMasterSwitch::STORE_NAMES));
 
             return self::SUCCESS;
         }
 
-        $storeRecord = Store::select('store.*')
-            ->join('store_type', 'store_type.id', '=', 'store.store_type_id')
-            ->where('store_type.code', 'shopify')
-            ->where(function ($query) use ($store) {
-                $query->where('store.id', $store)
-                    ->orWhere('store.name', $store);
-            })
-            ->first();
+        $storeRecords = [];
 
-        if (!$storeRecord) {
-            $this->error('No Shopify store found matching: ' . $store);
+        foreach ($stores as $store) {
+            $storeRecord = Store::select('store.*')
+                ->join('store_type', 'store_type.id', '=', 'store.store_type_id')
+                ->where('store_type.code', 'shopify')
+                ->where(function ($query) use ($store) {
+                    $query->where('store.id', $store)
+                        ->orWhere('store.name', $store);
+                })
+                ->first();
 
-            return self::FAILURE;
+            if (!$storeRecord) {
+                $this->error('No Shopify store found matching: ' . $store);
+
+                return self::FAILURE;
+            }
+
+            $storeRecords[$storeRecord->id] = $storeRecord;
         }
 
-        OyderaMasterSwitch::dispatch($storeRecord->id);
-        $this->info('Queued OyderaMasterSwitch for: ' . $storeRecord->name . ' (' . $storeRecord->id . ')');
+        OyderaMasterSwitch::dispatch(array_keys($storeRecords));
+        $this->info('Queued OyderaMasterSwitch for: ' . collect($storeRecords)->map(fn ($store) => $store->name . ' (' . $store->id . ')')->implode(', '));
 
         return self::SUCCESS;
     }

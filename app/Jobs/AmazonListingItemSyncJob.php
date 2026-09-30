@@ -4,6 +4,8 @@ namespace App\Jobs;
 
 use App\Helpers\Common;
 use App\Jobs\Concerns\TrackableJob;
+use App\Jobs\Concerns\ScopesToStores;
+use App\Jobs\Contracts\StoreScopedJob;
 use App\Constants\FeedStatus;
 use App\Constants\ListingStatus;
 use App\Constants\ListingSyncStatus;
@@ -17,21 +19,26 @@ use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
 //use const http\Client\Curl\FEATURES;
 
-class AmazonListingItemSyncJob implements ShouldQueue
+class AmazonListingItemSyncJob implements ShouldQueue, StoreScopedJob
 {
-    use Queueable, TrackableJob {
+    use Queueable, ScopesToStores, TrackableJob {
         TrackableJob::withChain insteadof Queueable;
         Queueable::withChain as queueableWithChain;
     }
 
     public $timeout = 3000;
 
+    public static function eligibleStoreTypes(): array
+    {
+        return ['amazon'];
+    }
+
     /**
      * Create a new job instance.
      */
-    public function __construct()
+    public function __construct(string|array|null $storeIds = null)
     {
-        //
+        $this->initStoreScope($storeIds);
     }
 
     /**
@@ -44,7 +51,7 @@ class AmazonListingItemSyncJob implements ShouldQueue
             $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now(), 'tags' => 'Amazon ListingItem']);
 
             /* get active store jobs*/
-            $store_ids = Common::getActiveStoreJobs('AmazonListingItemSyncJob', 'amazon');
+            $store_ids = $this->resolveStoreIds();
             /* get active store jobs*/
 
             $query = Store::where('store_type_id', function ($subquery) {
