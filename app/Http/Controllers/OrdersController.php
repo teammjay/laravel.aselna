@@ -251,21 +251,21 @@ class OrdersController extends Controller
         print_r($orderDetail);
         echo '</pre>';die;*/
         $orderOperations = OrderOperation::with('carrier','shipFrom')->where('order_id',$id)->get();
-        $pendingShipment = $this->getPendingShipment($id);
+        $shippedShipment = $this->getShippedShipment($id);
         $shippingCarrier = ShippingCarrier::orderBy('name', 'asc')->get();
-        return view('orders.detail',compact('orderDetail', 'orderOperations', 'pendingShipment', 'shippingCarrier'));
+        return view('orders.detail',compact('orderDetail', 'orderOperations', 'shippedShipment', 'shippingCarrier'));
     }
 
     /**
-     * The open shipment of an order, for the Update Tracking Number popup to prefill its carrier and service.
+     * The shipped shipment of an order, for the Update Tracking Number popup to prefill its carrier and service.
      */
-    public function getPendingShipmentDetail(Request $request)
+    public function getShippedShipmentDetail(Request $request)
     {
-        $orderOperation = $this->getPendingShipment($request->input('order_id'));
+        $orderOperation = $this->getShippedShipment($request->input('order_id'));
         if (!$orderOperation) {
             return response()->json([
                 'success' => false,
-                'message' => 'This order has no open shipment. It may already be shipped or canceled.'
+                'message' => 'The tracking number can only be updated for shipped orders.'
             ]);
         }
 
@@ -278,10 +278,9 @@ class OrdersController extends Controller
     }
 
     /**
-     * Mark the order shipped with a tracking number from a label made outside Aselna. Same flow as
-     * "Mark as shipped" on the shipment screen: the shipment operation gets the carrier, service and
-     * tracking number, then OrderOperationUtility::createShipment pushes it to the marketplace and
-     * marks the operation, order and items shipped.
+     * Give a shipped order a new tracking number from a label made outside Aselna. The shipped operation
+     * is kept as it is; a copy of it (with its items) gets the new carrier, service and tracking number,
+     * and OrderOperationUtility::createShipment pushes the copy to the marketplace.
      */
     public function updateTrackingNumber(Request $request)
     {
@@ -300,11 +299,11 @@ class OrdersController extends Controller
         }
 
         try {
-            $orderOperation = $this->getPendingShipment($request->input('order_id'));
+            $orderOperation = $this->getShippedShipment($request->input('order_id'));
             if (!$orderOperation) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'No open shipment found for this order.'
+                    'message' => 'The tracking number can only be updated for shipped orders.'
                 ]);
             }
 
@@ -324,33 +323,56 @@ class OrdersController extends Controller
             }
 
             $trackingNumber = trim($request->input('tracking_number'));
-            $orderOperation->update([
-                'tracking_number' => $trackingNumber,
-                'shipping_carrier_id' => $request->input('carrier_name'),
-                'shipping_carrier_service_id' => $request->input('shipping_carrier_service'),
-                'label_creation_type' => ShippingLabelCreationType::MarkAsShipped,
-                'updated_by' => auth()->user()->name ?? null,
-            ]);
-            // Orders merged into this shipment go out in the same box, under the same tracking number.
-            OrderOperation::where('is_merged', true)
-                ->where('merged_with', $orderOperation->id)
-                ->update(['tracking_number' => $trackingNumber]);
+            $userName = auth()->user()->name ?? null;
 
-            Log::info('Manual tracking number ' . $trackingNumber . ' for order operation: ' . $orderOperation->id);
+            $newOperation = DB::transaction(function () use ($orderOperation, $request, $trackingNumber, $userName) {
+                $newOperation = $orderOperation->replicate();
+                $newOperation->fill([
+                    'tracking_number' => $trackingNumber,
+                    'shipping_carrier_id' => $request->input('carrier_name'),
+                    'shipping_carrier_service_id' => $request->input('shipping_carrier_service'),
+                    'label_creation_type' => ShippingLabelCreationType::MarkAsShipped,
+                    // The label was not bought through Aselna, so the original's label transaction does not apply.
+                    'shipping_transaction_id' => null,
+                    'shipping_account_transaction_id' => null,
+                    'sync_status' => null,
+                    'sync_message' => null,
+                    'created_by' => $userName,
+                    'updated_by' => $userName,
+                ]);
+                $newOperation->save();
 
-            $orderOperation = OrderOperation::with('order', 'order.orderItem', 'order.customer', 'order.customerAddress', 'store', 'store.storeType', 'carrier', 'carrierService', 'shipFrom', 'operationItem', 'operationItem.orderItem')->where('id', $orderOperation->id)->first();
-            $successRes = OrderOperationUtility::createShipment($orderOperation);
+                foreach ($orderOperation->operationItem as $operationItem) {
+                    $newItem = $operationItem->replicate();
+                    $newItem->order_operation_id = $newOperation->id;
+                    $newItem->created_by = $userName;
+                    $newItem->updated_by = $userName;
+                    $newItem->save();
+                }
+
+                return $newOperation;
+            });
+
+            Log::info('Manual tracking number ' . $trackingNumber . ' for order operation: ' . $newOperation->id . ' (copied from ' . $orderOperation->id . ')');
+
+            $newOperation = OrderOperation::with('order', 'order.orderItem', 'order.customer', 'order.customerAddress', 'store', 'store.storeType', 'carrier', 'carrierService', 'shipFrom', 'operationItem', 'operationItem.orderItem')->where('id', $newOperation->id)->first();
+            $successRes = OrderOperationUtility::createShipment($newOperation);
+//            $successRes['success'] = true;
 
             if (!$successRes['success']) {
+                // Drop the copy so a retry does not leave a trail of unsynced operations.
+                OrderOperationItem::where('order_operation_id', $newOperation->id)->delete();
+                $newOperation->delete();
+
                 return response()->json([
                     'success' => false,
-                    'message' => $successRes['message'] ?: 'The tracking number was saved, but the marketplace did not accept the shipment. Please try again.'
+                    'message' => $successRes['message'] ?: 'The marketplace did not accept the new tracking number. Please try again.'
                 ]);
             }
 
             return response()->json([
                 'success' => true,
-                'message' => 'Tracking number updated and order marked as shipped.'
+                'message' => 'Tracking number updated.'
             ]);
         } catch (\Exception $exception) {
             Log::error('Update tracking number error: ' . $exception->getMessage());
@@ -362,18 +384,21 @@ class OrdersController extends Controller
     }
 
     /**
-     * The order's shipment operation that has not been shipped or canceled yet. Operations merged
-     * into another shipment are skipped, they are shipped through the one they are merged with.
+     * The latest shipment operation of a shipped order. Operations merged into another shipment are
+     * skipped, they are shipped through the one they are merged with.
      */
-    private function getPendingShipment($orderId)
+    private function getShippedShipment($orderId)
     {
-        return OrderOperation::with('order', 'store', 'store.storeType')
+        return OrderOperation::with('order', 'store', 'store.storeType', 'operationItem')
             ->where('order_id', $orderId)
-            ->where('operation_type', OrderOperationType::OrderShipment)
+            ->whereHas('order', function ($q) {
+                $q->where('order_status', OrderStatus::Shipped);
+            })
+//            ->where('operation_type', OrderOperationType::OrderShipment)
             ->where(function ($q) {
                 $q->whereNull('is_merged')->orWhere('is_merged', false);
             })
-            ->whereNotIn('status', [OrderOperationStatus::MarkAsShipped, OrderOperationStatus::InTransit, OrderOperationStatus::Delivered, OrderOperationStatus::Canceled, OrderOperationStatus::CanceledRequested])
+            ->whereNotIn('status', [OrderOperationStatus::Canceled, OrderOperationStatus::CanceledRequested])
             ->orderBy('created_at', 'desc')
             ->first();
     }

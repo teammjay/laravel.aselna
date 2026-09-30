@@ -347,7 +347,10 @@
                     ele.find('.pro-id').prop('checked', true);
                     $('#edit_order').removeAttr('disabled');
                     $('#create_message').removeAttr('disabled');
-                    $('#update_tracking_number').removeAttr('disabled');
+                    // The tracking number can only be updated once the order is shipped.
+                    let rowData = $('#ordersTable').DataTable().row(ele).data();
+                    console.log(rowData)
+                    $('#update_tracking_number').prop('disabled', !(rowData && parseInt(rowData.order_status) === {{ OrderStatus::Shipped }}));
                 }
 
                 if (!$('.pro-id:checked').length) {

@@ -30,7 +30,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" id="saveTrackingNumber"><i class="fa fa-check"></i> Update &amp; Mark Shipped</button>
+                <button type="button" class="btn btn-primary" id="saveTrackingNumber"><i class="fa fa-check"></i> Update Tracking Number</button>
             </div>
         </div>
     </div>
@@ -59,10 +59,10 @@
         });
     }
 
-    // Looks up the order's open shipment first: the popup only opens when there is one to ship.
+    // Looks up the order's shipped shipment first: the popup only opens for shipped orders.
     function openTrackingNumberModal(orderId) {
         $.ajax({
-            url: "{{ route('order.pendingshipment') }}",
+            url: "{{ route('order.shippedshipment') }}",
             type: 'POST',
             data: {
                 order_id: orderId,
@@ -70,7 +70,7 @@
             },
             success: function (response) {
                 if (!response.success) {
-                    alert(response.message || 'No open shipment found for this order.');
+                    alert(response.message || 'The tracking number can only be updated for shipped orders.');
                     return;
                 }
                 $('#tn_order_id').val(orderId);

@@ -264,7 +264,7 @@
             <div class="card">
                 <div class="card-header d-flex align-items-center">
                     Operations
-                    @if(isset($pendingShipment))
+                    @if(isset($shippedShipment))
                         <button class="btn btn-primary btn-sm ml-auto" type="button" id="updateTrackingNumberBtn"><i class="fas fa-fw fa-truck"></i> Update Tracking Number</button>
                     @endif
                 </div>

@@ -517,7 +517,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/orders/getcustomerdetail', 'getCustomerDetail')->name('order.getcustomerdetail');
         Route::post('/orders/savecustomer', 'saveCustomer')->name('order.savecustomer');
         Route::post('/orders/reprintLabel', 'reprintLabel')->name('order.reprintlabel');
-        Route::post('/orders/pendingshipment', 'getPendingShipmentDetail')->name('order.pendingshipment');
+        Route::post('/orders/shippedshipment', 'getShippedShipmentDetail')->name('order.shippedshipment');
         Route::post('/orders/updatetrackingnumber', 'updateTrackingNumber')->name('order.updatetrackingnumber');
         Route::post('/orders/getorderitemattributes', 'getOrderItemAttributes')->name('order.getorderitemattributes');
     });
