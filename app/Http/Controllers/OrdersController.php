@@ -27,6 +27,7 @@ use App\Models\ShippingPackage;
 use App\Models\Store;
 use App\Services\Marketplace\Service\AmazonService;
 use App\Services\Marketplace\Service\EbayService;
+use App\Services\Marketplace\Service\ShopifyService;
 use App\Utils\order\OrderOperationUtility;
 use App\Utils\shipment\ShipmentDocumentsCreator;
 use Illuminate\Http\Request;
@@ -356,7 +357,16 @@ class OrdersController extends Controller
             Log::info('Manual tracking number ' . $trackingNumber . ' for order operation: ' . $newOperation->id . ' (copied from ' . $orderOperation->id . ')');
 
             $newOperation = OrderOperation::with('order', 'order.orderItem', 'order.customer', 'order.customerAddress', 'store', 'store.storeType', 'carrier', 'carrierService', 'shipFrom', 'operationItem', 'operationItem.orderItem')->where('id', $newOperation->id)->first();
-            $successRes = OrderOperationUtility::createShipment($newOperation);
+            if ($storeType == 'shopify') {
+                // The order is already fulfilled in Shopify, so the tracking on that fulfillment is updated
+                // instead of creating a new fulfillment.
+                $successRes = (new ShopifyService())->updateTrackingNumber($newOperation);
+                if ($successRes['success']) {
+                    $newOperation->update(['status' => OrderOperationStatus::MarkAsShipped, 'ship_date' => now()]);
+                }
+            } else {
+                $successRes = OrderOperationUtility::createShipment($newOperation);
+            }
 //            $successRes['success'] = true;
 
             if (!$successRes['success']) {

@@ -546,6 +546,50 @@ class ShopifyService implements MarketplaceServiceInterface
     }
 
 
+    /**
+     * Replace the tracking number on an order that is already fulfilled in Shopify. fulfillmentCreate cannot
+     * be used for this, the fulfillment order has nothing left to fulfil, so the latest fulfillment is updated.
+     */
+    public function updateTrackingNumber($orderOperation): array
+    {
+        $store = $orderOperation->store;
+        $this->authService = new ShopifyAuthService($store->secret_key, $store->service_url);
+        $orderId = "gid://shopify/Order/" . $orderOperation->order->order_id;
+
+        $response = $this->authService->getOrderFulfillments($orderId);
+        if (empty($response) || isset($response['errors'])) {
+            return ['success' => false, 'message' => 'Could not load the Shopify fulfillments for this order.'];
+        }
+
+        $fulfillments = array_filter($response['data']['order']['fulfillments'] ?? [], function ($fulfillment) {
+            return !in_array($fulfillment['status'], ['CANCELLED', 'ERROR', 'FAILURE']);
+        });
+        if (empty($fulfillments)) {
+            return ['success' => false, 'message' => 'No fulfillment found in Shopify for this order.'];
+        }
+
+        usort($fulfillments, function ($a, $b) {
+            return strcmp($b['createdAt'], $a['createdAt']);
+        });
+        $fulfillment = $fulfillments[0];
+
+        $company = $orderOperation->carrierService->ShippingCarrier->name ?? $orderOperation->carrier->name ?? null;
+        $response = $this->authService->updateFulfillmentTrackingInfo($fulfillment['id'], $company, $orderOperation->tracking_number);
+
+        if (empty($response) || isset($response['errors'])) {
+            Log::info('Shopify tracking number update error: ' . json_encode($response));
+            return ['success' => false, 'message' => 'Shopify did not accept the new tracking number.'];
+        }
+
+        $userErrors = $response['data']['fulfillmentTrackingInfoUpdateV2']['userErrors'] ?? [];
+        if (!empty($userErrors)) {
+            Log::info('Shopify tracking number update user errors: ' . json_encode($userErrors));
+            return ['success' => false, 'message' => implode(' ', array_column($userErrors, 'message'))];
+        }
+
+        return ['success' => true, 'message' => ''];
+    }
+
     public function refundOrder($order_id,$store)
     {
         if($order_id) {
