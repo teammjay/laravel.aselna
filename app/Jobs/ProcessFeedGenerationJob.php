@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Constants\FeedFilePrefix;
 use App\Constants\FeedStatus;
 use App\Constants\WebStorePageType;
 use App\Exceptions\UpcNotAvailableException;
@@ -197,6 +198,10 @@ class ProcessFeedGenerationJob implements ShouldQueue
             $this->directory = public_path($this->feedFolder . '/' . $this->store_id);
             // ensure directory exists
             FileUtility::createDirectoryIfNotExists($this->directory);
+            // feed_product / feed_device when the dashboard picked one, so this run only replaces those parts
+            if (FeedFilePrefix::isValid($this->data['filePrefix'] ?? null)) {
+                $this->file_name = $this->data['filePrefix'] . '.' . pathinfo($this->file_name, PATHINFO_EXTENSION);
+            }
             $this->fileNameBase = pathinfo($this->file_name, PATHINFO_FILENAME);
             $this->fileExtension = pathinfo($this->file_name, PATHINFO_EXTENSION);
 
@@ -599,8 +604,8 @@ class ProcessFeedGenerationJob implements ShouldQueue
      */
     private function clearPreviousFeedFiles(): void
     {
-        // Numbered parts only: feed_1.csv, feed_12.csv. Anything else named like a part, such as
-        // feed_1_asl.csv or a backup copy, is left alone.
+        // Numbered parts of this prefix only: feed_1.csv, feed_12.csv. Anything else named like a part,
+        // such as feed_1_asl.csv, a backup copy, or feed_product_1.csv when this run is "feed", is left alone.
         $partPattern = '/^' . preg_quote($this->fileNameBase, '/') . '_\d+\.' . preg_quote($this->fileExtension, '/') . '$/';
 
         $removed = 0;
