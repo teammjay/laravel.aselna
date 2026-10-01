@@ -131,9 +131,14 @@ class Navigationutility
                         ->where('page_type', WebStorePageType::BRAND)
                         ->where('device_brand_id', $link->device_brand_id)
                         ->first();
-                    $count = StoreNavigationPage::where('store_id', $store_id)
-                        ->where('device_brand_id', $link->device_brand_id)
-                        ->where('page_type', $skipDevicePages ? WebStorePageType::DEVICE : WebStorePageType::BRAND_DEVICE_PRODUCT_TYPES)
+                    $count = StoreNavigationPage::join('device', 'store_navigation_page.device_id', '=', 'device.id')
+                        ->where('store_navigation_page.store_id', $store_id)
+                        ->where(function ($query) use ($link) {
+                            // older rows were saved without device_brand_id, so fall back to the device's brand
+                            $query->where('store_navigation_page.device_brand_id', $link->device_brand_id)
+                                ->orWhere('device.brand_id', $link->device_brand_id);
+                        })
+                        ->where('store_navigation_page.page_type', $skipDevicePages ? WebStorePageType::DEVICE : WebStorePageType::BRAND_DEVICE_PRODUCT_TYPES)
                         ->count();
 
                     if ($count <= 0) {
@@ -156,7 +161,11 @@ class Navigationutility
                     ->join('popular_devices','store_navigation_page.device_id', '=', 'popular_devices.device_id')
                     ->where('store_id', $store_id)
                     ->where('page_type', $skipDevicePages ? WebStorePageType::DEVICE : WebStorePageType::BRAND_DEVICE_PRODUCT_TYPES)
-                    ->where('device_brand_id', $brand->id)
+                    ->where(function ($query) use ($brand) {
+                        // older rows were saved without device_brand_id, so fall back to the device's brand
+                        $query->where('store_navigation_page.device_brand_id', $brand->id)
+                            ->orWhere('device.brand_id', $brand->id);
+                    })
                     ->where('device.status', 'active')
                     ->orderBy('device.device_type_id', 'asc')
                     ->orderBy('device.release_date', 'desc')
@@ -170,7 +179,11 @@ class Navigationutility
                     })
                     ->where('store_id', $store_id)
                     ->where('page_type', $skipDevicePages ? WebStorePageType::DEVICE : WebStorePageType::BRAND_DEVICE_PRODUCT_TYPES)
-                    ->where('device_brand_id', $brand->id)
+                    ->where(function ($query) use ($brand) {
+                        // older rows were saved without device_brand_id, so fall back to the device's brand
+                        $query->where('store_navigation_page.device_brand_id', $brand->id)
+                            ->orWhere('device.brand_id', $brand->id);
+                    })
                     ->where('device.status', 'active')
                     ->orderBy('device.name', 'asc')
                     ->get();
