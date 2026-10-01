@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Constants\FeedFilePrefix;
 use App\Constants\FeedStatus;
 use App\Jobs\ProcessFeedGenerationJob;
 use App\Models\Brand;
@@ -73,6 +74,7 @@ class FeedController extends Controller
                 'product_type' => $request->input('product_type', []),
                 'brand' => $request->input('brand', []),
             ];
+            $filters['file_prefix'] = FeedFilePrefix::resolve($request->input('file_prefix'), $filters['product_code'], $filters['device']);
 
             FeedConfiguration::updateOrCreate(
                 [
@@ -142,6 +144,7 @@ class FeedController extends Controller
                 'product_type' => $filters['product_type'] ?? [],
                 'brand' => $filters['brand'] ?? [],
             ];
+            $requestData['filePrefix'] = FeedFilePrefix::resolve($filters['file_prefix'] ?? null, $requestData['product_code'], $requestData['device']);
 
             if (isset($feed_type)) {
                 switch (strtolower($feed_type)) {
@@ -305,6 +308,7 @@ class FeedController extends Controller
                 'included_ratings' => $request->input('included_ratings'),
                 'excluded_ratings' => $request->input('excluded_ratings'),
             ];
+            $requestData['filePrefix'] = FeedFilePrefix::resolve($request->input('file_prefix'), $product_code, $requestData['device']);
 
             if (isset($feed_type)) {
 
