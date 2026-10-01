@@ -322,7 +322,7 @@ class ShopifyAuthService
         if (!empty($variables)) {
             $response = $this->makeGraphQLRequest(ShopifyQueries::$createFullfillment, $variables);
 
-            //Log::info('Update Fullfillment Response: ' . json_encode($response));
+            Log::info('Update Fullfillment Response: ' . json_encode($response));
 
             return $response;
         } else {
