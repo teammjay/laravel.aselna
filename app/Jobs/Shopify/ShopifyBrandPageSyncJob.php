@@ -79,15 +79,24 @@ class ShopifyBrandPageSyncJob implements ShouldQueue
                 case WebStorePageType::BRAND_DEVICES:
                     Log::info('Page Type :: ' . $page_type);
                     $brands = Brand::where('status', 'active')->orderBy('order_no')->get();
+                    $descriptionTemplate = Navigationutility::getDescriptionTemplate($this->store_id, $page_type);
                     foreach ($brands as $brand) {
                         Log::info('Brand :: ' . $brand->name);
                         $request['device_brand_id'] = $brand->id;
                         $links = Navigationutility::getLinks($this->store_id, $page_type, $request);
 
+                        $request['description'] = $this->pageDescription($descriptionTemplate, [
+                            'store_id' => $this->store_id,
+                            'page_type' => $page_type,
+                            'device_brand_id' => $brand->id,
+                        ], [
+                            'brandName' => $brand->name,
+                        ]);
+
                         $data = [
-                            'description' => $request->description ?? '',
+                            'description' => $request['description'],
                             'title' => $request->title ?? $links['final_title'],
-                            'name' => $request->name ?? '',
+                            'name' => $request->name ?? $brand->name,
                             'popularLinks' => $links['popular_link'] ?? [],
                             'otherLinks' => $links['other_link'] ?? [],
                             'alphabeticallySortedPopularLinks' => [],
@@ -96,6 +105,7 @@ class ShopifyBrandPageSyncJob implements ShouldQueue
 
                         $request['title'] = $links['final_title'];
                         Log::info('Request Title :: ' . json_encode($request['title']));
+                        Log::info('Reequest Json :: ' . json_encode($request));
                         $request['generated_body'] = Navigationutility::fillTemplateWithData($template->template_code, $data);
                         Log::info('Brand :: ' . $brand->name . ' Generated Body :: ' . $request['generated_body']);
 
@@ -326,7 +336,8 @@ class ShopifyBrandPageSyncJob implements ShouldQueue
                         }, 'device.id','id');
                     break;
                 case WebStorePageType::BRAND_DEVICE_PRODUCT_TYPES:
-                    Device::where('status', 'active')->whereIn('device_type_id', $compatibleDeviceTypes)->orderBy('id')->chunk(100, function ($devices) use ($page_type, $template, $request) {
+                    $descriptionTemplate = Navigationutility::getDescriptionTemplate($this->store_id, $page_type);
+                    Device::where('status', 'active')->whereIn('device_type_id', $compatibleDeviceTypes)->orderBy('id')->chunk(100, function ($devices) use ($page_type, $template, $request, $descriptionTemplate) {
                         foreach ($devices as $device) {
                             Log::info('Device :: ' . $device->name);
                             $deviceCollectionPage = StoreNavigationPage::where('store_id', $this->store_id)
@@ -341,8 +352,17 @@ class ShopifyBrandPageSyncJob implements ShouldQueue
                             $request['device_id'] = $device->id;
                             $links = Navigationutility::getLinks($this->store_id, $page_type, $request);
                             $request['title'] = $device->brand->name . ' ' . $device->name . ' Accessories';
+                            $request['description'] = $this->pageDescription($descriptionTemplate, [
+                                'store_id' => $this->store_id,
+                                'page_type' => $page_type,
+                                'device_brand_id' => $device->brand->id,
+                                'device_id' => $device->id,
+                            ], [
+                                'brandName' => $device->brand->name,
+                                'deviceName' => $device->name,
+                            ]);
                             $data = [
-                                'description' => $request->description ?? '',
+                                'description' => $request['description'],
                                 'title' => $links['final_title'],
                                 'name' => $request->name ?? '',
                                 'popularLinks' => $links['popular_link'] ?? [],
@@ -573,6 +593,24 @@ class ShopifyBrandPageSyncJob implements ShouldQueue
         }
 
         StoreNavigationPage::updateOrCreate($keys, $data);
+    }
+
+    /**
+     * Description for a page from the store's (or the default) description template. A page that
+     * already has a description keeps it unless the template is set to overwrite, so the spun text
+     * does not change on every run. With no template the existing description is kept.
+     */
+    private function pageDescription(?StorePageTemplate $descriptionTemplate, array $keys, array $variables): string
+    {
+        $existing = StoreNavigationPage::where($keys)->value('description');
+
+        if (!isset($descriptionTemplate) || (!empty($existing) && !$descriptionTemplate->overwrite)) {
+            return $existing ?? '';
+        }
+
+        return Navigationutility::generateDescription($descriptionTemplate->description_template, $variables + [
+            'storeName' => $this->store->name,
+        ]);
     }
 
     private function setVariables()
