@@ -451,6 +451,43 @@ GQL;
     }
 GQL;
 
+    public static $getOrderFulfillments = <<<GQL
+    query getOrderFulfillments(\$id: ID!) {
+      order(id: \$id) {
+        id
+        fulfillments(first: 10) {
+          id
+          status
+          createdAt
+          trackingInfo {
+            number
+            company
+          }
+        }
+      }
+    }
+GQL;
+
+    public static $fulfillmentTrackingInfoUpdate = <<<GQL
+    mutation fulfillmentTrackingInfoUpdateV2(\$fulfillmentId: ID!, \$trackingInfoInput: FulfillmentTrackingInput!, \$notifyCustomer: Boolean) {
+      fulfillmentTrackingInfoUpdateV2(fulfillmentId: \$fulfillmentId, trackingInfoInput: \$trackingInfoInput, notifyCustomer: \$notifyCustomer) {
+        fulfillment {
+          id
+          status
+          trackingInfo {
+            number
+            url
+            company
+          }
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+GQL;
+
     public static $cancelOrder = <<<GQL
     mutation orderCancel(\$notifyCustomer: Boolean, \$orderId: ID!, \$reason: OrderCancelReason!, \$refund: Boolean!, \$restock: Boolean!, \$staffNote: String) {
         orderCancel(notifyCustomer: \$notifyCustomer, orderId: \$orderId, reason: \$reason, refund: \$refund, restock: \$restock, staffNote: \$staffNote) {
