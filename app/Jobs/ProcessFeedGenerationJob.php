@@ -453,13 +453,20 @@ class ProcessFeedGenerationJob implements ShouldQueue
 
         // An unrated device has rating_id NULL, and both IN and NOT IN evaluate to
         // NULL for it, so it fails either test. Let it through explicitly.
-        $query->where(function ($subQuery) use ($excludedRating, $includedRatings) {
-            $subQuery->whereNull('device.rating_id')
-                ->orWhere(function ($rated) use ($excludedRating, $includedRatings) {
-                    $rated->whereNotIn('device.rating_id', $excludedRating)
-                        ->whereIn('device.rating_id', $includedRatings);
-                });
-        });
+        // Each rating filter applies only when its list is non-empty.
+        if (!empty($excludedRating) || !empty($includedRatings)) {
+            $query->where(function ($subQuery) use ($excludedRating, $includedRatings) {
+                $subQuery->whereNull('device.rating_id')
+                    ->orWhere(function ($rated) use ($excludedRating, $includedRatings) {
+                        if (!empty($excludedRating)) {
+                            $rated->whereNotIn('device.rating_id', $excludedRating);
+                        }
+                        if (!empty($includedRatings)) {
+                            $rated->whereIn('device.rating_id', $includedRatings);
+                        }
+                    });
+            });
+        }
 
         $query->orderBy('brands.name', 'asc');
         $query->orderBy('device.name', 'asc');
