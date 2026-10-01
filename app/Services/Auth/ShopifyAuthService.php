@@ -330,6 +330,38 @@ class ShopifyAuthService
         }
     }
 
+    public function getOrderFulfillments($orderId)
+    {
+        if (!empty($orderId)) {
+            $response = $this->makeGraphQLRequest(ShopifyQueries::$getOrderFulfillments, ['id' => $orderId]);
+
+            Log::info('Order Fulfillments Response: ' . json_encode($response));
+
+            return $response;
+        } else {
+            return false;
+        }
+    }
+
+    public function updateFulfillmentTrackingInfo($fulfillmentId, $company, $trackingNumber, $notifyCustomer = true)
+    {
+        if (!empty($fulfillmentId)) {
+            $variables = [
+                'fulfillmentId' => $fulfillmentId,
+                'trackingInfoInput' => [
+                    'company' => $company,
+                    'number' => $trackingNumber,
+                ],
+                'notifyCustomer' => $notifyCustomer,
+            ];
+            Log::info('Fulfillment Tracking Info Update Variables: ' . json_encode($variables));
+
+            return $this->makeGraphQLRequest(ShopifyQueries::$fulfillmentTrackingInfoUpdate, $variables);
+        } else {
+            return false;
+        }
+    }
+
     public function cancelOrder($orderId, $reason = 'CUSTOMER')
     {
 
