@@ -378,7 +378,20 @@
                         </div>
                     </div>
                     <div class="col-md-12 pt-3">
-                        <div class="d-flex" style="gap:10px;">
+                        <div class="d-flex align-items-start" style="gap:10px;">
+                            <div style="width: 25%;">
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <label class="input-group-text" for="file_prefix">File Name</label>
+                                    </div>
+                                    <select class="form-control" name="file_prefix" id="file_prefix">
+                                        <option value="{{ \App\Constants\FeedFilePrefix::FEED }}">feed</option>
+                                        <option value="{{ \App\Constants\FeedFilePrefix::PRODUCT }}" disabled>feed_product (needs Product Code Filter)</option>
+                                        <option value="{{ \App\Constants\FeedFilePrefix::DEVICE }}" disabled>feed_device (needs Device Filter)</option>
+                                    </select>
+                                </div>
+                                <small id="file_prefix_preview" class="form-text text-muted"></small>
+                            </div>
                             <div style="width: 20%;">
                                 <button type="button" id="generateFeed" class="btn btn-primary w-100">Generate Feed</button>
                             </div>
@@ -625,6 +638,10 @@
                             $('#excluded_device_list').append(filterChip('excluded_device[]', val, deviceNames[val] || val));
                         });
                     }
+
+                    refreshFilePrefixOptions();
+                    $('#file_prefix').val(config.filters.file_prefix || 'feed');
+                    refreshFilePrefixOptions();
 
                     // For multiselects, we need to set values and trigger refresh
                     if (config.filters.included_ratings) {
@@ -1082,6 +1099,8 @@
                 }
             });
 
+            $('#file_prefix').on('change', refreshFilePrefixOptions);
+
             $(document).on('click', '.filter-chip-remove', function () {
                 $(this).closest('.filter-chip').remove();
             });
@@ -1150,6 +1169,29 @@
                 $more = $('<button type="button" class="btn btn-link btn-sm p-0 mt-2 filter-show-all"></button>').insertAfter($list);
             }
             $more.text('+' + (count - FILTER_CHIPS_SHOWN) + ' more · View all').toggle(count > FILTER_CHIPS_SHOWN);
+
+            refreshFilePrefixOptions();
+        }
+
+        // feed_product / feed_device can only be picked while their filter has values. When both
+        // filters are set either one can be picked; a prefix whose filter is emptied goes back to "feed".
+        function refreshFilePrefixOptions() {
+            let $select = $('#file_prefix');
+            let enabled = {
+                feed_product: $('#pro_code_list').children('.filter-chip').length > 0,
+                feed_device: $('#device_list').children('.filter-chip').length > 0,
+            };
+
+            $.each(enabled, function (prefix, isEnabled) {
+                $select.children('option[value="' + prefix + '"]').prop('disabled', !isEnabled);
+            });
+            if ($select.children('option:selected').prop('disabled')) {
+                $select.val('feed');
+            }
+
+            let prefix = $select.val() || 'feed';
+            $('#file_prefix_preview').html('Will generate <b>' + prefix + '_1.csv</b>, <b>' + prefix + '_2.csv</b>, … '
+                + '(replaces only the older <b>' + prefix + '_*.csv</b> files)');
         }
 
         function renderFilterListModal() {

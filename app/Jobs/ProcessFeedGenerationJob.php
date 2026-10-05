@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Constants\FeedFilePrefix;
 use App\Constants\FeedStatus;
 use App\Constants\WebStorePageType;
 use App\Exceptions\UpcNotAvailableException;
@@ -197,6 +198,10 @@ class ProcessFeedGenerationJob implements ShouldQueue
             $this->directory = public_path($this->feedFolder . '/' . $this->store_id);
             // ensure directory exists
             FileUtility::createDirectoryIfNotExists($this->directory);
+            // feed_product / feed_device when the dashboard picked one, so this run only replaces those parts
+            if (FeedFilePrefix::isValid($this->data['filePrefix'] ?? null)) {
+                $this->file_name = $this->data['filePrefix'] . '.' . pathinfo($this->file_name, PATHINFO_EXTENSION);
+            }
             $this->fileNameBase = pathinfo($this->file_name, PATHINFO_FILENAME);
             $this->fileExtension = pathinfo($this->file_name, PATHINFO_EXTENSION);
 
@@ -448,13 +453,20 @@ class ProcessFeedGenerationJob implements ShouldQueue
 
         // An unrated device has rating_id NULL, and both IN and NOT IN evaluate to
         // NULL for it, so it fails either test. Let it through explicitly.
-        $query->where(function ($subQuery) use ($excludedRating, $includedRatings) {
-            $subQuery->whereNull('device.rating_id')
-                ->orWhere(function ($rated) use ($excludedRating, $includedRatings) {
-                    $rated->whereNotIn('device.rating_id', $excludedRating)
-                        ->whereIn('device.rating_id', $includedRatings);
-                });
-        });
+        // Each rating filter applies only when its list is non-empty.
+        if (!empty($excludedRating) || !empty($includedRatings)) {
+            $query->where(function ($subQuery) use ($excludedRating, $includedRatings) {
+                $subQuery->whereNull('device.rating_id')
+                    ->orWhere(function ($rated) use ($excludedRating, $includedRatings) {
+                        if (!empty($excludedRating)) {
+                            $rated->whereNotIn('device.rating_id', $excludedRating);
+                        }
+                        if (!empty($includedRatings)) {
+                            $rated->whereIn('device.rating_id', $includedRatings);
+                        }
+                    });
+            });
+        }
 
         $query->orderBy('brands.name', 'asc');
         $query->orderBy('device.name', 'asc');
@@ -474,6 +486,28 @@ class ProcessFeedGenerationJob implements ShouldQueue
             $category = $category->parent;
         }
         return implode(' > ', array_reverse($path));
+    }
+
+    /**
+     * Main product type = the category directly below the root of the type tree.
+     * e.g. Consumer Electronics Accessories > Armbands > Armband  =>  Armbands
+     */
+    private function getMainProductTypeName($category)
+    {
+        if (!$category) return '';
+        $path = [];
+        while ($category) {
+            $path[] = $category->name;
+            $category = $category->parent;
+        }
+        $path = array_reverse($path);
+        return $path[1] ?? $path[0];
+    }
+
+    private function isNevaWirelessStore()
+    {
+        return str_contains(strtolower($this->storeDetail->name ?? ''), 'nevawireless')
+            || str_contains(strtolower($this->storeDetail->store_url ?? ''), 'nevawireless');
     }
 
     public function generateProductImages($productData, $store)
@@ -577,8 +611,8 @@ class ProcessFeedGenerationJob implements ShouldQueue
      */
     private function clearPreviousFeedFiles(): void
     {
-        // Numbered parts only: feed_1.csv, feed_12.csv. Anything else named like a part, such as
-        // feed_1_asl.csv or a backup copy, is left alone.
+        // Numbered parts of this prefix only: feed_1.csv, feed_12.csv. Anything else named like a part,
+        // such as feed_1_asl.csv, a backup copy, or feed_product_1.csv when this run is "feed", is left alone.
         $partPattern = '/^' . preg_quote($this->fileNameBase, '/') . '_\d+\.' . preg_quote($this->fileExtension, '/') . '$/';
 
         $removed = 0;
@@ -713,6 +747,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
 
                         $typeDetail = ProductType::with('parent')->where('id', $itemDetail->product->product_type)->first();
                         $product_type = $this->getCategoryPath($typeDetail);
+                        $main_product_type = $this->getMainProductTypeName($typeDetail);
 
                         $listingItemImages = ListingItemProductImage::where('listing_item_id', $listitem->id)->orderBy('main_image','desc')->limit(5)->get();
                         $mainImage = null;
@@ -834,6 +869,11 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                     $custom_label_2 = (isset($item_detail->device->name)) ? $item_detail->device->name : '';
                                 } else {
                                     $custom_label_1 = (isset($item_detail->device->name)) ? $item_detail->device->name : '';
+                                }
+
+                                // NevaWireless only: custom_label_2 carries the main product type (e.g. Armbands)
+                                if ($this->isNevaWirelessStore()) {
+                                    $custom_label_2 = $main_product_type;
                                 }
 
                                 // item group id logic

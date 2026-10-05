@@ -9,7 +9,9 @@ use App\Models\DeviceInterface;
 use App\Models\ProductType;
 use App\Models\Store;
 use App\Models\StoreNavigationPage;
+use App\Models\StorePageTemplate;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Log;
 
@@ -131,9 +133,14 @@ class Navigationutility
                         ->where('page_type', WebStorePageType::BRAND)
                         ->where('device_brand_id', $link->device_brand_id)
                         ->first();
-                    $count = StoreNavigationPage::where('store_id', $store_id)
-                        ->where('device_brand_id', $link->device_brand_id)
-                        ->where('page_type', $skipDevicePages ? WebStorePageType::DEVICE : WebStorePageType::BRAND_DEVICE_PRODUCT_TYPES)
+                    $count = StoreNavigationPage::join('device', 'store_navigation_page.device_id', '=', 'device.id')
+                        ->where('store_navigation_page.store_id', $store_id)
+                        ->where(function ($query) use ($link) {
+                            // older rows were saved without device_brand_id, so fall back to the device's brand
+                            $query->where('store_navigation_page.device_brand_id', $link->device_brand_id)
+                                ->orWhere('device.brand_id', $link->device_brand_id);
+                        })
+                        ->where('store_navigation_page.page_type', $skipDevicePages ? WebStorePageType::DEVICE : WebStorePageType::BRAND_DEVICE_PRODUCT_TYPES)
                         ->count();
 
                     if ($count <= 0) {
@@ -156,7 +163,11 @@ class Navigationutility
                     ->join('popular_devices','store_navigation_page.device_id', '=', 'popular_devices.device_id')
                     ->where('store_id', $store_id)
                     ->where('page_type', $skipDevicePages ? WebStorePageType::DEVICE : WebStorePageType::BRAND_DEVICE_PRODUCT_TYPES)
-                    ->where('device_brand_id', $brand->id)
+                    ->where(function ($query) use ($brand) {
+                        // older rows were saved without device_brand_id, so fall back to the device's brand
+                        $query->where('store_navigation_page.device_brand_id', $brand->id)
+                            ->orWhere('device.brand_id', $brand->id);
+                    })
                     ->where('device.status', 'active')
                     ->orderBy('device.device_type_id', 'asc')
                     ->orderBy('device.release_date', 'desc')
@@ -170,7 +181,11 @@ class Navigationutility
                     })
                     ->where('store_id', $store_id)
                     ->where('page_type', $skipDevicePages ? WebStorePageType::DEVICE : WebStorePageType::BRAND_DEVICE_PRODUCT_TYPES)
-                    ->where('device_brand_id', $brand->id)
+                    ->where(function ($query) use ($brand) {
+                        // older rows were saved without device_brand_id, so fall back to the device's brand
+                        $query->where('store_navigation_page.device_brand_id', $brand->id)
+                            ->orWhere('device.brand_id', $brand->id);
+                    })
                     ->where('device.status', 'active')
                     ->orderBy('device.name', 'asc')
                     ->get();
@@ -282,6 +297,119 @@ class Navigationutility
         }
 
         return $finalLinkArray;
+    }
+
+    /**
+     * Template whose description_template is used for a page. The store's own template wins; the
+     * default one (no store) is used when the store has none or its description_template is empty.
+     */
+    public static function getDescriptionTemplate(string $storeId, int $pageType, ?string $productTypeId = null): ?StorePageTemplate
+    {
+        $query = fn () => StorePageTemplate::where('page_type', $pageType)
+            ->where('product_type_id', $productTypeId)
+            ->whereNotNull('description_template')
+            ->where('description_template', '<>', '');
+
+        return $query()->where('store_id', $storeId)->first()
+            ?? $query()->whereNull('store_id')->first();
+    }
+
+    /**
+     * Description for a page from a Blade description template (see convertLegacyTemplate()).
+     * Blade fills in the variables first, then the {a|b} spintax left in the text is spun.
+     * The result is plain text; the page template escapes it when printing $description.
+     */
+    public static function generateDescription(?string $template, array $data): string
+    {
+        if (blank($template)) {
+            return '';
+        }
+
+        $data['shuffled'] = fn (string ...$items) => implode(', ', Arr::shuffle($items));
+
+        $text = self::fillTemplateWithData($template, $data);
+        $text = html_entity_decode($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $text = (new Spintax())->process($text);
+
+        return trim(preg_replace('/[ \t]{2,}/', ' ', $text));
+    }
+
+    /**
+     * Converts a legacy (Oydera) description template to Blade. Spintax {a|b} is kept and spun
+     * after rendering:
+     *   ##devicebrandname, ##storename, ...  ->  {{ $brandName }}, {{ $storeName }}, ...
+     *   @, {case|cable|charger}              ->  {{ $shuffled('case', 'cable', 'charger') }}
+     *     (legacy printed every option of the group, in random order)
+     *   {{ opening nested spintax           ->  { {  so Blade does not read it as an echo
+     *   {##devicebrandname| }               ->  { {{ $brandName }}| }  for the same reason
+     * Already converted text is returned unchanged.
+     */
+    public static function convertLegacyTemplate(?string $text): ?string
+    {
+        if (blank($text) || preg_match('/\{\{\s*\$/', $text)) {
+            return $text;
+        }
+
+        $text = preg_replace('/\{\{/', '{ {', $text);
+
+        $text = self::convertShuffledLists($text);
+
+        $variables = [
+            'devicenamewithsubtype' => 'deviceNameWithSubtype',
+            'devicebrandname' => 'brandName',
+            'devicename' => 'deviceName',
+            'storename' => 'storeName',
+            'categoryname' => 'categoryName',
+        ];
+
+        $text = preg_replace_callback(
+            '/#{1,2}(' . implode('|', array_keys($variables)) . ')/',
+            fn ($match) => '{{ $' . $variables[$match[1]] . ' }}',
+            $text
+        );
+
+        // "{##devicebrandname| }" would give "{{{ $brandName }}| }", which Blade reads as a {{{ }}} echo
+        return str_replace('{{{', '{ {{', $text);
+    }
+
+    private static function convertShuffledLists(string $text): string
+    {
+        $result = '';
+        $offset = 0;
+
+        while (preg_match('/@,\s*\{/', $text, $match, PREG_OFFSET_CAPTURE, $offset)) {
+            $start = $match[0][1];
+            $groupStart = $start + strlen($match[0][0]) - 1;
+
+            // find the closing brace of the group and split it on its top level "|"
+            $depth = 0;
+            $items = [];
+            $item = '';
+            for ($i = $groupStart; $i < strlen($text); $i++) {
+                $char = $text[$i];
+                if ($char === '{') {
+                    if ($depth++ === 0) continue;
+                } elseif ($char === '}') {
+                    if (--$depth === 0) break;
+                } elseif ($char === '|' && $depth === 1) {
+                    $items[] = $item;
+                    $item = '';
+                    continue;
+                }
+                $item .= $char;
+            }
+            $items[] = $item;
+
+            if ($depth !== 0) {
+                break; // unbalanced braces, leave the rest as it is
+            }
+
+            $arguments = array_map(fn ($item) => "'" . addcslashes(trim($item), "'\\") . "'", $items);
+            $result .= substr($text, $offset, $start - $offset) . '{{ $shuffled(' . implode(', ', $arguments) . ') }}';
+            $offset = $i + 1;
+        }
+
+        return $result . substr($text, $offset);
     }
 
     /**
