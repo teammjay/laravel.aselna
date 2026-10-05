@@ -281,7 +281,8 @@ class OrdersController extends Controller
     /**
      * Give a shipped order a new tracking number from a label made outside Aselna. The shipped operation
      * is kept as it is; a copy of it (with its items) gets the new carrier, service and tracking number,
-     * and OrderOperationUtility::createShipment pushes the copy to the marketplace.
+     * and OrderOperationUtility::createShipment pushes the copy to the marketplace. Operations merged into
+     * the shipped one are copied the same way, merged into the new copy, so their orders get the new tracking too.
      */
     public function updateTrackingNumber(Request $request)
     {
@@ -325,44 +326,59 @@ class OrdersController extends Controller
 
             $trackingNumber = trim($request->input('tracking_number'));
             $userName = auth()->user()->name ?? null;
+            $trackingFields = [
+                'tracking_number' => $trackingNumber,
+                'shipping_carrier_id' => $request->input('carrier_name'),
+                'shipping_carrier_service_id' => $request->input('shipping_carrier_service'),
+            ];
 
-            $newOperation = DB::transaction(function () use ($orderOperation, $request, $trackingNumber, $userName) {
-                $newOperation = $orderOperation->replicate();
-                $newOperation->fill([
-                    'tracking_number' => $trackingNumber,
-                    'shipping_carrier_id' => $request->input('carrier_name'),
-                    'shipping_carrier_service_id' => $request->input('shipping_carrier_service'),
-                    'label_creation_type' => ShippingLabelCreationType::MarkAsShipped,
-                    // The label was not bought through Aselna, so the original's label transaction does not apply.
-                    'shipping_transaction_id' => null,
-                    'shipping_account_transaction_id' => null,
-                    'sync_status' => null,
-                    'sync_message' => null,
-                    'created_by' => $userName,
-                    'updated_by' => $userName,
-                ]);
-                $newOperation->save();
+            // Orders merged into this shipment went out in the same package, so they get the new tracking too.
+            $mergedOperations = OrderOperation::with('operationItem')
+                ->where('is_merged', true)
+                ->where('merged_with', $orderOperation->id)
+                ->whereNotIn('status', [OrderOperationStatus::Canceled, OrderOperationStatus::CanceledRequested])
+                ->get();
 
-                foreach ($orderOperation->operationItem as $operationItem) {
-                    $newItem = $operationItem->replicate();
-                    $newItem->order_operation_id = $newOperation->id;
-                    $newItem->created_by = $userName;
-                    $newItem->updated_by = $userName;
-                    $newItem->save();
+            [$newOperation, $newMergedOperationIds] = DB::transaction(function () use ($orderOperation, $mergedOperations, $trackingFields, $userName) {
+                $newOperation = $this->copyOperationWithTracking($orderOperation, $trackingFields, $userName);
+
+                // The copies point at the new main operation, so createShipment pushes them along with it.
+                $newMergedOperationIds = [];
+                foreach ($mergedOperations as $mergedOperation) {
+                    $newMergedOperationIds[] = $this->copyOperationWithTracking($mergedOperation, $trackingFields + [
+                        'is_merged' => true,
+                        'merged_with' => $newOperation->id,
+                    ], $userName)->id;
                 }
 
-                return $newOperation;
+                return [$newOperation, $newMergedOperationIds];
             });
 
-            Log::info('Manual tracking number ' . $trackingNumber . ' for order operation: ' . $newOperation->id . ' (copied from ' . $orderOperation->id . ')');
+            Log::info('Manual tracking number ' . $trackingNumber . ' for order operation: ' . $newOperation->id . ' (copied from ' . $orderOperation->id . '), merged copies: ' . json_encode($newMergedOperationIds));
 
-            $newOperation = OrderOperation::with('order', 'order.orderItem', 'order.customer', 'order.customerAddress', 'store', 'store.storeType', 'carrier', 'carrierService', 'shipFrom', 'operationItem', 'operationItem.orderItem')->where('id', $newOperation->id)->first();
+            $relations = ['order', 'order.orderItem', 'order.customer', 'order.customerAddress', 'store', 'store.storeType', 'carrier', 'carrierService', 'carrierService.ShippingCarrier', 'shipFrom', 'operationItem', 'operationItem.orderItem'];
+            $newOperation = OrderOperation::with($relations)->where('id', $newOperation->id)->first();
+            $failedOrders = [];
+
             if ($storeType == 'shopify') {
-                // The order is already fulfilled in Shopify, so the tracking on that fulfillment is updated
-                // instead of creating a new fulfillment.
-                $successRes = (new ShopifyService())->updateTrackingNumber($newOperation);
+                // The orders are already fulfilled in Shopify, so the tracking on their fulfillments is updated
+                // instead of creating new fulfillments.
+                $shopifyService = new ShopifyService();
+                $successRes = $shopifyService->updateTrackingNumber($newOperation);
                 if ($successRes['success']) {
                     $newOperation->update(['status' => OrderOperationStatus::MarkAsShipped, 'ship_date' => now()]);
+
+                    $newMergedOperations = OrderOperation::with($relations)->whereIn('id', $newMergedOperationIds)->get();
+                    foreach ($newMergedOperations as $newMergedOperation) {
+                        $mergedRes = $shopifyService->updateTrackingNumber($newMergedOperation);
+                        if ($mergedRes['success']) {
+                            $newMergedOperation->update(['status' => OrderOperationStatus::MarkAsShipped, 'ship_date' => now()]);
+                        } else {
+                            // The main order already has the new tracking, so only this copy is dropped.
+                            $failedOrders[] = '#' . ($newMergedOperation->order->order_id ?? $newMergedOperation->order_id) . ' (' . $mergedRes['message'] . ')';
+                            $this->deleteOperationCopies([$newMergedOperation->id]);
+                        }
+                    }
                 }
             } else {
                 $successRes = OrderOperationUtility::createShipment($newOperation);
@@ -370,9 +386,8 @@ class OrdersController extends Controller
 //            $successRes['success'] = true;
 
             if (!$successRes['success']) {
-                // Drop the copy so a retry does not leave a trail of unsynced operations.
-                OrderOperationItem::where('order_operation_id', $newOperation->id)->delete();
-                $newOperation->delete();
+                // Drop the copies so a retry does not leave a trail of unsynced operations.
+                $this->deleteOperationCopies(array_merge([$newOperation->id], $newMergedOperationIds));
 
                 return response()->json([
                     'success' => false,
@@ -380,9 +395,18 @@ class OrdersController extends Controller
                 ]);
             }
 
+            if (!empty($failedOrders)) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Tracking number updated, but the marketplace did not accept it for merged order(s): ' . implode(', ', $failedOrders)
+                ]);
+            }
+
             return response()->json([
                 'success' => true,
-                'message' => 'Tracking number updated.'
+                'message' => count($newMergedOperationIds) > 0
+                    ? 'Tracking number updated for this order and ' . count($newMergedOperationIds) . ' merged order(s).'
+                    : 'Tracking number updated.'
             ]);
         } catch (\Exception $exception) {
             Log::error('Update tracking number error: ' . $exception->getMessage());
@@ -391,6 +415,41 @@ class OrdersController extends Controller
                 'message' => $exception->getMessage()
             ]);
         }
+    }
+
+    /**
+     * Copy an operation (with its items) for a label made outside Aselna. The original's label transaction
+     * does not apply to the copy.
+     */
+    private function copyOperationWithTracking(OrderOperation $operation, array $fields, $userName): OrderOperation
+    {
+        $newOperation = $operation->replicate();
+        $newOperation->fill($fields + [
+            'label_creation_type' => ShippingLabelCreationType::MarkAsShipped,
+            'shipping_transaction_id' => null,
+            'shipping_account_transaction_id' => null,
+            'sync_status' => null,
+            'sync_message' => null,
+            'created_by' => $userName,
+            'updated_by' => $userName,
+        ]);
+        $newOperation->save();
+
+        foreach ($operation->operationItem as $operationItem) {
+            $newItem = $operationItem->replicate();
+            $newItem->order_operation_id = $newOperation->id;
+            $newItem->created_by = $userName;
+            $newItem->updated_by = $userName;
+            $newItem->save();
+        }
+
+        return $newOperation;
+    }
+
+    private function deleteOperationCopies(array $operationIds)
+    {
+        OrderOperationItem::whereIn('order_operation_id', $operationIds)->delete();
+        OrderOperation::whereIn('id', $operationIds)->delete();
     }
 
     /**
