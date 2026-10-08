@@ -602,6 +602,51 @@ class TemuAuthService
         }
     }
 
+    /**
+     * Change the carrier and tracking number of packages already shipped (bg.logistics.shipment.shippingtype.update).
+     * Each entry is ['packageSn' => ..., 'trackingNumber' => ..., 'shipCompanyId' => ...].
+     */
+    public function updateShipmentTracking(array $editPackageRequestList)
+    {
+        try {
+            $client = new Client();
+            $headers = [
+                'content-type' => 'application/json',
+            ];
+
+            $params = [
+                'type' => 'bg.logistics.shipment.shippingtype.update',
+                'app_key' => $this->appKey,
+                'timestamp' => time(),
+                'editPackageRequestList' => $editPackageRequestList,
+                'data_type' => 'JSON',
+                'access_token' => $this->accessToken,
+            ];
+
+            $params['sign'] = $this->generateSign($params, $this->appSecret);
+
+            Log::info('Update Shipment Tracking Params: ' . json_encode($params));
+
+            $request = new Request('POST', $this->endpoint, $headers, json_encode($params));
+
+            $res = $client->sendAsync($request)->wait();
+
+            return json_decode($res->getBody(), true);
+
+        } catch (\Throwable $e) {
+
+            CriticalErrorService::report('Temu Update Shipment Tracking Failed', [
+                'marketplace' => 'Temu',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
+                'method' => __METHOD__
+            ],['editPackageRequestList' => $editPackageRequestList]);
+
+            Log::error('Temu Update Shipment Tracking Error: ' . $e->getMessage());
+
+            return ['success' => false, 'errorMsg' => $e->getMessage()];
+        }
+    }
+
     public function getShipmentInfo($parentOrderSn,$orderSn)
     {
         try {

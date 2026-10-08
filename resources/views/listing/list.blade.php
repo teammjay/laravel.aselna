@@ -1166,10 +1166,22 @@
     });
 
     document.addEventListener("DOMContentLoaded", function () {
+        // A product code coming from the URL (Catalog → Show Listing) must win over
+        // the cached filters, and must start from page 1 instead of the saved table state.
+        let urlCode = new URLSearchParams(window.location.search).get('code');
+        if (urlCode) {
+            sessionStorage.removeItem("all_active_listing_filters");
+            sessionStorage.removeItem("DataTables_productsTable");
+        }
+
         let savedFilters = JSON.parse(sessionStorage.getItem("all_active_listing_filters"));
         if (savedFilters) {
-            console.log(savedFilters);
             Object.keys(savedFilters).forEach(function (key) {
+
+                // product code is driven only by the ?code= URL param, never restored from cache
+                if (['product_code', 'product_code_operator'].includes(savedFilters[key].name)) {
+                    return;
+                }
 
                 //console.log(savedFilters[key]);
                 let input = $('#filter-form [name="'+savedFilters[key].name+'"]');

@@ -629,6 +629,55 @@ class EbayAuthService
         }
     }
 
+    /**
+     * Replace the tracking on an order with the Trading API CompleteSale call. eBay deletes the old tracking
+     * number and carrier and adds the new ones; the Fulfillment API can only add another package.
+     * https://developer.ebay.com/devzone/xml/docs/reference/ebay/CompleteSale.html
+     */
+    public function completeSaleTracking($orderId, $carrier, $trackingNumber)
+    {
+        try {
+            $accessToken = $this->refreshToken();
+
+            $xml = new \SimpleXMLElement('<?xml version="1.0" encoding="utf-8"?>
+<CompleteSaleRequest xmlns="urn:ebay:apis:eBLBaseComponents"></CompleteSaleRequest>');
+            $xml->addChild('OrderID', htmlspecialchars($orderId));
+            $trackingDetails = $xml->addChild('Shipment')->addChild('ShipmentTrackingDetails');
+            $trackingDetails->addChild('ShipmentTrackingNumber', htmlspecialchars($trackingNumber));
+            $trackingDetails->addChild('ShippingCarrierUsed', htmlspecialchars($carrier));
+            $xml->addChild('Shipped', 'true');
+
+            Log::info('CompleteSale Request: ' . $xml->asXML());
+
+            $response = $this->client->post('ws/api.dll', [
+                'verify' => false,
+                'headers' => [
+                    'X-EBAY-API-COMPATIBILITY-LEVEL' => '1349',
+                    'X-EBAY-API-CALL-NAME' => 'CompleteSale',
+                    'X-EBAY-API-SITEID' => '0',
+                    'X-EBAY-API-IAF-TOKEN' => $accessToken,
+                    'Content-Type' => 'text/xml',
+                ],
+                'body' => $xml->asXML(),
+            ]);
+
+            $body = $response->getBody()->getContents();
+            Log::info('CompleteSale Response: ' . $body);
+
+            return json_decode(json_encode(simplexml_load_string($body)), true);
+
+        } catch (RequestException $e) {
+
+            CriticalErrorService::report('Ebay complete sale tracking update failed', [
+                'marketplace' => 'eBay',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
+                'method' => __METHOD__
+            ],['order_id' => $orderId, 'tracking_number' => $trackingNumber]);
+
+            return ['Ack' => 'Failure', 'Errors' => ['LongMessage' => $e->getMessage()]];
+        }
+    }
+
     public function cancelOrder($data)
     {
         try {

@@ -76,4 +76,30 @@ class ShippingUtility
 
         return '';
     }
+
+    /**
+     * The carrier code Amazon, Walmart, eBay and Temu all accept for one of our carriers. Null when the
+     * carrier has no marketplace equivalent (e.g. BEST RATE), the caller should then refuse the update.
+     */
+    public static function marketplaceCarrierCode($orderOperation): ?string
+    {
+        $carrierName = $orderOperation->carrierService->ShippingCarrier->name ?? $orderOperation->carrier->name ?? '';
+        $carrierName = strtoupper(str_replace(' ', '', $carrierName));
+
+        if (str_starts_with($carrierName, 'USPS')) {
+            return 'USPS';
+        }
+        // SurePost is booked through UPS and tracks on a UPS number.
+        if (str_starts_with($carrierName, 'UPS')) {
+            return 'UPS';
+        }
+        if (str_starts_with($carrierName, 'FEDEX')) {
+            return 'FedEx';
+        }
+        if (str_starts_with($carrierName, 'DHL')) {
+            return 'DHL';
+        }
+
+        return null;
+    }
 }
