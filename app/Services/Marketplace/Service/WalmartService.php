@@ -25,6 +25,7 @@ use App\Services\CriticalErrorService;
 use App\Services\Marketplace\Contracts\MarketplaceServiceInterface;
 use App\Utils\FileUtility;
 use App\Utils\order\OrderUtility;
+use App\Utils\order\ShippingUtility;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -937,6 +938,67 @@ class WalmartService implements MarketplaceServiceInterface
                 'method' => __METHOD__
             ],['store_name'=>$store->name]);
         }
+    }
+
+    /**
+     * Replace the tracking number on order lines already shipped in Walmart. The ship order lines call
+     * updates the tracking of shipped lines when processMode is PARTIAL_UPDATE.
+     * https://developer.walmart.com/us-marketplace/reference/shippingupdates
+     */
+    public function updateTrackingNumber($orderOperation): array
+    {
+        $carrierCode = ShippingUtility::marketplaceCarrierCode($orderOperation);
+        if (!$carrierCode) {
+            return ['success' => false, 'message' => 'Walmart does not accept ' . ($orderOperation->carrier->name ?? 'this carrier') . ' as a carrier. Please choose USPS, UPS, FedEx or DHL.'];
+        }
+
+        $purchaseOrderId = $orderOperation->order->purchase_order_id;
+        // The copy keeps the original ship date; editing the tracking does not move it.
+        $shipDateTime = date('Y-m-d\TH:i:sP', $orderOperation->ship_date ? strtotime($orderOperation->ship_date) : time());
+
+        $finalData = ['orderShipment' => ['processMode' => 'PARTIAL_UPDATE']];
+        foreach ($orderOperation->order->orderItem as $item) {
+            $finalData['orderShipment']['orderLines']['orderLine'][] = [
+                'lineNumber' => $item->id1,
+                'orderLineStatuses' => [
+                    'orderLineStatus' => [
+                        [
+                            'status' => 'Shipped',
+                            'statusQuantity' => [
+                                'unitOfMeasurement' => 'EACH',
+                                'amount' => $item->quantity
+                            ],
+                            'trackingInfo' => [
+                                'shipDateTime' => $shipDateTime,
+                                'carrierName' => [
+                                    'carrier' => $carrierCode,
+                                ],
+                                'methodCode' => 'Standard',
+                                'trackingNumber' => $orderOperation->tracking_number,
+                            ]
+                        ]
+                    ]
+                ]
+            ];
+        }
+
+
+        try {
+            $store = $orderOperation->store;
+            $authService = new WalmartAuthService($store->seller_id, $store->secret_key);
+            $response = $authService->shipOrder($purchaseOrderId, $finalData);
+            Log::info('Walmart tracking number update response for PO ' . $purchaseOrderId . ': ' . json_encode($response));
+        } catch (\Throwable $e) {
+            Log::info('Walmart tracking number update error: ' . $e->getMessage());
+            return ['success' => false, 'message' => 'Walmart did not accept the new tracking number: ' . $e->getMessage()];
+        }
+
+        // shipOrder returns nothing when Walmart rejects the call (the error is logged there).
+        if (($response['order']['purchaseOrderId'] ?? null) != $purchaseOrderId) {
+            return ['success' => false, 'message' => 'Walmart did not accept the new tracking number.'];
+        }
+
+        return ['success' => true, 'message' => ''];
     }
 
     private function getVisibleAttributes($categoryNames, $store)
