@@ -23,6 +23,7 @@ use App\Services\Auth\AmazonAuthService;
 use App\Services\Marketplace\Contracts\MarketplaceServiceInterface;
 use App\Utils\AmazonUtility;
 use App\Utils\FileUtility;
+use App\Utils\order\ShippingUtility;
 use App\Utils\XmlUtility;
 use Illuminate\Support\Facades\Log;
 use Opis\JsonSchema\Schema;
@@ -31,6 +32,10 @@ use SimpleXMLElement;
 
 class AmazonService implements MarketplaceServiceInterface
 {
+    // Every shipment is confirmed with this package reference, and Amazon edits a confirmation when it is
+    // sent again with the same one (see updateTrackingNumber), so the two must stay the same.
+    const PACKAGE_REFERENCE_ID = '123';
+
     private $authService;
 
     public function generateFeed($listingId, $feedId = null)
@@ -271,14 +276,14 @@ class AmazonService implements MarketplaceServiceInterface
             if (is_dir($directory)) {
                 Log::info('Directory exists');
                 $scannedFiles = scandir($directory, SCANDIR_SORT_DESCENDING);
-                
+
                 // First check for listingId (backward compatibility)
                 foreach ($scannedFiles as $file) {
                     if (strpos($file, $listingId) === 0 && preg_match('/\.(json|xml)$/', $file)) {
                         $files[] = 'feeds/amazon/' . $file;
                     }
                 }
-                
+
                 // Then check for feedId
                 if (empty($files) && $feedId) {
                     foreach ($scannedFiles as $file) {
@@ -288,11 +293,11 @@ class AmazonService implements MarketplaceServiceInterface
                     }
                 }
             }
-            
+
             if (empty($files)) {
                 throw new \Exception("Feed file not found for listingId: $listingId or feedId: $feedId");
             }
-            
+
             $filePath = public_path($files[0]);
 
             $content = file_get_contents($filePath);
@@ -345,14 +350,14 @@ class AmazonService implements MarketplaceServiceInterface
         if (is_dir($directory)) {
             Log::info('Directory exists');
             $scannedFiles = scandir($directory, SCANDIR_SORT_DESCENDING);
-            
+
             // First check for listingId (backward compatibility)
             foreach ($scannedFiles as $file) {
                 if (strpos($file, $listingId) === 0 && preg_match('/\.(json|xml)$/', $file)) {
                     $files[] = 'feeds/amazon/' . $file;
                 }
             }
-            
+
             // Then check for feedId
             if (empty($files) && $feedId) {
                 foreach ($scannedFiles as $file) {
@@ -362,12 +367,12 @@ class AmazonService implements MarketplaceServiceInterface
                 }
             }
         }
-        
+
         if (empty($files)) {
              Log::error("Feed file not found for validation. listingId: $listingId, feedId: $feedId");
              return;
         }
-        
+
         $filePath = public_path($files[0]);
 
         $content = file_get_contents($filePath);
@@ -591,7 +596,7 @@ class AmazonService implements MarketplaceServiceInterface
             'carrierName' => '',
             'carrierCode' => $mainOrderOperation->carrier->name,
             'shippingMethod' => $shippingMethod,
-            'packageReferenceId' => "123",
+            'packageReferenceId' => self::PACKAGE_REFERENCE_ID,
         ];
         $finalData['marketplaceId'] = $orderDetail['payload']['MarketplaceId'];
 
@@ -620,6 +625,71 @@ class AmazonService implements MarketplaceServiceInterface
             Log::error('Error creating shipment for order ' . $orderId);
             return false;
         }
+    }
+
+    /**
+     * Replace the tracking number on an order already confirmed as shipped. Amazon edits the existing
+     * confirmation when confirmShipment is sent again with the same packageReferenceId, order items and
+     * quantities, so only the carrier, method and tracking number change.
+     * https://developer-docs.amazon.com/sp-api/docs/confirm-the-shipment-status
+     */
+    public function updateTrackingNumber($orderOperation): array
+    {
+        $carrierCode = ShippingUtility::marketplaceCarrierCode($orderOperation);
+        if (!$carrierCode) {
+            return ['success' => false, 'message' => 'Amazon does not accept ' . ($orderOperation->carrier->name ?? 'this carrier') . ' as a carrier. Please choose USPS, UPS, FedEx or DHL.'];
+        }
+
+        $store = $orderOperation->store;
+        $this->authService = new AmazonAuthService($store->seller_id, $store->secret_key, $store->api_key);
+        $orderId = $orderOperation->order->order_id;
+
+        try {
+            $orderDetail = $this->authService->getOrderInfo($orderId);
+        } catch (\Throwable $e) {
+            Log::info('Amazon tracking number update, order info error: ' . $e->getMessage());
+            return ['success' => false, 'message' => 'Could not load the Amazon order ' . $orderId . '.'];
+        }
+        if (empty($orderDetail['payload']['MarketplaceId'])) {
+            return ['success' => false, 'message' => 'Could not load the Amazon order ' . $orderId . '.'];
+        }
+
+        $orderItems = [];
+        foreach ($orderOperation->order->orderItem as $item) {
+            $orderItems[] = [
+                'orderItemId' => $item->id1,
+                'quantity' => $item->quantity
+            ];
+        }
+
+        // The copy keeps the original ship date; editing the tracking does not move it.
+        $shipDate = $orderOperation->ship_date ? date('c', strtotime($orderOperation->ship_date)) : date('c');
+
+        $finalData = [
+            'marketplaceId' => $orderDetail['payload']['MarketplaceId'],
+            'packageDetail' => [
+                'packageReferenceId' => self::PACKAGE_REFERENCE_ID,
+                'carrierCode' => $carrierCode,
+                'shippingMethod' => $orderOperation->carrierService->name ?? '',
+                'trackingNumber' => $orderOperation->tracking_number,
+                'shipDate' => $shipDate,
+                'orderItems' => $orderItems,
+            ],
+        ];
+
+
+        $response = $this->authService->shipOrder($finalData, $orderId);
+        Log::info('Amazon tracking number update response for order ' . $orderId . ': ' . json_encode($response));
+
+        // shipOrder answers 204 on success, anything else is an error body.
+        if ($response === 204) {
+            return ['success' => true, 'message' => ''];
+        }
+
+        $error = is_string($response) ? json_decode($response, true) : $response;
+        $message = $error['message'] ?? ($error['errors'][0]['message'] ?? 'Amazon did not accept the new tracking number.');
+
+        return ['success' => false, 'message' => $message];
     }
 
     public function cancelOrder($orderOperation, mixed $store)

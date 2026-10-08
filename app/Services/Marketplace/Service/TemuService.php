@@ -22,10 +22,14 @@ use App\Services\CriticalErrorService;
 use App\Services\Marketplace\Contracts\MarketplaceServiceInterface;
 use App\Utils\FileUtility;
 use App\Utils\order\OrderUtility;
+use App\Utils\order\ShippingUtility;
 use Illuminate\Support\Facades\Log;
 
 class TemuService implements MarketplaceServiceInterface
 {
+    // Packages already given the new tracking in this run. Merged orders can share one Temu package,
+    // and it only needs updating once.
+    private $updatedPackageSns = [];
 
     public function generateFeed($listingId, $feedId = null)
     {
@@ -69,13 +73,13 @@ class TemuService implements MarketplaceServiceInterface
         $store = $listingInfo->store;
 
         $temuAuthService = new TemuAuthService();
-        
+
         // Backward compatibility
         $file = public_path('feeds/temu/' . $listingId . '.json');
         if (!file_exists($file) && $feedId) {
             $file = public_path('feeds/temu/' . $feedId . '.json');
         }
-        
+
         $resultFile = public_path('result-feeds/temu/' . ($feedId ?: $listingId) . '.json');
         // json content
         if (!file_exists($file)) {
@@ -701,6 +705,79 @@ class TemuService implements MarketplaceServiceInterface
         }
 
         return false;
+    }
+
+    /**
+     * Replace the tracking number on the packages Temu holds for an order already shipped. The packages
+     * are looked up per order line (bg.logistics.shipment.v2.get) and edited in one call.
+     */
+    public function updateTrackingNumber($orderOperation): array
+    {
+        $carrierCode = ShippingUtility::marketplaceCarrierCode($orderOperation);
+        if (!$carrierCode) {
+            return ['success' => false, 'message' => 'Temu does not accept ' . ($orderOperation->carrier->name ?? 'this carrier') . ' as a carrier. Please choose USPS, UPS, FedEx or DHL.'];
+        }
+
+        $temuAuthService = new TemuAuthService();
+        $parentOrderSn = $orderOperation->order->order_id;
+
+        $warehouseDetails = $temuAuthService->getWarehouseInfo();
+        $warehouseDetail = $warehouseDetails['result']['warehouseList'][0] ?? null;
+        if (!$warehouseDetail) {
+            return ['success' => false, 'message' => 'Could not load the Temu warehouse.'];
+        }
+
+        $carrierDetails = $temuAuthService->getLogisticsInfo($warehouseDetail['regionId1']);
+        $shipCompanyId = null;
+        foreach ($carrierDetails['result'] ?? [] as $logistic) {
+            if (strcasecmp($logistic['logisticsBrandName'] ?? '', $carrierCode) === 0) {
+                $shipCompanyId = $logistic['logisticsServiceProviderId'];
+            }
+        }
+        if (!$shipCompanyId) {
+            return ['success' => false, 'message' => 'Temu does not offer ' . $carrierCode . ' for this warehouse.'];
+        }
+
+        // The order lines are shipped as Temu sub orders (orderSn), stored as store_sku.
+        $packageSns = [];
+        foreach ($orderOperation->order->orderItem as $item) {
+            $shipmentInfo = $temuAuthService->getShipmentInfo($parentOrderSn, $item->store_sku);
+            foreach ($shipmentInfo['result']['shipmentInfoDTO'] ?? [] as $shipment) {
+                if (!empty($shipment['packageSn'])) {
+                    $packageSns[$shipment['packageSn']] = true;
+                }
+            }
+        }
+        if (empty($packageSns)) {
+            return ['success' => false, 'message' => 'No shipped package found in Temu for order ' . $parentOrderSn . '.'];
+        }
+
+        $packageSns = array_diff(array_keys($packageSns), $this->updatedPackageSns);
+        if (empty($packageSns)) {
+            // A merged order sharing a package that was already updated.
+            return ['success' => true, 'message' => ''];
+        }
+
+        $editPackageRequestList = [];
+        foreach ($packageSns as $packageSn) {
+            $editPackageRequestList[] = [
+                'packageSn' => $packageSn,
+                'trackingNumber' => $orderOperation->tracking_number,
+                'shipCompanyId' => $shipCompanyId,
+            ];
+        }
+
+
+        $response = $temuAuthService->updateShipmentTracking($editPackageRequestList);
+        Log::info('Temu tracking number update response for order ' . $parentOrderSn . ': ' . json_encode($response));
+
+        if (empty($response['success'])) {
+            return ['success' => false, 'message' => $response['errorMsg'] ?? $response['errorMessage'] ?? $response['error_msg'] ?? 'Temu did not accept the new tracking number.'];
+        }
+
+        $this->updatedPackageSns = array_merge($this->updatedPackageSns, $packageSns);
+
+        return ['success' => true, 'message' => ''];
     }
 
     public function refundOrder($parentOrderSn){

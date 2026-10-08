@@ -30,6 +30,7 @@ use App\Services\Auth\EbayAuthService;
 use App\Services\Marketplace\Contracts\MarketplaceServiceInterface;
 use App\Utils\ListingUtility;
 use App\Utils\order\OrderUtility;
+use App\Utils\order\ShippingUtility;
 use App\Utils\Spintax;
 use App\Utils\XmlUtility;
 use Illuminate\Support\Facades\DB;
@@ -1341,6 +1342,34 @@ class EbayService implements MarketplaceServiceInterface
 
             return $newFeed;
         });
+    }
+
+    /**
+     * Replace the tracking number on an order already shipped in eBay.
+     */
+    public function updateTrackingNumber($orderOperation): array
+    {
+        $carrierCode = ShippingUtility::marketplaceCarrierCode($orderOperation);
+        if (!$carrierCode) {
+            return ['success' => false, 'message' => 'eBay does not accept ' . ($orderOperation->carrier->name ?? 'this carrier') . ' as a carrier. Please choose USPS, UPS, FedEx or DHL.'];
+        }
+
+        $orderId = $orderOperation->order->order_id;
+
+        $authService = new EbayAuthService(env('EBAY_CLIENT_ID'), env('EBAY_CLIENT_SECRET'), env('EBAY_REDIRECT_URI'), $orderOperation->store->user_id);
+        $response = $authService->completeSaleTracking($orderId, $carrierCode, $orderOperation->tracking_number);
+
+        // Warning still means the tracking was saved.
+        if (in_array($response['Ack'] ?? null, ['Success', 'Warning'])) {
+            return ['success' => true, 'message' => ''];
+        }
+
+        // Errors is a single error or a list of them.
+        $errors = $response['Errors'] ?? [];
+        $errors = isset($errors['LongMessage']) || isset($errors['ShortMessage']) ? [$errors] : $errors;
+        $messages = array_map(fn ($error) => $error['LongMessage'] ?? $error['ShortMessage'] ?? '', $errors);
+
+        return ['success' => false, 'message' => trim(implode(' ', $messages)) ?: 'eBay did not accept the new tracking number.'];
     }
 
     public function syncAttributes($store)

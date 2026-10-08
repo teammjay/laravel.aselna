@@ -28,6 +28,8 @@ use App\Models\Store;
 use App\Services\Marketplace\Service\AmazonService;
 use App\Services\Marketplace\Service\EbayService;
 use App\Services\Marketplace\Service\ShopifyService;
+use App\Services\Marketplace\Service\TemuService;
+use App\Services\Marketplace\Service\WalmartService;
 use App\Utils\order\OrderOperationUtility;
 use App\Utils\shipment\ShipmentDocumentsCreator;
 use Illuminate\Http\Request;
@@ -270,9 +272,19 @@ class OrdersController extends Controller
             ]);
         }
 
+        // The popup names every order the update will reach, merged ones included.
+        $mergedOrderNumbers = OrderOperation::with('order')
+            ->where('is_merged', true)
+            ->where('merged_with', $orderOperation->id)
+            ->whereNotIn('status', [OrderOperationStatus::Canceled, OrderOperationStatus::CanceledRequested])
+            ->get()
+            ->map(fn ($mergedOperation) => $mergedOperation->order->order_id ?? '')
+            ->filter()
+            ->implode(', ');
+
         return response()->json([
             'success' => true,
-            'order_number' => $orderOperation->order->order_id ?? '',
+            'order_number' => ($orderOperation->order->order_id ?? '') . ($mergedOrderNumbers ? ' + merged ' . $mergedOrderNumbers : ''),
             'carrier_id' => $orderOperation->shipping_carrier_id,
             'carrier_service_id' => $orderOperation->shipping_carrier_service_id,
         ]);
@@ -281,7 +293,9 @@ class OrdersController extends Controller
     /**
      * Give a shipped order a new tracking number from a label made outside Aselna. The shipped operation
      * is kept as it is; a copy of it (with its items) gets the new carrier, service and tracking number,
-     * and OrderOperationUtility::createShipment pushes the copy to the marketplace.
+     * and the marketplace service's updateTrackingNumber edits the tracking of the shipped order. Operations
+     * merged into the shipped one are copied the same way, merged into the new copy, and their orders are
+     * updated in the marketplace too.
      */
     public function updateTrackingNumber(Request $request)
     {
@@ -325,54 +339,68 @@ class OrdersController extends Controller
 
             $trackingNumber = trim($request->input('tracking_number'));
             $userName = auth()->user()->name ?? null;
+            $trackingFields = [
+                'tracking_number' => $trackingNumber,
+                'shipping_carrier_id' => $request->input('carrier_name'),
+                'shipping_carrier_service_id' => $request->input('shipping_carrier_service'),
+            ];
 
-            $newOperation = DB::transaction(function () use ($orderOperation, $request, $trackingNumber, $userName) {
-                $newOperation = $orderOperation->replicate();
-                $newOperation->fill([
-                    'tracking_number' => $trackingNumber,
-                    'shipping_carrier_id' => $request->input('carrier_name'),
-                    'shipping_carrier_service_id' => $request->input('shipping_carrier_service'),
-                    'label_creation_type' => ShippingLabelCreationType::MarkAsShipped,
-                    // The label was not bought through Aselna, so the original's label transaction does not apply.
-                    'shipping_transaction_id' => null,
-                    'shipping_account_transaction_id' => null,
-                    'sync_status' => null,
-                    'sync_message' => null,
-                    'created_by' => $userName,
-                    'updated_by' => $userName,
-                ]);
-                $newOperation->save();
+            // Orders merged into this shipment went out in the same package, so they get the new tracking too.
+            $mergedOperations = OrderOperation::with('operationItem')
+                ->where('is_merged', true)
+                ->where('merged_with', $orderOperation->id)
+                ->whereNotIn('status', [OrderOperationStatus::Canceled, OrderOperationStatus::CanceledRequested])
+                ->get();
 
-                foreach ($orderOperation->operationItem as $operationItem) {
-                    $newItem = $operationItem->replicate();
-                    $newItem->order_operation_id = $newOperation->id;
-                    $newItem->created_by = $userName;
-                    $newItem->updated_by = $userName;
-                    $newItem->save();
+            [$newOperation, $newMergedOperationIds] = DB::transaction(function () use ($orderOperation, $mergedOperations, $trackingFields, $userName) {
+                $newOperation = $this->copyOperationWithTracking($orderOperation, $trackingFields, $userName);
+
+                // The copies point at the new main operation, so they stay merged with it.
+                $newMergedOperationIds = [];
+                foreach ($mergedOperations as $mergedOperation) {
+                    $newMergedOperationIds[] = $this->copyOperationWithTracking($mergedOperation, $trackingFields + [
+                        'is_merged' => true,
+                        'merged_with' => $newOperation->id,
+                    ], $userName)->id;
                 }
 
-                return $newOperation;
+                return [$newOperation, $newMergedOperationIds];
             });
 
-            Log::info('Manual tracking number ' . $trackingNumber . ' for order operation: ' . $newOperation->id . ' (copied from ' . $orderOperation->id . ')');
+            Log::info('Manual tracking number ' . $trackingNumber . ' for order operation: ' . $newOperation->id . ' (copied from ' . $orderOperation->id . '), merged copies: ' . json_encode($newMergedOperationIds));
 
-            $newOperation = OrderOperation::with('order', 'order.orderItem', 'order.customer', 'order.customerAddress', 'store', 'store.storeType', 'carrier', 'carrierService', 'shipFrom', 'operationItem', 'operationItem.orderItem')->where('id', $newOperation->id)->first();
-            if ($storeType == 'shopify') {
-                // The order is already fulfilled in Shopify, so the tracking on that fulfillment is updated
-                // instead of creating a new fulfillment.
-                $successRes = (new ShopifyService())->updateTrackingNumber($newOperation);
-                if ($successRes['success']) {
-                    $newOperation->update(['status' => OrderOperationStatus::MarkAsShipped, 'ship_date' => now()]);
+            $relations = ['order', 'order.orderItem', 'order.customer', 'order.customerAddress', 'store', 'store.storeType', 'carrier', 'carrierService', 'carrierService.ShippingCarrier', 'shipFrom', 'operationItem', 'operationItem.orderItem'];
+            $newOperation = OrderOperation::with($relations)->where('id', $newOperation->id)->first();
+            $failedOrders = [];
+
+            // The orders are already shipped in the marketplace, so the tracking on their shipments is edited
+            // instead of shipping them again through OrderOperationUtility::createShipment.
+            $service = $this->trackingUpdateService($storeType);
+            $successRes = $service->updateTrackingNumber($newOperation);
+            $updatedOrders = ['#' . ($newOperation->order->order_id ?? $newOperation->order_id)];
+
+            if ($successRes['success']) {
+                $newOperation->update(['status' => OrderOperationStatus::MarkAsShipped, 'ship_date' => now()]);
+
+                // Every merged order is pushed on its own, each marketplace keeps the tracking per order.
+                $newMergedOperations = OrderOperation::with($relations)->whereIn('id', $newMergedOperationIds)->get();
+                foreach ($newMergedOperations as $newMergedOperation) {
+                    $mergedOrderNumber = '#' . ($newMergedOperation->order->order_id ?? $newMergedOperation->order_id);
+                    $mergedRes = $service->updateTrackingNumber($newMergedOperation);
+                    if ($mergedRes['success']) {
+                        $newMergedOperation->update(['status' => OrderOperationStatus::MarkAsShipped, 'ship_date' => now()]);
+                        $updatedOrders[] = $mergedOrderNumber;
+                    } else {
+                        // The main order already has the new tracking, so only this copy is dropped.
+                        $failedOrders[] = $mergedOrderNumber . ' (' . $mergedRes['message'] . ')';
+                        $this->deleteOperationCopies([$newMergedOperation->id]);
+                    }
                 }
-            } else {
-                $successRes = OrderOperationUtility::createShipment($newOperation);
             }
-//            $successRes['success'] = true;
 
             if (!$successRes['success']) {
-                // Drop the copy so a retry does not leave a trail of unsynced operations.
-                OrderOperationItem::where('order_operation_id', $newOperation->id)->delete();
-                $newOperation->delete();
+                // Drop the copies so a retry does not leave a trail of unsynced operations.
+                $this->deleteOperationCopies(array_merge([$newOperation->id], $newMergedOperationIds));
 
                 return response()->json([
                     'success' => false,
@@ -380,9 +408,14 @@ class OrdersController extends Controller
                 ]);
             }
 
+            $message = 'Tracking number updated for order(s) ' . implode(', ', $updatedOrders) . '.';
+            if (!empty($failedOrders)) {
+                $message .= ' The marketplace did not accept it for merged order(s): ' . implode(', ', $failedOrders);
+            }
+
             return response()->json([
                 'success' => true,
-                'message' => 'Tracking number updated.'
+                'message' => $message
             ]);
         } catch (\Exception $exception) {
             Log::error('Update tracking number error: ' . $exception->getMessage());
@@ -394,23 +427,77 @@ class OrdersController extends Controller
     }
 
     /**
-     * The latest shipment operation of a shipped order. Operations merged into another shipment are
-     * skipped, they are shipped through the one they are merged with.
+     * Copy an operation (with its items) for a label made outside Aselna. The original's label transaction
+     * does not apply to the copy.
+     */
+    private function copyOperationWithTracking(OrderOperation $operation, array $fields, $userName): OrderOperation
+    {
+        $newOperation = $operation->replicate();
+        $newOperation->fill($fields + [
+            'label_creation_type' => ShippingLabelCreationType::MarkAsShipped,
+            'shipping_transaction_id' => null,
+            'shipping_account_transaction_id' => null,
+            'sync_status' => null,
+            'sync_message' => null,
+            'created_by' => $userName,
+            'updated_by' => $userName,
+        ]);
+        $newOperation->save();
+
+        foreach ($operation->operationItem as $operationItem) {
+            $newItem = $operationItem->replicate();
+            $newItem->order_operation_id = $newOperation->id;
+            $newItem->created_by = $userName;
+            $newItem->updated_by = $userName;
+            $newItem->save();
+        }
+
+        return $newOperation;
+    }
+
+    private function trackingUpdateService(string $storeType)
+    {
+        return match ($storeType) {
+            'shopify' => new ShopifyService(),
+            'amazon' => new AmazonService(),
+            'walmart' => new WalmartService(),
+            'ebay' => new EbayService(),
+            'temu' => new TemuService(),
+        };
+    }
+
+    private function deleteOperationCopies(array $operationIds)
+    {
+        OrderOperationItem::whereIn('order_operation_id', $operationIds)->delete();
+        OrderOperation::whereIn('id', $operationIds)->delete();
+    }
+
+    /**
+     * The latest shipment operation of a shipped order. An order merged into another shipment went out in
+     * that shipment's package, so the operation it is merged with is returned instead; updating it updates
+     * every order merged into it.
      */
     private function getShippedShipment($orderId)
     {
-        return OrderOperation::with('order', 'store', 'store.storeType', 'operationItem')
+        $relations = ['order', 'store', 'store.storeType', 'operationItem'];
+        $orderOperation = OrderOperation::with($relations)
             ->where('order_id', $orderId)
             ->whereHas('order', function ($q) {
                 $q->where('order_status', OrderStatus::Shipped);
             })
 //            ->where('operation_type', OrderOperationType::OrderShipment)
-            ->where(function ($q) {
-                $q->whereNull('is_merged')->orWhere('is_merged', false);
-            })
             ->whereNotIn('status', [OrderOperationStatus::Canceled, OrderOperationStatus::CanceledRequested])
             ->orderBy('created_at', 'desc')
             ->first();
+
+        if ($orderOperation && $orderOperation->is_merged && $orderOperation->merged_with) {
+            $orderOperation = OrderOperation::with($relations)
+                ->where('id', $orderOperation->merged_with)
+                ->whereNotIn('status', [OrderOperationStatus::Canceled, OrderOperationStatus::CanceledRequested])
+                ->first();
+        }
+
+        return $orderOperation;
     }
 
     public function create_message(Request $request)
