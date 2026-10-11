@@ -57,6 +57,11 @@ class ProcessFeedGenerationJob implements ShouldQueue
 
     private $file_name = 'feed.csv';
     protected $compatibleDeviceTypes;
+    // per run lookups, filled once instead of being queried for every feed row
+    private $devicePageUrls = null;
+    private $productCategoryCodes = [];
+    private $productTypes = [];
+    private $manufacturerNames = [];
     private $storeDetail;
     private $store_type_detail;
     private $current_file_index;
@@ -469,7 +474,6 @@ class ProcessFeedGenerationJob implements ShouldQueue
         $excludedRating = $this->data['excluded_ratings'] ?? [];
         $includedRatings = $this->data['included_ratings'] ?? [];
 
-        Log::info('Excluded Device Ratings: ' . json_encode($excludedRating));
         $query = Device::select('device.*', 'product_interface.product_id')->with('brand', 'rating')->with('deviceType', 'deviceSeries');
         $query->leftJoin('device_interface', 'device_interface.device_id', '=', 'device.id');
         $query->leftJoin('product_interface', 'product_interface.interface_id', '=', 'device_interface.interface_id');
@@ -486,7 +490,6 @@ class ProcessFeedGenerationJob implements ShouldQueue
         }
 
         if (isset($this->compatibleDeviceTypes)) {
-            Log::info('Compatible Device Types: ' . json_encode($this->compatibleDeviceTypes));
             $query->whereIn('device_type_id', $this->compatibleDeviceTypes);
         }
 
@@ -521,11 +524,41 @@ class ProcessFeedGenerationJob implements ShouldQueue
         $query->orderBy('brands.name', 'asc');
         $query->orderBy('device.name', 'asc');
 
-        Log::info('Compatible Devices Query: ' . $query->toRawSql());
 
         $devices = $query->get();
 
         return $devices;
+    }
+
+    /**
+     * url_path of the store's device page for a device, the first one when there are several.
+     */
+    private function getDevicePageUrl($deviceId): ?string
+    {
+        if ($this->devicePageUrls === null) {
+            $this->devicePageUrls = [];
+            $pages = StoreNavigationPage::where('store_id', $this->store_id)
+                ->where('page_type', WebStorePageType::DEVICE)
+                ->orderBy('id')
+                ->toBase()
+                ->get(['device_id', 'url_path']);
+            foreach ($pages as $page) {
+                if (!array_key_exists($page->device_id, $this->devicePageUrls)) {
+                    $this->devicePageUrls[$page->device_id] = $page->url_path;
+                }
+            }
+        }
+
+        return $this->devicePageUrls[$deviceId] ?? null;
+    }
+
+    private function getProductTypeWithParents($id)
+    {
+        if (!array_key_exists($id, $this->productTypes)) {
+            $this->productTypes[$id] = ProductType::with('parent')->where('id', $id)->first();
+        }
+
+        return $this->productTypes[$id];
     }
 
     private function getCategoryPath($category)
@@ -993,16 +1026,13 @@ class ProcessFeedGenerationJob implements ShouldQueue
                         $site_url = isset($this->storeDetail->store_url) ? $this->storeDetail->store_url : '';
                         $store_url = isset($listitem->store_url) ? $listitem->store_url : '';
 
-                        $item_url = StoreNavigationPage::where('store_id', $this->store_id)
-                            ->where('page_type', WebStorePageType::DEVICE)
-                            ->where('device_id', $listitem->device_id)
-                            ->first();
+                        $itemUrlPath = $this->getDevicePageUrl($listitem->device_id);
 
-                        if ($item_url && !isset($listitem->url)) {
-                            $listitem->update(['url' => $item_url->url_path]);
+                        if ($itemUrlPath !== null && !isset($listitem->url)) {
+                            $listitem->update(['url' => $itemUrlPath]);
                         }
 
-                        $typeDetail = ProductType::with('parent')->where('id', $itemDetail->product->product_type)->first();
+                        $typeDetail = $this->getProductTypeWithParents($itemDetail->product->product_type);
                         $product_type = $this->getCategoryPath($typeDetail);
                         $main_product_type = $this->getMainProductTypeName($typeDetail);
 
@@ -1026,17 +1056,19 @@ class ProcessFeedGenerationJob implements ShouldQueue
                             $product_price = $listitem->price;
                         }
 
-                        Log::info('Main image for listing item ID ' . $listitem->id . ': ' . $mainImage);
-                        Log::info('Additional images for listing item ID ' . $listitem->id . ': ' . json_encode($images));
 
                         $compatibledevices = $this->getCompatibleDevices($itemDetail->product_id, $this->data['device'] ?? []);
 
                         if ($compatibledevices) {
 
+                            // all details of the listing item in one query, first one per device as ->first() gave
+                            $itemDetailsByDevice = [];
+                            foreach (ListingItemDetail::where('listing_item_id', $listitem->id)->orderBy('id')->get() as $detail) {
+                                $itemDetailsByDevice[$detail->device_id] ??= $detail;
+                            }
+
                             foreach ($compatibledevices as $device) {
-                                Log::info('Processing compatible device ID: ' . $device->id . ' for listing item ID: ' . $listitem->id);
-                                $item_detail = ListingItemDetail::where('listing_item_id', $listitem->id)
-                                    ->where('device_id', $device->id)->first();
+                                $item_detail = $itemDetailsByDevice[$device->id] ?? null;
 
                                 $productTitle = $itemProductTitle;
 
@@ -1089,6 +1121,9 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                     $item_detail = $this->insertListingItemDetail($product_code, $listitem, $device);
                                 }
 
+                                // same device_id, so reuse the loaded device (with brand) instead of lazy loading it per row
+                                $item_detail->setRelation('device', $device);
+
                                 // Fill a missing UPC from upc_codes. If none are left, stop the whole feed
                                 // here: the client has to generate UPCs for the store first.
                                 if (empty($item_detail->upc)) {
@@ -1102,17 +1137,12 @@ class ProcessFeedGenerationJob implements ShouldQueue
 
                                 $collection_url = '';
 
-                                $devicePage = StoreNavigationPage::where('store_id', $this->store_id)
-                                    ->where('page_type', WebStorePageType::DEVICE)
-                                    ->where('device_id', $device->id)
-                                    ->first();
-
                                 if ($item_detail->url) {
                                     $collection_url = $item_detail->url;
                                 }
 
                                 if (!isset($collection_url) || $collection_url == '') {
-                                    $collection_url = $devicePage->url_path ?? '';
+                                    $collection_url = $this->getDevicePageUrl($device->id) ?? '';
                                 }
 
                                 if ($store_sku != '') {
@@ -1285,6 +1315,15 @@ class ProcessFeedGenerationJob implements ShouldQueue
 
     public function getProductCategoryCode($id)
     {
+        if (!array_key_exists($id, $this->productCategoryCodes)) {
+            $this->productCategoryCodes[$id] = $this->findProductCategoryCode($id);
+        }
+
+        return $this->productCategoryCodes[$id];
+    }
+
+    private function findProductCategoryCode($id)
+    {
         $category = ProductType::where('id', $id)->first();
         while (isset($category) && $category->parent_id != null) {
             $parentCategory = ProductType::where('id', $category->parent_id)->first();
@@ -1321,6 +1360,12 @@ class ProcessFeedGenerationJob implements ShouldQueue
         if ($manufacturer == null) {
             return '';
         }
+
+        return $this->manufacturerNames[$manufacturer->id] ??= $this->findManufacturerName($manufacturer);
+    }
+
+    private function findManufacturerName($manufacturer)
+    {
         $manufacturerLink = StoreTypeManufaturerLink::where('store_type_id', $this->store_type_detail->id)
             ->where('manufacturer_id', $manufacturer->id)
             ->first();
