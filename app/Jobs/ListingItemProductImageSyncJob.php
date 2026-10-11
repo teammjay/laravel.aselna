@@ -273,7 +273,7 @@ class ListingItemProductImageSyncJob implements ShouldQueue
      *
      * @return array<string, ProductImages>
      */
-    private function resolveProductImages($links): array
+    public function resolveProductImages($links): array
     {
         $this->resolveProductIds($links->pluck('product_id')->all());
 
@@ -457,7 +457,7 @@ class ListingItemProductImageSyncJob implements ShouldQueue
      * one and otherwise points at the sys_file our product image holds, the way
      * ListingItemImageCreate writes it.
      */
-    private function mapImageLink(mixed $link, ProductImages $productImage): array
+    public function mapImageLink(mixed $link, ProductImages $productImage): array
     {
         return [
             'listing_item_id' => $link->listing_item_id,

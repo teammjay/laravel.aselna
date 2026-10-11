@@ -47,6 +47,12 @@ class SubmitShopifyProductsJob implements ShouldQueue, StoreScopedJob
     public $timeout = 30000;
     private array $publications;
 
+    // How long the run lock lives without a heartbeat. A live run refreshes it while it works, so a
+    // run whose worker was killed (deploy, OOM, kill -9) only blocks the next run for this long.
+    private const LOCK_SECONDS = 1800;
+    private $lock;
+    private int $lockRefreshedAt = 0;
+
     public static function eligibleStoreTypes(): array
     {
         return ['shopify'];
@@ -73,9 +79,9 @@ class SubmitShopifyProductsJob implements ShouldQueue, StoreScopedJob
             return;
         }
 
-        // Only one run at a time. The lock expires after $timeout, so a worker killed mid-run
-        // can't block the job forever.
-        $lock = Cache::lock(self::class, $this->timeout);
+        // Only one run at a time. The database store is used because acquiring a lock again with the
+        // same owner extends it there, which is what keepLockAlive() relies on.
+        $this->lock = $lock = Cache::store('database')->lock(self::class, self::LOCK_SECONDS);
         if (!$lock->get()) {
             Log::info('Skipping SubmitShopifyProductsJob: another SubmitShopifyProductsJob is currently running.');
             $this->updateTrackingRecord([
@@ -83,6 +89,9 @@ class SubmitShopifyProductsJob implements ShouldQueue, StoreScopedJob
             ]);
             return;
         }
+        // Just acquired. A refresh within the same second writes an unchanged row, which MySQL
+        // counts as 0 affected rows and acquire() then reports as a lost lock.
+        $this->lockRefreshedAt = time();
 
         try {
             $this->updateTrackingRecord(['status' => 'processing', 'started_at' => now()]);
@@ -143,6 +152,7 @@ class SubmitShopifyProductsJob implements ShouldQueue, StoreScopedJob
                         ->limit(100)
                         ->get();
                     foreach ($products as $product) {
+                        $this->keepLockAlive();
                         $this->createProduct($product, $store);
                         if (env('APP_ENV') == 'local') {
                             break;
@@ -186,6 +196,7 @@ class SubmitShopifyProductsJob implements ShouldQueue, StoreScopedJob
                         ->get();
 
                     foreach ($products as $product) {
+                        $this->keepLockAlive();
                         Log::info('Update Products SKU :: ' . $product->product_sku . ' | Product ID :: ' . $product->product_id);
                         $this->updateProduct($product, $store);
                         if (env('APP_ENV') == 'local') {
@@ -221,6 +232,7 @@ class SubmitShopifyProductsJob implements ShouldQueue, StoreScopedJob
                         ->get();
 
                     foreach ($discontinuedProducts as $product) {
+                        $this->keepLockAlive();
                         $this->discontinueProduct($product, $store);
                         if (env('APP_ENV') == 'local') {
                             break;
@@ -237,6 +249,7 @@ class SubmitShopifyProductsJob implements ShouldQueue, StoreScopedJob
                         ->get();
 
                     foreach ($deletedMarketplaceProducts as $marketplaceProduct) {
+                        $this->keepLockAlive();
                         $this->discontinueDeletedProduct($marketplaceProduct, $store);
                         if (env('APP_ENV') == 'local') {
                             break;
@@ -268,6 +281,22 @@ class SubmitShopifyProductsJob implements ShouldQueue, StoreScopedJob
         } finally {
             $lock->release();
         }
+    }
+
+    /**
+     * Push the run lock's expiry forward, at most once a minute.
+     */
+    private function keepLockAlive(): void
+    {
+        if (time() - $this->lockRefreshedAt < 60) {
+            return;
+        }
+
+        // same owner, so this only extends our own lock
+        if (!$this->lock->acquire()) {
+            Log::warning('SubmitShopifyProductsJob: run lock was lost, another run may have started.');
+        }
+        $this->lockRefreshedAt = time();
     }
 
     public function getAllTags($productData, array $tags)

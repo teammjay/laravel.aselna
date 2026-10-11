@@ -38,7 +38,7 @@ class Store extends Model
         'generate_device_details', 'skip_device_pages', 'label_order_prefix', 'alter_image_files', 'resize_images', 'apply_watermark', 'watermark_image_id',
         'watermark_transparency', 'images_location', 'app_id', 'dev_id', 'certificate', 'authorized', 'seller_id', 'first_name', 'last_name', 'company',
         'address_1', 'address_2', 'address_3', 'city', 'country', 'district', 'state', 'postal_code', 'country_code', 'phone', 'email', 'code', 'user_id',
-        'file_system_id', 'auto_submit_listing', 're_submit_listing','auto_resubmit_shipment','shopify_title_template','default_handling_time','include_upc_in_feed'];
+        'file_system_id', 'auto_submit_listing', 're_submit_listing','auto_resubmit_shipment','shopify_title_template','default_handling_time','include_upc_in_feed','feed_file_count'];
 
     public function storeCategory()
     {
