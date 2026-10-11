@@ -77,6 +77,11 @@ class ProcessFeedGenerationJob implements ShouldQueue
     private $rowsInCurrentFile = 0;
     // number of files oydera split the shopping feed into when the store sets none (CeaAutoListingServiceBean default)
     private const OYDERA_DEFAULT_FILE_COUNT = 6;
+    // number of files the meta feed is split into when the store sets none. UZID's catalog (~1.5 GB,
+    // 1,815 products) hashed into 40 files gives a largest file of ~58 MB, room to grow under the cap.
+    private const META_DEFAULT_FILE_COUNT = 40;
+    // Meta refuses feed files over 100 MB
+    private const META_MAX_FILE_SIZE = 98 * 1024 * 1024;
     // public/ relative folder the part files go to, one sub folder per store
     private $feedFolder = 'feeds/google-shopping';
 
@@ -108,12 +113,8 @@ class ProcessFeedGenerationJob implements ShouldQueue
             // Google takes feed files up to 4 GB. The cap is kept that high because every product has
             // a fixed file (see getOyderaOrderedStoreProducts): splitting a file on size would shift
             // all later products into the next file number.
+            // Meta's 100 MB limit is handled per product in writeMetaFeedFiles, so it keeps this cap too.
             $this->max_file_size = 4000 * 1024 * 1024;
-
-            // Meta takes at most 100 MB per uploaded feed file, so its parts are cut smaller.
-            if (strtolower($feed_type) == 'meta') {
-                $this->max_file_size = 98 * 1024 * 1024;
-            }
 
             if (env('APP_ENV') == 'local' || env('APP_ENV') == 'development') {
 //                $this->max_file_size = 1 * 1024 * 1024; // 1 MB for local testing
@@ -223,6 +224,22 @@ class ProcessFeedGenerationJob implements ShouldQueue
 
             if (env('APP_ENV') == 'local' || env('APP_ENV') == 'development') {
                 Log::info('Feed generation query: ' . $query->toRawSql());
+            }
+
+            if (strtolower($feed_type) == 'meta') {
+                fclose($this->fileHandle);
+                $this->writeMetaFeedFiles($feed_type, $query, $feedDetail);
+
+                $feedDetail->update([
+                    'status' => FeedStatus::PROCESSED,
+                ]);
+
+                $this->updateTrackingRecord([
+                    'status' => 'completed',
+                    'finished_at' => now()
+                ]);
+
+                return;
             }
 
             $orderedProducts = $this->getOyderaOrderedStoreProducts($query);
@@ -685,6 +702,127 @@ class ProcessFeedGenerationJob implements ShouldQueue
             'file_name' => $this->getPartFilename($this->current_file_index),
             'path' => $this->getPartPath($this->current_file_index)
         ];
+    }
+
+    /**
+     * Meta feed: every product goes to file md5(product code) mod file count + 1, so a product keeps
+     * its file from run to run however the rest of the catalog changes. Each file number is always
+     * written, empty or not, so the file URLs Meta fetches stay valid.
+     *
+     * A product is written whole. A product that would push its file past Meta's limit goes to an
+     * overflow file numbered after the regular ones, and the overflow is reported so the store's
+     * meta feed file count can be raised. Only products of that full file are affected.
+     */
+    private function writeMetaFeedFiles($feed_type, $query, $feedDetail): void
+    {
+        $fileCount = (int) ($this->storeDetail->meta_feed_file_count ?: self::META_DEFAULT_FILE_COUNT);
+        Log::info('Meta feed file count: ' . $fileCount);
+
+        $rows = (clone $query)->toBase()
+            ->select(['store_product.id', 'products.product_sku'])
+            ->get();
+
+        $byFile = [];
+        $seen = [];
+        foreach ($rows as $row) {
+            // the device join gives a product once per matching device
+            if (isset($seen[$row->id])) {
+                continue;
+            }
+            $seen[$row->id] = true;
+            $byFile[self::oyderaFileNumber((string) $row->product_sku, $fileCount) + 1][] = [
+                'id' => $row->id,
+                'sku' => (string) $row->product_sku,
+            ];
+        }
+        Log::info('Products in meta feed: ' . count($seen));
+
+        $overflowHandle = null;
+        $overflowIndex = $fileCount;
+        $overflowedFiles = [];
+
+        for ($fileNumber = 1; $fileNumber <= $fileCount; $fileNumber++) {
+            $fileHandle = $this->openMetaFeedFile($fileNumber, $feedDetail);
+
+            // product code order, so which products overflow does not depend on the database order
+            $entries = $byFile[$fileNumber] ?? [];
+            usort($entries, fn ($a, $b) => [$a['sku'], $a['id']] <=> [$b['sku'], $b['id']]);
+
+            foreach (array_chunk($entries, 10) as $chunk) {
+                $products = (clone $query)->whereIn('store_product.id', array_column($chunk, 'id'))->get()->keyBy('id');
+
+                foreach ($chunk as $entry) {
+                    $product = $products->get($entry['id']);
+                    if (!$product) {
+                        continue;
+                    }
+
+                    // write the product to memory first to know its size before choosing the file
+                    $buffer = fopen('php://temp', 'w+');
+                    $this->fileHandle = $buffer;
+                    $this->addProductsToFeed($feed_type, new EloquentCollection([$product]), $feedDetail);
+                    $size = ftell($buffer);
+
+                    if (ftell($fileHandle) + $size > self::META_MAX_FILE_SIZE) {
+                        $overflowedFiles[$fileNumber] = true;
+
+                        if ($overflowHandle === null || ftell($overflowHandle) + $size > self::META_MAX_FILE_SIZE) {
+                            if ($overflowHandle !== null) {
+                                fclose($overflowHandle);
+                            }
+                            $overflowIndex++;
+                            $overflowHandle = $this->openMetaFeedFile($overflowIndex, $feedDetail);
+                        }
+                        $target = $overflowHandle;
+                    } else {
+                        $target = $fileHandle;
+                    }
+
+                    rewind($buffer);
+                    stream_copy_to_stream($buffer, $target);
+                    fclose($buffer);
+                }
+            }
+
+            fclose($fileHandle);
+        }
+
+        if ($overflowHandle !== null) {
+            fclose($overflowHandle);
+        }
+        $this->fileHandle = null;
+
+        if (!empty($overflowedFiles)) {
+            CriticalErrorService::report('Meta feed file over the 98 MB limit, raise the store\'s Meta Feed File Count', [
+                'store_id' => $this->store_id,
+                'feed_id' => $this->feed_id,
+                'reason' => 'meta_feed_file_overflow',
+                'method' => __METHOD__,
+            ], [
+                'meta_feed_file_count' => $fileCount,
+                'full_files' => array_keys($overflowedFiles),
+                'overflow_files' => range($fileCount + 1, $overflowIndex),
+            ]);
+        }
+    }
+
+    /**
+     * Open meta feed part $index with its header and record the part on the feed.
+     *
+     * @return resource
+     */
+    private function openMetaFeedFile(int $index, $feedDetail)
+    {
+        $handle = fopen($this->getFilePath($index), 'w');
+        fputcsv($handle, $this->columns);
+
+        $feedDetail->parts()->create([
+            'part_number' => $index,
+            'file_name' => $this->getPartFilename($index),
+            'path' => $this->getPartPath($index)
+        ]);
+
+        return $handle;
     }
 
     /**
