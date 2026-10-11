@@ -210,12 +210,17 @@ class StoreController extends Controller
             $request['re_submit_listing'] = $request->has('re_submit_listing') ? 1 : 0;
             $request['auto_resubmit_shipment'] = $request->has('auto_resubmit_shipment') ? 1 : 0;
             $request['include_upc_in_feed'] = $request->has('include_upc_in_feed') ? 1 : 0;
+            // empty field: back to the default file count
+            $request['feed_file_count'] = $request->filled('feed_file_count') ? $request->input('feed_file_count') : null;
+            $request['meta_feed_file_count'] = $request->filled('meta_feed_file_count') ? $request->input('meta_feed_file_count') : null;
 
             $validator = Validator::make(request()->all(), [
                 'name' => 'required',
                 'marketplace_name' => 'required',
                 //'store_url' => 'required'
                 'product_alt_image_number' => 'nullable|integer|min:0',
+                'feed_file_count' => 'nullable|integer|min:1|max:50',
+                'meta_feed_file_count' => 'nullable|integer|min:1|max:200',
             ]);
 
             if ($validator->fails()) {
