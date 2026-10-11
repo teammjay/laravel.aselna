@@ -449,6 +449,22 @@
                                         <input type="checkbox" id="include_upc_in_feed" name="include_upc_in_feed" {{ ($store->include_upc_in_feed == 1) ? 'checked' : '' }}>
                                     </div>
                                 </div>
+                                <div class="row mt-3 g-3 align-items-center">
+                                    <div class="col-md-5">
+                                        <label for="feed_file_count">Feed File Count</label>
+                                    </div>
+                                    <div class="col-md-7">
+                                        <input type="number" min="1" max="50" class="form-control" id="feed_file_count" name="feed_file_count" placeholder="6" value="{{ old('feed_file_count',$store->feed_file_count) }}">
+                                    </div>
+                                </div>
+                                <div class="row mt-3 g-3 align-items-center">
+                                    <div class="col-md-5">
+                                        <label for="meta_feed_file_count">Meta Feed File Count</label>
+                                    </div>
+                                    <div class="col-md-7">
+                                        <input type="number" min="1" max="200" class="form-control" id="meta_feed_file_count" name="meta_feed_file_count" placeholder="40" value="{{ old('meta_feed_file_count',$store->meta_feed_file_count) }}">
+                                    </div>
+                                </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="row mt-3 g-3 align-items-center">
