@@ -748,7 +748,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
      */
     private function writeMetaFeedFiles($feed_type, $query, $feedDetail): void
     {
-        $fileCount = (int) ($this->storeDetail->meta_feed_file_count ?: self::META_DEFAULT_FILE_COUNT);
+        $fileCount = $this->isFilteredFeedRun() ? 1 : (int) ($this->storeDetail->meta_feed_file_count ?: self::META_DEFAULT_FILE_COUNT);
         Log::info('Meta feed file count: ' . $fileCount);
 
         $rows = (clone $query)->toBase()
@@ -867,7 +867,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
     private function getOyderaOrderedStoreProducts($query): array
     {
         // per store, like oydera's scheduled task parameter (UZID ran with 7)
-        $fileCount = (int) ($this->storeDetail->feed_file_count ?: self::OYDERA_DEFAULT_FILE_COUNT);
+        $fileCount = $this->isFilteredFeedRun() ? 1 : (int) ($this->storeDetail->feed_file_count ?: self::OYDERA_DEFAULT_FILE_COUNT);
         Log::info('Feed file count: ' . $fileCount);
 
         $rows = (clone $query)->toBase()
@@ -917,6 +917,16 @@ class ProcessFeedGenerationJob implements ShouldQueue
         }
 
         return $mod;
+    }
+
+    /**
+     * A product / device filtered run (feed_product_*, feed_device_*) holds only a few products, so it
+     * is written to one file instead of being split by file number. The size caps still apply. The
+     * full feed (feed_*) keeps its fixed split, since the file URLs Google and Meta fetch depend on it.
+     */
+    private function isFilteredFeedRun(): bool
+    {
+        return $this->fileNameBase !== FeedFilePrefix::FEED;
     }
 
     private function getPartFilename($index)
