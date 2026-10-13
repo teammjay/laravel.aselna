@@ -1070,8 +1070,16 @@ class ProcessFeedGenerationJob implements ShouldQueue
                         $product_type = $this->getCategoryPath($typeDetail);
                         $main_product_type = $this->getMainProductTypeName($typeDetail);
 
-                        $listingItemImages = ListingItemProductImage::where('listing_item_id', $listitem->id)->orderBy('main_image','desc')->limit(5)->get();
+                        // main image first, then the rest in the product image sort_order
+                        $listingItemImages = ListingItemProductImage::select('listing_item_product_images.*')
+                            ->leftJoin('product_images', 'product_images.id', '=', 'listing_item_product_images.product_image_id')
+                            ->where('listing_item_product_images.listing_item_id', $listitem->id)
+                            ->orderBy('listing_item_product_images.main_image', 'desc')
+                            ->orderByRaw('product_images.sort_order IS NULL, product_images.sort_order ASC')
+                            ->limit(5)
+                            ->get();
                         $mainImage = null;
+                        $images = [];
 
                         foreach ($listingItemImages as $image) {
                             if ($image->main_image == 1) {
