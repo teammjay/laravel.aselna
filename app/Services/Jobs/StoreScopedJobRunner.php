@@ -2,6 +2,7 @@
 
 namespace App\Services\Jobs;
 
+use App\Constants\JobRunMode;
 use App\Helpers\Common;
 use App\Jobs\Contracts\StoreScopedJob;
 use App\Models\Store;
@@ -30,6 +31,33 @@ class StoreScopedJobRunner
     public function scopedClasses(array $classes): array
     {
         return array_values(array_unique(array_filter($classes, fn ($class) => $this->isStoreScoped($class))));
+    }
+
+    /**
+     * Run mode and eligible store types of a job made of $classes (a Saved Job's chain, or one
+     * Cron Job class), for the Run Mode column. store_types is [] when any store type is eligible.
+     *
+     * @param  string[]  $classes
+     * @return array{mode: int, store_types: string[]}
+     */
+    public function runMode(array $classes): array
+    {
+        $scoped = $this->scopedClasses($classes);
+
+        if (empty($scoped)) {
+            return ['mode' => JobRunMode::SINGLE_RUN, 'store_types' => []];
+        }
+
+        $types = [];
+        foreach ($scoped as $class) {
+            $classTypes = $class::eligibleStoreTypes();
+            if (empty($classTypes)) {
+                return ['mode' => JobRunMode::STORE_PICKER, 'store_types' => []];
+            }
+            $types = array_merge($types, $classTypes);
+        }
+
+        return ['mode' => JobRunMode::STORE_PICKER, 'store_types' => array_values(array_unique($types))];
     }
 
     /**

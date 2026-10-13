@@ -37,6 +37,23 @@ class ShopifyQueries
     }
 GQL;
 
+    public static $metafieldsSet = <<<GQL
+    mutation metafieldsSet(\$metafields: [MetafieldsSetInput!]!) {
+        metafieldsSet(metafields: \$metafields) {
+            metafields {
+                id
+                key
+                namespace
+            }
+            userErrors {
+                code
+                field
+                message
+            }
+        }
+    }
+GQL;
+
     public static $updateProduct = <<<GQL
     mutation UpdateProductWithNewMedia(\$product: ProductUpdateInput!, \$media: [CreateMediaInput!]) {
       productUpdate(product: \$product, media: \$media) {

@@ -77,6 +77,14 @@ class ShopifyAuthService
         return $this->makeGraphQLRequest(ShopifyQueries::$saveProduct, $productData);
     }
 
+    /**
+     * Write up to 25 metafields in one call.
+     */
+    public function setMetafields(array $metafields)
+    {
+        return $this->makeGraphQLRequest(ShopifyQueries::$metafieldsSet, ['metafields' => $metafields]);
+    }
+
     public function getProductById($marketplace_product_id)
     {
         return $this->makeGraphQLRequest(ShopifyQueries::$getProductById, ['id' => $marketplace_product_id]);
