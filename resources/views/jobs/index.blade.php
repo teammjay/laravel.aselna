@@ -18,12 +18,15 @@
         <div class="alert alert-danger">{{ $errors->first() }}</div>
     @endif
 
+    @include('jobs.run_mode_filter')
+
     <table id="stored-jobs" class="table table-bordered table-striped table-hover">
         <thead>
         <tr>
             <th>Job Name</th>
             <th>Description</th>
             <th>Last Run</th>
+            <th>Run Mode</th>
             <th>Actions</th>
         </tr>
         </thead>
@@ -33,25 +36,18 @@
                 <td>{{ $job->name }}</td>
                 <td>{{ $job->description }}</td>
                 <td>{{ $job->last_run }}</td>
+                @include('jobs.run_mode_badge', ['runMode' => $runModes[$job->id] ?? []])
                 <td class="d-flex">
-                    <a href="{{ route('jobs.edit', $job) }}" class="btn btn-warning btn-sm">
+                    <a href="{{ route('jobs.edit', $job) }}" class="btn btn-warning btn-sm mr-1">
                         Edit
                     </a>
-                    @if(in_array($job->id, $storeScopedJobIds))
-                        <button type="button" class="btn btn-primary btn-sm js-run-stores"
-                                data-run-url="{{ route('jobs.run', $job) }}"
-                                data-stores-url="{{ route('jobs.stores', $job) }}"
-                                data-job-name="{{ $job->name }}">
-                            Run Now...
-                        </button>
-                    @else
-                        <form method="POST" action="{{ route('jobs.run', $job) }}">
-                            @csrf
-                            <button type="submit" class="btn btn-primary btn-sm">
-                                Run Now
-                            </button>
-                        </form>
-                    @endif
+                    @include('jobs.run_now_button', [
+                        'runMode' => $runModes[$job->id] ?? [],
+                        'runUrl' => route('jobs.run', $job),
+                        'storesUrl' => route('jobs.stores', $job),
+                        'jobName' => $job->name,
+                        'buttonClass' => 'btn-sm',
+                    ])
                 </td>
             </tr>
         @endforeach
@@ -63,6 +59,7 @@
 
 @section('adminlte_js')
     @include('jobs.run_stores_js')
+    @include('jobs.run_mode_js')
     <script>
         $(document).ready(function () {
             $('#stored-jobs').DataTable({
@@ -81,6 +78,7 @@
                     );
                 },
             });
+            initRunModeFilter('#stored-jobs', 3);
         });
     </script>
 @stop

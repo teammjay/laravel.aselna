@@ -24,12 +24,13 @@ class ScheduledjobsController extends Controller
     {
         $scheduled_jobs = ScheduledJobs::all();
 
-        // Jobs that can be run for chosen stores get the store popup on Run Now
-        $storeScopedJobIds = $scheduled_jobs->filter(fn ($job) => ($job->type ?? 'job') === 'job' && $this->runner->isStoreScoped($job->class_name))
-            ->pluck('id')
-            ->all();
+        // Jobs that can be run for chosen stores get the store popup on Run Now (JobRunMode::STORE_PICKER);
+        // commands and callbacks always run as configured
+        $runModes = $scheduled_jobs->mapWithKeys(fn ($job) => [
+            $job->id => $this->runner->runMode(($job->type ?? 'job') === 'job' ? [$job->class_name] : []),
+        ])->all();
 
-        return view('scheduled_jobs.index', compact('scheduled_jobs', 'storeScopedJobIds'));
+        return view('scheduled_jobs.index', compact('scheduled_jobs', 'runModes'));
     }
 
     /**

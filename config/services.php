@@ -35,4 +35,13 @@ return [
         ],
     ],
 
+    'shopify' => [
+        // Shopify stores whose finished feed dispatches SyncShopifyDeviceSkuMetafieldsJob.
+        // Comma separated store ids; NevaWireless (shopify) only for now. Manual runs are not limited by this.
+        'device_sku_feed_store_ids' => array_values(array_filter(array_map('trim', explode(',', (string) env(
+            'SHOPIFY_DEVICE_SKU_FEED_STORE_IDS',
+            'c2c8131f-c8a2-e082-9f89-3e8bf96b1049'
+        ))))),
+    ],
+
 ];

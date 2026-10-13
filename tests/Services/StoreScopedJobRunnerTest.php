@@ -7,6 +7,8 @@ use App\Jobs\FetchShopifyOrders;
 use App\Jobs\FetchShopifyProductsJob;
 use App\Jobs\Sync\OyderaMasterSwitch;
 use App\Jobs\TransactionStatusCheckJob;
+use App\Constants\JobRunMode;
+use App\Jobs\Shopify\SyncShopifyDeviceSkuMetafieldsJob;
 use App\Services\Jobs\StoreScopedJobRunner;
 use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
@@ -134,5 +136,46 @@ class StoreScopedJobRunnerTest extends TestCase
     public function testStoreOptionsForNonScopedJobs()
     {
         $this->assertSame(['scoped' => false, 'jobs' => [], 'stores' => []], $this->runner->storeOptions([TransactionStatusCheckJob::class]));
+    }
+
+    public function testRunModeOfStoreScopedJob()
+    {
+        $this->assertSame(
+            ['mode' => JobRunMode::STORE_PICKER, 'store_types' => ['shopify']],
+            $this->runner->runMode([SyncShopifyDeviceSkuMetafieldsJob::class])
+        );
+    }
+
+    public function testRunModeMergesTheStoreTypesOfAChain()
+    {
+        $runMode = $this->runner->runMode([FetchShopifyOrders::class, FetchEbayOrders::class, TransactionStatusCheckJob::class]);
+
+        $this->assertSame(JobRunMode::STORE_PICKER, $runMode['mode']);
+        $this->assertEqualsCanonicalizing(
+            array_merge(FetchShopifyOrders::eligibleStoreTypes(), FetchEbayOrders::eligibleStoreTypes()),
+            $runMode['store_types']
+        );
+    }
+
+    public function testRunModeOfNonScopedJobsAndCommands()
+    {
+        $single = ['mode' => JobRunMode::SINGLE_RUN, 'store_types' => []];
+
+        $this->assertSame($single, $this->runner->runMode([TransactionStatusCheckJob::class]));
+        $this->assertSame($single, $this->runner->runMode([]));
+        $this->assertSame($single, $this->runner->runMode(['App\\Jobs\\DoesNotExist']));
+    }
+
+    public function testFeedTriggerIsLimitedToConfiguredStoresButThePickerIsNot()
+    {
+        $storeId = $this->eligibleIds(SyncShopifyDeviceSkuMetafieldsJob::class, 1)[0];
+        $allShopify = $this->runner->eligibleStoresFor(SyncShopifyDeviceSkuMetafieldsJob::class)->count();
+
+        config(['services.shopify.device_sku_feed_store_ids' => [$storeId]]);
+
+        $this->assertTrue(SyncShopifyDeviceSkuMetafieldsJob::shouldRunAfterFeed($storeId));
+        $this->assertFalse(SyncShopifyDeviceSkuMetafieldsJob::shouldRunAfterFeed('not-a-store'));
+        $this->assertFalse(SyncShopifyDeviceSkuMetafieldsJob::shouldRunAfterFeed(null));
+        $this->assertSame($allShopify, $this->runner->eligibleStoresFor(SyncShopifyDeviceSkuMetafieldsJob::class)->count());
     }
 }

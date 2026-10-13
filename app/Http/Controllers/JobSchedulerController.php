@@ -22,12 +22,11 @@ class JobSchedulerController extends Controller
     {
         $jobs = ScheduledJob::all();
 
-        // Jobs whose chain (parents + itself) can be run for chosen stores get the store popup
-        $storeScopedJobIds = $jobs->filter(fn ($job) => !empty($this->runner->scopedClasses($this->chainClasses($job))))
-            ->pluck('id')
+        // Jobs whose chain (parents + itself) can be run for chosen stores get the store popup (JobRunMode::STORE_PICKER)
+        $runModes = $jobs->mapWithKeys(fn ($job) => [$job->id => $this->runner->runMode($this->chainClasses($job))])
             ->all();
 
-        return view('jobs.index', compact('jobs', 'storeScopedJobIds'));
+        return view('jobs.index', compact('jobs', 'runModes'));
     }
 
     /**

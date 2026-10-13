@@ -41,6 +41,7 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Jobs\Concerns\TrackableJob;
+use App\Jobs\Shopify\SyncShopifyDeviceSkuMetafieldsJob;
 
 class ProcessFeedGenerationJob implements ShouldQueue
 {
@@ -244,6 +245,8 @@ class ProcessFeedGenerationJob implements ShouldQueue
                     'finished_at' => now()
                 ]);
 
+                $this->dispatchDeviceSkuMetafieldSync();
+
                 return;
             }
 
@@ -297,6 +300,8 @@ class ProcessFeedGenerationJob implements ShouldQueue
                 'status' => 'completed',
                 'finished_at' => now()
             ]);
+
+            $this->dispatchDeviceSkuMetafieldSync();
 
         } catch (\Throwable $e) {
 
@@ -352,6 +357,25 @@ class ProcessFeedGenerationJob implements ShouldQueue
             'output' => $exception->getMessage(),
             'finished_at' => now(),
         ]);
+    }
+
+    /**
+     * The feed may have created detail rows (new combination SKUs), so push the Shopify products'
+     * device SKU metafields. Runs after the feed is marked done and never fails it. Only for the
+     * Shopify stores in services.shopify.device_sku_feed_store_ids (NevaWireless for now).
+     */
+    private function dispatchDeviceSkuMetafieldSync(): void
+    {
+        try {
+            if (strtolower($this->storeDetail->storeType->code ?? '') !== 'shopify'
+                || !SyncShopifyDeviceSkuMetafieldsJob::shouldRunAfterFeed($this->store_id)) {
+                return;
+            }
+
+            SyncShopifyDeviceSkuMetafieldsJob::dispatch($this->store_id);
+        } catch (\Throwable $e) {
+            Log::error('Could not dispatch SyncShopifyDeviceSkuMetafieldsJob for store ' . $this->store_id . ': ' . $e->getMessage());
+        }
     }
 
     private function insertListingItemDetail($product_code, $listitem, $device)
