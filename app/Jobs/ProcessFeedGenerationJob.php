@@ -1128,10 +1128,17 @@ class ProcessFeedGenerationJob implements ShouldQueue
 
                                 $deviceType = $device->deviceType;
                                 $descriptionTitle = '';
-                                if ($deviceType->code != 1 && $deviceType->code != 2) {
-                                    $descriptionTitle = $device->brand->name . ' ' . $device->name . ' Compatible ' . $title;
+                                if (strpos($productTitle, ',') !== false &&
+                                    (str_contains(strtolower($this->storeDetail->store_url), 'accessorychoice') || str_contains(strtolower($this->storeDetail->store_url), 'accessorywiz')
+                                        || str_contains(strtolower($this->storeDetail->store_url), 'aselna') || str_contains(strtolower($this->storeDetail->store_url), 'neva'))) {
+                                    $descriptionTitle = str_replace(',', ' for ' . $device->brand->name . ' ' . $device->name . ' -', $title);
+                                    Log::info('final Product title 1: ' . $productTitle);
                                 } else {
-                                    $descriptionTitle = $device->brand->name . ' ' . $device->name . ' - ' . $title;
+                                    if ($deviceType->code != 1 && $deviceType->code != 2) {
+                                        $descriptionTitle = $device->brand->name . ' ' . $device->name . ' Compatible ' . $title;
+                                    } else {
+                                        $descriptionTitle = $device->brand->name . ' ' . $device->name . ' - ' . $title;
+                                    }
                                 }
 
                                 $final_description = $descriptionTitle . ' for ' . $device->name . '. ' . $product_description;
@@ -1141,6 +1148,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                         (str_contains(strtolower($this->storeDetail->store_url), 'accessorychoice') || str_contains(strtolower($this->storeDetail->store_url), 'accessorywiz')
                                             || str_contains(strtolower($this->storeDetail->store_url), 'aselna') || str_contains(strtolower($this->storeDetail->store_url), 'neva'))) {
                                         $productTitle = str_replace(',', ' for ' . $device->brand->name . ' ' . $device->name . ' -', $productTitle);
+                                        Log::info('final Product title 2: ' . $productTitle);
                                     } else {
 
                                         if ($deviceType->code != 1 && $deviceType->code != 2) {
@@ -1391,7 +1399,9 @@ class ProcessFeedGenerationJob implements ShouldQueue
         if ($productTitle == null) {
             return true;
         }
+        Log::info('Product Title: ' . $productTitle);
         if (stripos(mb_strtolower($productTitle), mb_strtolower($device->name)) === false) {
+            Log::info('Returning True');
             return true;
         }
         return false;
