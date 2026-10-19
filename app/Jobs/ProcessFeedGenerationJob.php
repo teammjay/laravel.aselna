@@ -1141,6 +1141,9 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                     }
                                 }
 
+                                $descriptionTitle = str_replace('Apple ', '', $descriptionTitle);
+                                $descriptionTitle = str_replace('apple', '', $descriptionTitle);
+
                                 $final_description = $descriptionTitle . ' for ' . $device->name . '. ' . $product_description;
 
                                 if ($this->can_add_device_to_title($productTitle, $device)) {
