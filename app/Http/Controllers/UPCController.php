@@ -7,7 +7,9 @@ use App\Jobs\UPCGenerateJob;
 use App\Models\Store;
 use App\Models\UPCCodes;
 use App\Models\UpcGenerate;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class UPCController extends Controller
 {
@@ -137,14 +139,35 @@ class UPCController extends Controller
 
     public function create_upc_generate(Request $request)
     {
+        $duplicateMessage = 'A UPC generate with this company prefix, start product number and number of codes already exists.';
         $validatedData = $request->validate([
-            'store' => 'required',
-            'company_prefix' => 'required',
-            'product_number' => 'required',
-            'number_of_codes' => 'required',
+            'store' => 'required|exists:store,id',
+            'company_prefix' => ['required', function ($attribute, $value, $fail) use ($request) {
+                // a company prefix belongs to one store only
+                $otherStoreId = UpcGenerate::where('company_prefix', $value)->where('store', '!=', $request->input('store'))->value('store')
+                    ?? UPCCodes::where('company_prefix', $value)->where('store', '!=', $request->input('store'))->value('store');
+                if ($otherStoreId) {
+                    $otherStore = Store::with('storeType')->find($otherStoreId);
+                    $storeName = $otherStore ? $otherStore->name . ($otherStore->storeType ? ' - ' . $otherStore->storeType->name : '') : 'another store';
+                    $fail('Company prefix ' . $value . ' is already used by ' . $storeName . '.');
+                }
+            }],
+            'product_number' => 'required|integer|min:0',
+            'number_of_codes' => ['required', 'integer', 'min:1',
+                Rule::unique('upc_generates', 'number_of_codes')
+                    ->where('company_prefix', $request->input('company_prefix'))
+                    ->where('product_number', $request->input('product_number')),
+            ],
+        ], [
+            'number_of_codes.unique' => $duplicateMessage,
         ]);
 
-        UpcGenerate::create($validatedData);
+        try {
+            UpcGenerate::create($validatedData);
+        } catch (UniqueConstraintViolationException $e) {
+            // same request submitted twice at once; the unique index stops the second one
+            return response()->json(['message' => $duplicateMessage, 'errors' => ['number_of_codes' => [$duplicateMessage]]], 422);
+        }
 
         UPCGenerateJob::dispatch($validatedData);
 

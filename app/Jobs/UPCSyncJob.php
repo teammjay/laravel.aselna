@@ -64,15 +64,16 @@ class UPCSyncJob implements ShouldQueue
         if (!Store::where('id', $upc->store_id)->exists()) {
             return;
         }
-        //company_prefix and product number cannot be null
-        if (is_null($upc->company_prefix) || is_null($upc->start_product_number)) {
+        //company_prefix, product number and number of codes cannot be null
+        if (is_null($upc->company_prefix) || is_null($upc->start_product_number) || is_null($upc->number_of_codes)) {
             return;
         }
 
-        // only copy rows missing from aselna, never update or remove existing ones
-        $exists = UpcGenerate::where('store', $upc->store_id)
-            ->where('company_prefix', $upc->company_prefix)
+        // only copy rows missing from aselna, never update or remove existing ones. A prefix + start
+        // product number + number of codes is unique (also across stores), the old DB has a few repeats
+        $exists = UpcGenerate::where('company_prefix', $upc->company_prefix)
             ->where('product_number', $upc->start_product_number)
+            ->where('number_of_codes', $upc->number_of_codes)
             ->exists();
         if ($exists || UpcGenerate::whereKey($upc->id)->exists()) {
             return;

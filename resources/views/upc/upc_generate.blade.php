@@ -320,6 +320,8 @@
                     },
                     error: function (xhr, status, error) {
                         console.error('Error generating UPC code:', error);
+                        var errors = xhr.responseJSON && xhr.responseJSON.errors;
+                        alert(errors ? Object.values(errors).flat().join("\n") : 'Error generating UPC code: ' + error);
                     }
                 });
             });
