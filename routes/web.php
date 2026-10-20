@@ -502,6 +502,7 @@ Route::middleware('auth')->group(function () {
     Route::controller(UPCController::class)->group(function () {
         Route::get('/upc_codes', 'upc_code')->name('upc_codes.upc_code');
         Route::get('/upc_generate', 'upc_generate')->name('upc_codes.upc_generate');
+        Route::get('/upc_generate/data', 'getUpcGenerateData')->name('upc_codes.generate_data');
         Route::post('/upc_generate/add', 'create_upc_generate')->name('upc_codes.generate');
     });
 

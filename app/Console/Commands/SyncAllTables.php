@@ -164,7 +164,7 @@ class SyncAllTables extends Command
 //            ListingItemProductImageSyncJob::dispatch();
 //            StoreTypeListingSyncJob::dispatch(),
 //            ListingFeedSyncJob::dispatch(),
-//            UPCSyncJob::dispatch(),
+            UPCSyncJob::dispatch();
 //            LogisticCentreSyncJob::dispatch(),
 //            ProductImagesSyncJob::dispatch();
 //            ProductAlternativeImagesSyncJob::dispatch();
@@ -244,7 +244,7 @@ class SyncAllTables extends Command
 //        FonusCombinedSyncJob::dispatch();
 //        ShopifyOnlySyncJob::dispatch();
 //        OdemobileListingItemSyncJob::dispatch();
-        ProductAlternativeImagesSyncJob::dispatch();
+//        ProductAlternativeImagesSyncJob::dispatch();
 
         $transactionIds = [
 ////            '9400150105798006163885',

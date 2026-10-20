@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Models\Store;
 use App\Models\UpcGenerate;
 use App\Services\CriticalErrorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -59,23 +60,33 @@ class UPCSyncJob implements ShouldQueue
 
     private function createUPCSequence(mixed $upc)
     {
-        // check is store exists
-        if (!DB::connection('easyesale_db')->table('store')->where('id', $upc->store_id)->exists()) {
+        // store must exist in aselna (FK on upc_generates.store)
+        if (!Store::where('id', $upc->store_id)->exists()) {
             return;
         }
-        //company_prefix cannot be null
-        if (is_null($upc->company_prefix)) {
+        //company_prefix, product number and number of codes cannot be null
+        if (is_null($upc->company_prefix) || is_null($upc->start_product_number) || is_null($upc->number_of_codes)) {
             return;
         }
-        $data = [
+
+        // only copy rows missing from aselna, never update or remove existing ones. A prefix + start
+        // product number + number of codes is unique (also across stores), the old DB has a few repeats
+        $exists = UpcGenerate::where('company_prefix', $upc->company_prefix)
+            ->where('product_number', $upc->start_product_number)
+            ->where('number_of_codes', $upc->number_of_codes)
+            ->exists();
+        if ($exists || UpcGenerate::whereKey($upc->id)->exists()) {
+            return;
+        }
+
+        $upcGenerate = new UpcGenerate([
             'company_prefix' => $upc->company_prefix,
-            'id' => $upc->id,
             'number_of_codes' => $upc->number_of_codes,
             'product_number' => $upc->start_product_number,
             'store' => $upc->store_id,
-            'created_at' => now(),
-            'updated_at' => now()
-        ];
-        UpcGenerate::updateOrCreate(['id' => $upc->id],$data );
+        ]);
+        $upcGenerate->id = $upc->id;
+        $upcGenerate->created_at = $upc->create_ts ?? now();
+        $upcGenerate->save();
     }
 }
