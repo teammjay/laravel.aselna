@@ -7,77 +7,132 @@ use App\Jobs\UPCGenerateJob;
 use App\Models\Store;
 use App\Models\UPCCodes;
 use App\Models\UpcGenerate;
-use App\Services\DataTable\DataTableService;
 use Illuminate\Http\Request;
 
 class UPCController extends Controller
 {
     public function upc_code()
     {
-        $upcCodes = UPCCodes::all();
         $stores = Store::with('storeType')->orderBy('name', 'asc')->get();
-        return view('upc.upc_codes',compact('upcCodes','stores'));
+        return view('upc.upc_codes',compact('stores'));
     }
 
     public function getUpcData(Request $request)
     {
-        $totalRecords = UPCCodes::query()
-            // ->when($request->input('store_id'), function ($query, $storeId) {
-            //     $query->where('store', $storeId);
-            // })
-            ->count();
-        $query = UPCCodes::query()
-            ->when($request->input('store_id'), function ($query, $storeId) {
-                $query->where('store', $storeId);
-            })
-            ->when($request->input('prefix'), function ($query) use ($request) {
-                QueryFilters::applyFilter($query, $request, 'company_prefix', 'prefix_operator', 'prefix');
-            })
-            ->when($request->input('product_number'), function ($query) use ($request) {
-                QueryFilters::applyFilter($query, $request, 'product_number', 'product_number_operator', 'product_number');
-            })
-            ->when($request->input('upc_code'), function ($query, $searchValue) use ($request) {
-                QueryFilters::applyFilter($query, $request, 'upc_code', 'upc_code_operator', 'upc_code');
-            })
-            ->when($request->has('is_used') && ($request->input('is_used') != ''), function ($query) use ($request) {
-                $query->where('is_used', $request->input('is_used'));
-            })
-            ->when($request->input('sequence_id'), function ($query, $searchValue) use ($request) {
-                QueryFilters::applyFilter($query, $request, 'sequence_id', 'sequence_id_operator', 'sequence_id');
-            })
-            ->with('storeData', 'storeData.storeType');
+        $query = UPCCodes::query();
 
-        $dataTableService = new DataTableService($query, $request);
+        if ($request->filled('store_id')) {
+            $query->where('store', $request->input('store_id'));
+        }
+        QueryFilters::applyFilter($query, $request, 'company_prefix', 'prefix_operator', 'prefix');
+        QueryFilters::applyFilter($query, $request, 'product_number', 'product_number_operator', 'product_number');
+        QueryFilters::applyFilter($query, $request, 'upc_code', 'upc_code_operator', 'upc_code');
+        $this->applyNumberFilter($query, $request, 'sequence_id', 'sequence_id_operator', 'sequence_id', false);
+        if ($request->filled('is_used')) {
+            $query->where('is_used', $request->input('is_used'));
+        }
 
-        $dataTableService->setCustomSorting(function ($query, $request) {
-            $columnIndex = $request->input('order.0.column', 0);
-            $sortColumn = $request->input('columns.' . $columnIndex . '.data', 'id');
-            $columnName = $request->input('columns.' . $columnIndex . '.name', 'id');
-            $sortDirection = $request->input('order.0.dir', 'asc');
-            if ($columnName === 'store') {
-                $query->join('store', 'store.id', '=', 'upc_codes.store')
-                    ->join('store_type', 'store_type.id', '=', 'store.store_type_id')
-                    ->orderByRaw("CONCAT(store.name, ' - ', store_type.name) $sortDirection");
-            } else {
-                // Default sorting logic
-                $query->orderBy($sortColumn, $sortDirection);
-            }
-        });
+        // counting ~700k rows is the slow part, so only count twice when a filter narrows it
+        $recordsTotal = UPCCodes::count();
+        $recordsFiltered = empty($query->getQuery()->wheres) ? $recordsTotal : (clone $query)->count();
 
-        $data = $dataTableService->handle();
+        // each sort is backed by an index (see add_listing_indexes_to_upc_codes_table); store is not
+        // sortable here because ordering every code by store name sorts the whole table
+        $direction = $request->input('order.0.dir') === 'desc' ? 'desc' : 'asc';
+        $sortColumn = $request->input('columns.' . $request->input('order.0.column', 0) . '.data');
+        $sorts = [
+            'company_prefix' => ['company_prefix', 'product_number'],
+            'product_number' => ['product_number'],
+            'upc_code' => ['upc_code'],
+            'is_used' => ['is_used'],
+            'sequence_id' => ['sequence_id'],
+        ];
+        $start = max(0, (int) $request->input('start', 0));
+        $length = (int) $request->input('length', 10);
+        if ($length <= 0) {
+            $length = $recordsFiltered;
+        }
+
+        // the back half of the list is read backwards, so the last page skips a few rows instead of ~700k
+        $reverse = $start > $recordsFiltered / 2;
+        if ($reverse) {
+            $direction = $direction === 'asc' ? 'desc' : 'asc';
+            $take = max(0, min($length, $recordsFiltered - $start));
+            $skip = max(0, $recordsFiltered - $start - $take);
+        } else {
+            $take = $length;
+            $skip = $start;
+        }
+
+        foreach ($sorts[$sortColumn] ?? $sorts['company_prefix'] as $column) {
+            $query->orderBy($column, $direction);
+        }
+
+        $data = $query->with('storeData', 'storeData.storeType')->skip($skip)->take($take)->get();
+        if ($reverse) {
+            $data = $data->reverse()->values();
+        }
 
         return response()->json([
-            'draw' => $request->input('draw'),
-            'recordsTotal' => $totalRecords,
-            'recordsFiltered' => $data->total(),
-            'data' => $data->items(),
+            'draw' => (int) $request->input('draw'),
+            'recordsTotal' => $recordsTotal,
+            'recordsFiltered' => $recordsFiltered,
+            'data' => $data,
         ]);
     }
 
     public function upc_generate()
     {
-        $upcGenerate = UpcGenerate::all();
-        return view('upc.upc_generate',compact('upcGenerate'));
+        $stores = Store::with('storeType')->orderBy('name', 'asc')->get();
+        return view('upc.upc_generate', compact('stores'));
+    }
+
+    public function getUpcGenerateData(Request $request)
+    {
+        $query = UpcGenerate::query()->select('upc_generates.*');
+
+        if ($request->filled('store_id')) {
+            $query->where('upc_generates.store', $request->input('store_id'));
+        }
+        QueryFilters::applyFilter($query, $request, 'upc_generates.company_prefix', 'prefix_operator', 'prefix');
+        $this->applyNumberFilter($query, $request, 'upc_generates.product_number', 'product_number_operator', 'product_number');
+        $this->applyNumberFilter($query, $request, 'upc_generates.number_of_codes', 'number_of_codes_operator', 'number_of_codes');
+
+        $recordsTotal = UpcGenerate::count();
+        $recordsFiltered = (clone $query)->count();
+
+        $direction = $request->input('order.0.dir') === 'desc' ? 'desc' : 'asc';
+        $sortColumn = $request->input('columns.' . $request->input('order.0.column', 0) . '.data');
+        switch ($sortColumn) {
+            case 'store':
+                $query->join('store', 'store.id', '=', 'upc_generates.store')
+                    ->leftJoin('store_type', 'store_type.id', '=', 'store.store_type_id')
+                    ->orderByRaw("CONCAT(store.name, ' - ', COALESCE(store_type.name, '')) $direction");
+                break;
+            case 'product_number':
+                // stored as a string, but sorted as the number it is
+                $query->orderByRaw("CAST(upc_generates.product_number AS UNSIGNED) $direction");
+                break;
+            case 'number_of_codes':
+                $query->orderBy('upc_generates.number_of_codes', $direction);
+                break;
+            default:
+                $query->orderBy('upc_generates.company_prefix', $direction);
+        }
+        // tie-breakers so a page never repeats or skips rows that share the sorted value
+        $query->orderByRaw('CAST(upc_generates.product_number AS UNSIGNED)')->orderBy('upc_generates.id');
+
+        $length = (int) $request->input('length', 10);
+        $data = $query->with('storeData', 'storeData.storeType')
+            ->when($length > 0, fn ($query) => $query->skip((int) $request->input('start', 0))->take($length))
+            ->get();
+
+        return response()->json([
+            'draw' => (int) $request->input('draw'),
+            'recordsTotal' => $recordsTotal,
+            'recordsFiltered' => $recordsFiltered,
+            'data' => $data,
+        ]);
     }
 
     public function create_upc_generate(Request $request)
@@ -94,6 +149,25 @@ class UPCController extends Controller
         UPCGenerateJob::dispatch($validatedData);
 
         return response()->json(['message' => 'UPC Codes generated successfully']);
+    }
+
+    /**
+     * =, > and < compared as numbers. QueryFilters::applyFilter treats > as a date and has no <.
+     * $cast for a numeric string column (product_number); an int column is compared as is so its index is used.
+     */
+    private function applyNumberFilter($query, Request $request, string $field, string $operatorKey, string $valueKey, bool $cast = true): void
+    {
+        $value = $request->input($valueKey);
+        if ($value === null || $value === '' || !is_numeric($value)) {
+            return;
+        }
+
+        $operator = in_array($request->input($operatorKey), ['>', '<'], true) ? $request->input($operatorKey) : '=';
+        if ($cast) {
+            $query->whereRaw("CAST($field AS UNSIGNED) $operator ?", [(int) $value]);
+        } else {
+            $query->where($field, $operator, (int) $value);
+        }
     }
 
     public function getStoresData()

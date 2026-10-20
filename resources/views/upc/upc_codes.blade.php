@@ -7,6 +7,32 @@
     <h1>UPC codes</h1>
 @stop
 
+@section('css')
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet"/>
+    <style>
+        .select2-container {
+            width: 100% !important;
+        }
+
+        .select2-container .select2-selection--single {
+            height: calc(2.25rem + 2px);
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            line-height: calc(2.25rem);
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: auto;
+            position: absolute;
+            top: 50%;
+            right: 1px;
+            width: 20px;
+            transform: translateY(-50%);
+        }
+    </style>
+@stop
+
 @section('content')
 <div class="card card-secondary">
         <div class="card-header bg-white">
@@ -172,11 +198,16 @@
     <script>
         var table;
         $(document).ready(function() {
-            // $('#store_id').select2();
+            $('#store_id').select2({placeholder: 'Select store', allowClear: true});
 
-            document.getElementById("resetForm").addEventListener("click", function () {
-                sessionStorage.removeItem("upc_code_filters");
-            });
+            // put the last search back before the table makes its first request
+            let savedFilters = JSON.parse(sessionStorage.getItem("upc_code_filters") || 'null');
+            if (savedFilters) {
+                savedFilters.forEach(function (field) {
+                    $('#filter-form [name="' + field.name + '"]').val(field.value);
+                });
+                $('#store_id').trigger('change.select2');
+            }
 
             $('.card-header').on('click', function () {
                 if ($(this).find('.fa').hasClass('fa-angle-down')) {
@@ -191,16 +222,17 @@
 
             table = $('#upcTable').DataTable(
                 {
+                    dom: '<"datatable-top"lip>rt<"datatable-bottom"ip>',
                     processing: true,
                     serverSide: true,
                     searching: false,
                     stateSave: true,
+                    lengthMenu: [10, 20, 25, 50, 100],
+                    order: [[0, 'asc']],
                     ajax: {
                         url: "{{ route('upc-code-data') }}",
                         data: function (d) {
                             var formData = $('#filter-form').serializeArray(); // Serialize form inputs
-
-                            console.log(formData)
 
                             // Add form data to the DataTable's request payload
                             $.each(formData, function (index, field) {
@@ -232,43 +264,35 @@
                             name: 'sequence_id'
                         },
                         {
-                            data: null, name: 'store',
+                            // not sortable: ordering ~700k codes by store name sorts the whole table, use the Store filter
+                            data: null, name: 'store', orderable: false,
                             render: function (data, type, row) {
-                                return row.store_data.name + " " + row.store_data.store_type.name;
+                                if (!row.store_data) {
+                                    return '';
+                                }
+                                return $('<div>').text(row.store_data.name + " " + (row.store_data.store_type ? row.store_data.store_type.name : '')).html();
                             }
                         }
                     ]
                 }
             );
 
-            $('#apply_filter').on('click', function (event) {
+            // Filter button and Enter in any field: search from the first page
+            $('#filter-form').on('submit', function (event) {
                 event.preventDefault();
+                table.ajax.reload();
+            });
+
+            // clear the fields and show everything again
+            $('#resetForm').on('click', function (event) {
+                event.preventDefault();
+                $('#filter-form')[0].reset();
+                $('#store_id').trigger('change.select2');
+                sessionStorage.removeItem("upc_code_filters");
                 table.ajax.reload();
             });
 
         } );
 
-        document.addEventListener("DOMContentLoaded", function () {
-            let savedFilters = JSON.parse(sessionStorage.getItem("upc_code_filters"));
-            if (savedFilters) {
-                console.log(savedFilters);
-                Object.keys(savedFilters).forEach(function (key) {
-
-                    //console.log(savedFilters[key]);
-                    let input = $('#filter-form [name="'+savedFilters[key].name+'"]');
-                    if (input) {
-                        input.val(savedFilters[key].value)
-                    }
-
-                    if( savedFilters[key].name == 'store_id'){
-                        $('#listing_store').val(savedFilters[key].value);
-                    }
-
-                });
-
-            }
-        });
-
     </script>
 @stop
-

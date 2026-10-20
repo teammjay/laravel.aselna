@@ -24,11 +24,11 @@ class QueryFilters
                     $query->where($field, $value);
                     break;
                 case 'in':
-                    $values = explode(',', $value);
+                    $values = array_map('trim', explode(',', $value));
                     $query->whereIn($field, $values);
                     break;
                 case 'not_in':
-                    $values = explode(',', $value);
+                    $values = array_map('trim', explode(',', $value));
                     $query->whereNotIn($field, $values);
                     break;
                 case 'doesnt_contain':
@@ -68,11 +68,11 @@ class QueryFilters
                         $q->where($field, $value);
                         break;
                     case 'in':
-                        $values = explode(',', $value);
+                        $values = array_map('trim', explode(',', $value));
                         $q->whereIn($field, $values);
                         break;
                     case 'not_in':
-                        $values = explode(',', $value);
+                        $values = array_map('trim', explode(',', $value));
                         $q->whereNotIn($field, $values);
                         break;
                     case 'doesnt_contain':
