@@ -68,6 +68,7 @@ class FeedController extends Controller
                 'excluded_product_code' => $request->input('excluded_product_code', []),
                 'device' => $request->input('device', []),
                 'excluded_device' => $request->input('excluded_device', []),
+                'excluded_sku' => $request->input('excluded_sku', []),
                 'included_ratings' => $request->input('included_ratings', []),
                 'excluded_ratings' => $request->input('excluded_ratings', []),
                 'manufacturer' => $request->input('manufacturer', []),
@@ -138,6 +139,7 @@ class FeedController extends Controller
                 'excluded_product_code' => $filters['excluded_product_code'] ?? [],
                 'device' => $filters['device'] ?? [],
                 'excluded_device' => $filters['excluded_device'] ?? [],
+                'excluded_sku' => $filters['excluded_sku'] ?? [],
                 'included_ratings' => $filters['included_ratings'] ?? [],
                 'excluded_ratings' => $filters['excluded_ratings'] ?? [],
                 'manufacturer' => $filters['manufacturer'] ?? [],
@@ -305,6 +307,7 @@ class FeedController extends Controller
                 'interface' => $request->input('interface'),
                 'excluded_device' => $request->input('excluded_device', []),
                 'excluded_product_code' => $request->input('excluded_product_code', []),
+                'excluded_sku' => $request->input('excluded_sku', []),
                 'included_ratings' => $request->input('included_ratings'),
                 'excluded_ratings' => $request->input('excluded_ratings'),
             ];

@@ -60,6 +60,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
     protected $compatibleDeviceTypes;
     // per run lookups, filled once instead of being queried for every feed row
     private $devicePageUrls = null;
+    private $excludedSkus = null;
     private $productCategoryCodes = [];
     private $productTypes = [];
     private $manufacturerNames = [];
@@ -491,6 +492,24 @@ class ProcessFeedGenerationJob implements ShouldQueue
         return implode($pairSep, $parts);
     }
 
+
+    /**
+     * Listing item detail SKUs left out of the feed, as a lowercase lookup set.
+     */
+    private function getExcludedSkus(): array
+    {
+        if ($this->excludedSkus === null) {
+            $this->excludedSkus = [];
+            foreach ((array) ($this->data['excluded_sku'] ?? []) as $sku) {
+                $sku = strtolower(trim((string) $sku));
+                if ($sku !== '') {
+                    $this->excludedSkus[$sku] = true;
+                }
+            }
+        }
+
+        return $this->excludedSkus;
+    }
 
     private function getCompatibleDevices($product_id, $devices)
     {
@@ -1111,6 +1130,12 @@ class ProcessFeedGenerationJob implements ShouldQueue
 
                             foreach ($compatibledevices as $device) {
                                 $item_detail = $itemDetailsByDevice[$device->id] ?? null;
+
+                                // "Exclude SKUs" drops single listing item detail rows; the rest of the
+                                // listing item still goes into the feed.
+                                if ($item_detail && isset($this->getExcludedSkus()[strtolower($item_detail->sku)])) {
+                                    continue;
+                                }
 
                                 $productTitle = $itemProductTitle;
 
