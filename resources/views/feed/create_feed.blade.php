@@ -286,6 +286,13 @@
                                 </div>
                                 <div id="excluded_device_list" class="filter-chip-list filter-chip-list-exclude" data-title="Excluded Devices"></div>
                             </div>
+                            <div class="border p-2" style="width: 20%;">
+                                <label>Exclude SKUs <i class="fas fa-exclamation-triangle feed-exclude-icon" title="Listing item detail (per device) SKUs left out of the feed. Search, or paste a list and press Enter."></i> <span class="badge badge-pill badge-danger filter-count"></span></label>
+                                <div class="form-group d-flex position-relative">
+                                    <input type="text" class="form-control" id="excluded_sku_filter" placeholder="Search or paste SKUs...."><i class="fa fa-search position-absolute" style="top: 50%;right: 5px;transform: translateY(-50%);"></i>
+                                </div>
+                                <div id="excluded_sku_list" class="filter-chip-list filter-chip-list-exclude" data-title="Excluded SKUs"></div>
+                            </div>
 
                             <div class="border p-2" style="width: 20%;">
                                 <label>Included Ratings</label>
@@ -613,7 +620,7 @@
                 $('#file_type').val(config.file_type);
 
                 // Clear existing lists
-                $('#pro_code_list, #excluded_pro_code_list, #device_list, #excluded_device_list').html('');
+                $('#pro_code_list, #excluded_pro_code_list, #device_list, #excluded_device_list, #excluded_sku_list').html('');
                 let deviceNames = config.device_names || {};
 
                 // Load dynamic filters
@@ -636,6 +643,11 @@
                     if (config.filters.excluded_device) {
                         config.filters.excluded_device.forEach(val => {
                             $('#excluded_device_list').append(filterChip('excluded_device[]', val, deviceNames[val] || val));
+                        });
+                    }
+                    if (config.filters.excluded_sku) {
+                        config.filters.excluded_sku.forEach(val => {
+                            $('#excluded_sku_list').append(filterChip('excluded_sku[]', val, val));
                         });
                     }
 
@@ -1099,6 +1111,42 @@
                 }
             });
 
+            $('#excluded_sku_filter').autocomplete({
+                source: function (request, response) {
+                    $.ajax({
+                        type: "POST",
+                        url: "{{ route('listing.search') }}",
+                        data: {
+                            term: request.term,
+                            type: "listing_item_detail_sku",
+                            sku: getExcludedSkus(),
+                            store_id: $('#listing_store').val(),
+                        },
+                        headers: {
+                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                        },
+                        success: function(data) {
+                            response(data.display || []);
+                        }
+                    });
+                },
+                delay: 250,
+                minLength: 2,
+                select : function(event, ui){
+                    $('#excluded_sku_filter').val('');
+                    addExcludedSkus([ui.item.value]);
+                    return false;
+                }
+            }).on('keydown', function (e) {
+                // Enter adds what was typed / pasted: one SKU or a list split by commas, spaces or new lines
+                if (e.key !== 'Enter') return;
+                e.preventDefault();
+                let skus = $(this).val().split(/[\s,;]+/).filter(Boolean);
+                if (!skus.length) return;
+                addExcludedSkus(skus);
+                $(this).val('').autocomplete('close');
+            });
+
             $('#file_prefix').on('change', refreshFilePrefixOptions);
 
             $(document).on('click', '.filter-chip-remove', function () {
@@ -1158,6 +1206,21 @@
             $chip.append($('<span></span>').text(label));
             $chip.append('<button type="button" class="filter-chip-remove" title="Remove">&times;</button>');
             return $chip;
+        }
+
+        function getExcludedSkus() {
+            return $('input[name="excluded_sku[]"]').map(function () { return $(this).val(); }).get();
+        }
+
+        // Adds SKUs to the Exclude SKUs list, skipping ones already in it (case-insensitive)
+        function addExcludedSkus(skus) {
+            let existing = new Set(getExcludedSkus().map(s => s.toLowerCase()));
+            skus.forEach(function (sku) {
+                sku = String(sku).trim();
+                if (!sku || existing.has(sku.toLowerCase())) return;
+                existing.add(sku.toLowerCase());
+                $('#excluded_sku_list').append(filterChip('excluded_sku[]', sku, sku));
+            });
         }
 
         function refreshChipList($list) {
