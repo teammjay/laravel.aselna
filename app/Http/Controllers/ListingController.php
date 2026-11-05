@@ -835,6 +835,23 @@ class ListingController extends Controller
                     ];
                 }
                 break;
+            case 'listing_item_detail_sku':
+                // SKUs of the per-device listing item details (not the listing item's own SKU).
+                // Prefix match so the sku index is used; the table is large.
+                $query = ListingItemDetail::query()
+                    ->select('listing_item_detail.sku')
+                    ->where('listing_item_detail.sku', 'like', $term . '%')
+                    ->whereNotIn('listing_item_detail.sku', (array) $request->input('sku', []));
+                if ($store_id != '') {
+                    $query->join('listing_item', 'listing_item.id', '=', 'listing_item_detail.listing_item_id')
+                        ->join('store_product', 'store_product.id', '=', 'listing_item.store_product_id')
+                        ->where('store_product.store_id', $store_id);
+                }
+                $skus = $query->distinct()->orderBy('listing_item_detail.sku')->limit(30)->pluck('sku');
+                foreach ($skus as $sku) {
+                    $data["display"][] = ["label" => $sku, "value" => $sku];
+                }
+                break;
             case 'device_series':
                 $device_series = $request->input('device_series');
                 if (!empty($device_series)) {
