@@ -215,6 +215,7 @@ class ShopifyBrandPageSyncJob implements ShouldQueue
                     break;
                 case WebStorePageType::DEVICE:
                     $this->getPuplications();
+                    $descriptionTemplate = Navigationutility::getDescriptionTemplate($this->store_id, $page_type);
                     Device::select('device.*')->leftJoin('store_navigation_page', function ($join) {
                         $join->on('store_navigation_page.device_id', '=', 'device.id')
                             ->where('store_navigation_page.store_id', $this->store_id)
@@ -227,7 +228,7 @@ class ShopifyBrandPageSyncJob implements ShouldQueue
                         $subquery->whereNull('store_navigation_page.id')
                             ->orWhereRaw('store_navigation_page.updated_at < GREATEST(device.updated_at, COALESCE(di.last_interface_update, "1970-01-01"))');
                     })->whereIn('device_type_id', $compatibleDeviceTypes)
-                        ->chunkById(100, function ($devices) use ($page_type, $template, $request) {
+                        ->chunkById(100, function ($devices) use ($page_type, $template, $request, $descriptionTemplate) {
                             foreach ($devices as $device) {
                                 Log::info('Processing device :: ' . $device->name . ' with id :: ' . $device->id);
                                 $handle = null;
@@ -253,6 +254,20 @@ class ShopifyBrandPageSyncJob implements ShouldQueue
                                     'title' => $title,
                                 ];
                                 $collectionData['collection']['ruleSet']['appliedDisjunctively'] = true;
+
+                                // Collection description from the store's (or default) DEVICE description_template
+                                $description = $this->pageDescription($descriptionTemplate, [
+                                    'store_id' => $this->store_id,
+                                    'page_type' => WebStorePageType::DEVICE,
+                                    'device_id' => $device->id,
+                                ], [
+                                    'brandName' => $brand->name,
+                                    'deviceName' => $device->name,
+                                ]);
+                                if ($description !== '') {
+                                    $collectionData['collection']['descriptionHtml'] = nl2br(e($description));
+                                }
+
                                 $path = '/store-images/' . $this->store->id . '/collections/' . $handle . '.jpg';
                                 $collection = null;
 
@@ -328,6 +343,7 @@ class ShopifyBrandPageSyncJob implements ShouldQueue
                                             'url_path' => $handle,
                                             'store_image_url' => $imageUrl,
                                             'title' => $title,
+                                            'description' => $description,
                                             'page_id' => $id,
                                         ]
                                     );
