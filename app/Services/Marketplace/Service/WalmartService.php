@@ -499,6 +499,15 @@ class WalmartService implements MarketplaceServiceInterface
                         'productNetContentMeasure' => 1,
                     ];
 
+                // Put the title on the first line of the description (skip if already there)
+                $title = trim((string) $item->title);
+                $description = trim((string) ($visibleAttributes['shortDescription'] ?? ''));
+                if ($title !== '' && !str_starts_with($description, $title)) {
+                    $visibleAttributes['shortDescription'] = $description === ''
+                        ? $title
+                        : $title . '<br>' . $description;
+                }
+
                 $product['Visible'][$storeTypeCategory->name] = $visibleAttributes;
 
                 $jsonFeed['MPItem'][] = $product;
