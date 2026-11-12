@@ -147,6 +147,20 @@ class AmazonService implements MarketplaceServiceInterface
                     }
                 }
                 $message['attributes']['bullet_point'] = $bulletPoints;
+
+                // Fall back to the first two bullet points when the product has no description
+                if (empty(trim((string) $productData->product_description))) {
+                    $fallbackDescription = $storeProduct->features
+                        ->map(fn ($feature) => trim((string) $feature->value))
+                        ->filter()
+                        ->take(2)
+                        ->implode(' ');
+
+                    if ($fallbackDescription !== '') {
+                        $message['attributes']['product_description'] = [['value' => $fallbackDescription, 'language_tag' => 'en_US']];
+                    }
+                }
+
                 $message['attributes']['list_price'] = [['value' => number_format($itemDetail->price, 2), 'currency' => 'USD']];
 
                 if (isset($productData->package_dimensions_length) && isset($productData->package_dimensions_width) && isset($productData->package_dimensions_height)) {
