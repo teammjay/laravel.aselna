@@ -505,7 +505,7 @@ class WalmartService implements MarketplaceServiceInterface
                 if ($title !== '' && !str_starts_with($description, $title)) {
                     $visibleAttributes['shortDescription'] = $description === ''
                         ? $title
-                        : $title . '\n' . $description;
+                        : $title . ' \n' . $description;
                 }
 
                 $product['Visible'][$storeTypeCategory->name] = $visibleAttributes;
