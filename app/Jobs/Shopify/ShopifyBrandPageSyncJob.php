@@ -263,6 +263,7 @@ class ShopifyBrandPageSyncJob implements ShouldQueue
                                 ], [
                                     'brandName' => $brand->name,
                                     'deviceName' => $device->name,
+                                    'deviceNameWithSubtype' => $this->deviceNameWithSubtype($device),
                                 ]);
                                 if ($description !== '') {
                                     $collectionData['collection']['descriptionHtml'] = nl2br(e($description));
@@ -376,6 +377,7 @@ class ShopifyBrandPageSyncJob implements ShouldQueue
                             ], [
                                 'brandName' => $device->brand->name,
                                 'deviceName' => $device->name,
+                                'deviceNameWithSubtype' => $this->deviceNameWithSubtype($device),
                             ]);
                             $data = [
                                 'description' => $request['description'],
@@ -627,6 +629,15 @@ class ShopifyBrandPageSyncJob implements ShouldQueue
         return Navigationutility::generateDescription($descriptionTemplate->description_template, $variables + [
             'storeName' => $this->store->name,
         ]);
+    }
+
+    /**
+     * Device name followed by its sub type when it has one, e.g. "Galaxy Note 20" (no sub type)
+     * or "Hero 12 Action Camera". Used by the legacy ##devicenamewithsubtype template variable.
+     */
+    private function deviceNameWithSubtype(Device $device): string
+    {
+        return trim($device->name . ' ' . ($device->deviceSubType->name ?? ''));
     }
 
     private function setVariables()
