@@ -111,6 +111,11 @@ class JobScheduler extends Seeder
                 'class_name' => 'App\Jobs\FetchResultFeedAsync',
             ],
             [
+                'name' => 'Walmart Pending Inventory Sync',
+                'description' => 'Send inventory for live Walmart items that never had an inventory feed',
+                'class_name' => 'App\Jobs\Walmart\PendingInventorySyncJob',
+            ],
+            [
                 'name' => 'Amazon Product Type Sync',
                 'description' => 'Sync all Amazon product types',
                 'class_name' => 'App\Jobs\AmazonProductTypeSyncJob',

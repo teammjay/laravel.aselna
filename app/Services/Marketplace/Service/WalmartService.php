@@ -67,7 +67,10 @@ class WalmartService implements MarketplaceServiceInterface
         return 'feeds/walmart/' . $identifier . '.json';
     }
 
-    public function submitFeed($feedId, $listingId)
+    /**
+     * @param string|null $file Feed file to send. When empty the file is looked up from the listing / feed id.
+     */
+    public function submitFeed($feedId, $listingId, $file = null)
     {
         try {
             $listingInfo = Listing::where('id', $listingId)->first();
@@ -79,7 +82,9 @@ class WalmartService implements MarketplaceServiceInterface
             $authService = new WalmartAuthService($store->seller_id, $store->secret_key);
 
             // Backward compatibility
-            $file = public_path('feeds/walmart/' . $listingId . '.json');
+            if (empty($file)) {
+                $file = public_path('feeds/walmart/' . $listingId . '.json');
+            }
             if (!file_exists($file) && $feedId) {
                 $file = public_path('feeds/walmart/' . $feedId . '.json');
             }
@@ -139,36 +144,127 @@ class WalmartService implements MarketplaceServiceInterface
         }
     }
 
-    public function submitInventoryFeedAfterCreate($listingId, $listingInfo, $feedInfo)
-    {
-        Log::info('Submit Inventory Feed After Create');
-        $created_by = auth()->user()->name ?? 'admin';
-        Log::info('Created By: ' . $created_by);
+    /**
+     * Minimum gap between two inventory feeds for the same listing. Items that clear Walmart's review
+     * inside the gap wait for the next check (or Walmart\PendingInventorySyncJob), so a long-running
+     * create feed does not send a new inventory feed on every 15-minute check.
+     */
+    const INVENTORY_FEED_MIN_GAP_MINUTES = 30;
 
-        $feedData = array(
+    /**
+     * Send inventory for the listing's items that are live on Walmart (store_sku set, Synchronized)
+     * but never had an inventory feed. Called while the create feed is still in progress, so items
+     * that clear review early get stock without waiting for the slowest item in the feed, and by
+     * Walmart\PendingInventorySyncJob to catch anything that slipped through.
+     *
+     * @return ListingFeed|null the inventory feed, or null when nothing was sent
+     */
+    public function submitInventoryForReadyItems($listingInfo)
+    {
+        $listingId = $listingInfo->id;
+
+        $recentInventoryFeed = ListingFeed::where('listing_id', $listingId)
+            ->where('feed_type', FeedTypes::INVENTORY)
+            ->where('submit_ts', '>=', now()->subMinutes(self::INVENTORY_FEED_MIN_GAP_MINUTES))
+            ->exists();
+        if ($recentInventoryFeed) {
+            Log::info('Walmart inventory feed sent less than ' . self::INVENTORY_FEED_MIN_GAP_MINUTES . ' minutes ago for listing ' . $listingId . ', waiting');
+            return null;
+        }
+
+        $items = ListingItem::select('listing_item.id', 'listing_item.sku', 'listing_item.quantity')
+            ->join('listing_item_link', 'listing_item_link.item_id', '=', 'listing_item.id')
+            ->where('listing_item_link.listing_id', $listingId)
+            ->whereNotNull('listing_item.store_sku')
+            ->where('listing_item.store_sku', '!=', '')
+            ->where('listing_item.sync_status', ListingSyncStatus::Synchronized)
+            ->where(function ($query) {
+                $query->whereNull('listing_item.status')
+                    ->orWhere('listing_item.status', '!=', ListingStatus::Deleted);
+            })
+            ->whereNull('listing_item.inventory_submitted_at')
+            ->distinct()
+            ->get();
+
+        if ($items->isEmpty()) {
+            return null;
+        }
+
+        Log::info('Submitting Walmart inventory for ' . $items->count() . ' item(s) of listing ' . $listingId);
+
+        $feed = ListingFeed::create([
             'listing_id' => $listingId,
             'status' => FeedStatus::CREATED,
             'feed_type' => FeedTypes::INVENTORY,
             'store_id' => $listingInfo->store_id,
-            'number_of_items' => $feedInfo->number_of_items,
-            'created_by' => $created_by
-        );
-        //Log::info('Feed Data: ' . json_encode($feedData));
-
-        $newfeed = ListingFeed::updateOrCreate([
-            'listing_id' => $listingId,
-            'feed_type' => FeedTypes::INVENTORY
-        ], $feedData);
-
-        $this->generateInventoryFeed($listingInfo, $listingId, $newfeed);
-        //Log::info('Inventory Feed Generated: ' . json_encode($newfeed));
-
-        $this->submitFeed($newfeed->id, $listingId);
-        //Log::info('Inventory Feed Submitted: ' . json_encode($newfeed));
-
-        $newfeed->update([
-            'status' => FeedStatus::PROCESSING,
+            'number_of_items' => $items->count(),
         ]);
+
+        $jsonFeed = [
+            'InventoryHeader' => ['version' => '1.4'],
+            'Inventory' => $items->map(fn ($item) => [
+                'sku' => $item->sku,
+                'quantity' => [
+                    'unit' => 'EACH',
+                    'amount' => $item->quantity
+                ]
+            ])->values()->all(),
+        ];
+
+        $file = public_path('feeds/walmart/I_' . $feed->id . '.json');
+        FileUtility::saveToFile($file, json_encode($jsonFeed));
+
+        // submitFeed sets the feed to PROCESSING, or to ERROR when Walmart refuses it
+        $this->submitFeed($feed->id, $listingId, $file);
+        $feed->refresh();
+
+        if ($feed->status == FeedStatus::PROCESSING) {
+            ListingItem::whereIn('id', $items->pluck('id'))->update(['inventory_submitted_at' => now()]);
+        }
+
+        return $feed;
+    }
+
+    /**
+     * Save the Walmart item id as store_sku for the items Walmart reports in the feed result.
+     *
+     * @param bool $onlySuccess true: only items with ingestionStatus SUCCESS (used while the feed is still
+     *                          in progress); false: any item that came back with an item id (the final result)
+     */
+    private function saveStoreSkus($listingInfo, array $itemStatuses, bool $onlySuccess)
+    {
+        $skuToItemId = [];
+        foreach ($itemStatuses as $item) {
+            if (empty($item['sku']) || empty($item['itemid']) || empty($item['ingestionStatus'])) {
+                continue;
+            }
+            if ($onlySuccess && $item['ingestionStatus'] !== 'SUCCESS') {
+                continue;
+            }
+            $skuToItemId[$item['sku']] = $item['itemid'];
+        }
+
+        if (empty($skuToItemId)) {
+            return;
+        }
+
+        // Only this store's items: the same SKU can exist in other stores' listings.
+        $listingItems = ListingItem::select('listing_item.*')
+            ->join('listing_item_link', 'listing_item_link.item_id', '=', 'listing_item.id')
+            ->join('listing', 'listing.id', '=', 'listing_item_link.listing_id')
+            ->where('listing.store_id', $listingInfo->store_id)
+            ->whereIn('listing_item.sku', array_keys($skuToItemId))
+            ->distinct()
+            ->get();
+
+        foreach ($listingItems as $listingItem) {
+            $updates = ['store_sku' => $skuToItemId[$listingItem->sku]];
+            if ($onlySuccess) {
+                // Live on Walmart; the final result sets the sync status of the remaining items.
+                $updates['sync_status'] = ListingSyncStatus::Synchronized;
+            }
+            $listingItem->update($updates);
+        }
     }
 
     public function getResultFeed(mixed $listingId, $feedId = null)
@@ -180,6 +276,7 @@ class WalmartService implements MarketplaceServiceInterface
 
         $feedInfo = ListingFeed::where('id', $feedId)->first();
         $itemCount = ListingItemLink::where('listing_id', $listingId)->count();
+        $isCreateFeed = $feedInfo->feed_type == FeedTypes::CREATE;
 
         $response = $authService->getFeedStatus($feedInfo->feed_id, $itemCount);
         Log::info('Feed Status: ' . json_encode($response));
@@ -192,53 +289,53 @@ class WalmartService implements MarketplaceServiceInterface
             'last_status_check_ts' => now(),
         ]);
 
-        // If not yet processed, return early (status stays as PROCESSING)
+        $itemStatuses = $response['itemDetails']['itemIngestionStatus'] ?? [];
+
+        // Walmart rejected the whole feed; it will not move on from here.
+        if (($response['feedStatus'] ?? null) == 'ERROR') {
+            FileUtility::saveToFile(public_path('result-feeds/walmart/' . $feedInfo->id . '.json'), json_encode($response));
+            $feedErrors = [];
+            foreach ($response['ingestionErrors']['ingestionError'] ?? [] as $error) {
+                $feedErrors[] = $error['description'] ?? ($error['code'] ?? 'Unknown error');
+            }
+            $feedInfo->update([
+                'status' => FeedStatus::ERROR,
+                'error_text' => 'Walmart rejected the feed' . (!empty($feedErrors) ? ': ' . implode("\n", array_slice($feedErrors, 0, 50)) : '.'),
+            ]);
+            return 'result-feeds/walmart/' . $feedInfo->id . '.json';
+        }
+
+        // If not yet processed, handle the items that already passed and return (status stays PROCESSING).
+        // Walmart's compliance / AI review can keep a create feed in progress for up to ~24 hours.
         if ($response['feedStatus'] != 'PROCESSED') {
             Log::info('Walmart feed still processing. Status: ' . $response['feedStatus']);
+            if ($isCreateFeed) {
+                $this->saveStoreSkus($listingInfo, $itemStatuses, true);
+                $this->submitInventoryForReadyItems($listingInfo);
+            }
             return null;
         }
 
         // Collect error messages from failed items
         $errorMessages = [];
-        if (isset($response['itemDetails']['itemIngestionStatus'])) {
-            if ($feedInfo->feed_type == FeedTypes::CREATE) {
-                foreach ($response['itemDetails']['itemIngestionStatus'] as $item) {
-                    $listingItems = ListingItem::where('sku', $item['sku'])->get();
-                    foreach ($listingItems as $listingItem) {
-                        if ($item['ingestionStatus'] && isset($item['itemid'])) {
-                            $listingItem->update([
-                                'store_sku' => $item['itemid']
-                            ]);
-                        }
-                    }
-                    // Collect errors from failed items
-                    if (isset($item['ingestionErrors']['ingestionError'])) {
-                        foreach ($item['ingestionErrors']['ingestionError'] as $error) {
-                            $errorMessages[] = '[' . ($item['sku'] ?? '') . '] ' . ($error['description'] ?? 'Unknown error');
-                        }
-                    }
-                }
-            }
-            else if ($feedInfo->feed_type == FeedTypes::DELETE) {
-                foreach ($response['itemDetails']['itemIngestionStatus'] as $item) {
-                    $listingItems = ListingItem::where('sku', $item['sku'])->get();
-                    foreach ($listingItems as $listingItem) {
-                        if (($item['ingestionStatus']) && $item['ingestionStatus'] == 'SUCCESS') {
-                            $listingItem->update(['status' => ListingStatus::Deleted]);
-                        }
-                    }
-                    if (isset($item['ingestionErrors']['ingestionError'])) {
-                        foreach ($item['ingestionErrors']['ingestionError'] as $error) {
-                            $errorMessages[] = '[' . ($item['sku'] ?? '') . '] ' . ($error['description'] ?? 'Unknown error');
-                        }
-                    }
-                }
+        foreach ($itemStatuses as $item) {
+            foreach ($item['ingestionErrors']['ingestionError'] ?? [] as $error) {
+                $errorMessages[] = '[' . ($item['sku'] ?? '') . '] ' . ($error['description'] ?? 'Unknown error');
             }
         }
 
-        if ($response['feedStatus'] == 'PROCESSED' && intval($response['itemsSucceeded']) > 0
-        && $feedInfo->feed_type == FeedTypes::CREATE) {
-            $this->submitInventoryFeedAfterCreate($listingId, $listingInfo, $feedInfo);
+        if ($isCreateFeed) {
+            $this->saveStoreSkus($listingInfo, $itemStatuses, false);
+        }
+        else if ($feedInfo->feed_type == FeedTypes::DELETE) {
+            foreach ($itemStatuses as $item) {
+                $listingItems = ListingItem::where('sku', $item['sku'])->get();
+                foreach ($listingItems as $listingItem) {
+                    if (($item['ingestionStatus']) && $item['ingestionStatus'] == 'SUCCESS') {
+                        $listingItem->update(['status' => ListingStatus::Deleted]);
+                    }
+                }
+            }
         }
 
         // save response into folder
@@ -261,8 +358,8 @@ class WalmartService implements MarketplaceServiceInterface
             ]);
         }
 
-        /* counting based on store sku*/
-        $listing_items = ListingItemLink::select('item_id')->where('listing_id', $listingId)->get();
+        /* counting based on store sku - only the create feed decides whether the listing's items are live */
+        $listing_items = $isCreateFeed ? ListingItemLink::select('item_id')->where('listing_id', $listingId)->get() : [];
         if (count($listing_items ?? []) > 0) {
             $successCnt = $failCnt = 0;
             foreach ($listing_items as $item) {
@@ -290,6 +387,11 @@ class WalmartService implements MarketplaceServiceInterface
 //            ]);
         }
         /* counting based on store sku*/
+
+        // Inventory for the items that went live and were not sent while the feed was in progress
+        if ($isCreateFeed) {
+            $this->submitInventoryForReadyItems($listingInfo);
+        }
 
         return 'result-feeds/walmart/' . $feedInfo->id . '.json';
     }

@@ -120,6 +120,17 @@ class ScheduledCronJobsSeeder extends Seeder
                 'type' => 'job',
                 'description' => 'Fetch listing feed results every 5 minutes',
             ],
+            [
+                'name' => 'Walmart Pending Inventory Sync',
+                'class_name' => 'App\Jobs\Walmart\PendingInventorySyncJob',
+                'command' => null,
+                'cron_expression' => '30 * * * *', // hourly
+                'parameters' => null,
+                'store_type' => 'walmart',
+                'is_active' => true,
+                'type' => 'job',
+                'description' => 'Send inventory for live Walmart items that never had an inventory feed',
+            ],
 
             // Order Syncing - Every 30 minutes
             [
