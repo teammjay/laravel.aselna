@@ -663,16 +663,6 @@ class TemuService implements MarketplaceServiceInterface
                         return false;
                     }
 
-                    $data = [
-                        'sendType' => 0,
-                        'sendRequestList' => [
-                            'carrierId' => $logisticsServiceProviderId,
-                            'trackingNumber' => $trackingNumber,
-                            'selfShippingWarehouseId' => $warehouseDetail['warehouseId'],
-                            'orderSendInfoList' => []
-                        ]
-                    ];
-
                     $orderItems = [];
                     foreach ($mainOrderOperation->order->orderItem as $item) {
                         $orderItems[] = [
@@ -681,12 +671,34 @@ class TemuService implements MarketplaceServiceInterface
                             'quantity' => $item->quantity
                         ];
                     }
-                    $data['sendRequestList']['orderSendInfoList'] = $orderItems;
+
+                    // sendRequestList is a list of packages, one entry per tracking number.
+                    $data = [
+                        'sendType' => 0,
+                        'sendRequestList' => [
+                            [
+                                'carrierId' => $logisticsServiceProviderId,
+                                'trackingNumber' => $trackingNumber,
+                                'selfShippingWarehouseId' => $warehouseDetail['warehouseId'],
+                                'orderSendInfoList' => $orderItems,
+                            ],
+                        ],
+                    ];
 
                     Log::info("Request For Shipment" . json_encode($data));
 
                     $response = $temuAuthService->callOrderShipment($data);
                     Log::info('Temu Shipment Response : ' . json_encode($response));
+
+                    if (empty($response['success'])) {
+                        CriticalErrorService::report('Temu Create Shipment Rejected', [
+                            'marketplace' => 'Temu',
+                            'reason' => $response['errorMsg'] ?? 'Unknown',
+                            'method' => __METHOD__
+                        ], ['order_id' => $orderId, 'tracking_number' => $trackingNumber, 'response' => $response]);
+                        return false;
+                    }
+
                     return true;
                 }
             }
