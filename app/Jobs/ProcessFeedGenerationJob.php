@@ -1172,7 +1172,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                 $final_description = $descriptionTitle . ' for ' . $device->name . '. ' . $product_description;
 
                                 if ($this->can_add_device_to_title($productTitle, $device)) {
-                                    if (strpos($productTitle, ' ') !== false &&
+                                    if (strpos($productTitle, ',') !== false &&
                                         (str_contains(strtolower($this->storeDetail->store_url), 'accessorychoice') || str_contains(strtolower($this->storeDetail->store_url), 'accessorywiz')
                                             || str_contains(strtolower($this->storeDetail->store_url), 'aselna') || str_contains(strtolower($this->storeDetail->store_url), 'neva'))) {
                                         $productTitle = str_replace(',', ' for ' . $device->brand->name . ' ' . $device->name . ' -', $productTitle);
