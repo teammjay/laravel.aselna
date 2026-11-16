@@ -27,6 +27,7 @@ use App\Utils\order\OrderOperationUtility;
 use App\Services\Marketplace\Service\ShopifyService;
 use Google\Service\ShoppingContent\OrderCancellation;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
@@ -1456,17 +1457,7 @@ class ShipmentsController extends Controller
                 $totalInsurance = 0;
                 foreach ($orderIds as $orderId) {
                     $orderOperation = OrderOperation::where('order_id', $orderId)->first();
-                    $product_weight = 0;
-                    foreach ($orderOperation->operationItem as $oitem) {
-                        if (isset($oitem->orderItem->product)) {
-                            $product_id = $oitem->orderItem->product->product_id;
-                            if ($product_id) {
-                                $product_detail = Catalog::findOrFail($product_id);
-                                $product_weight = $product_detail->product_weight * $oitem->quantity;
-                            }
-                        }
-                    }
-                    $totalweight += $orderOperation->weight_value ?? $product_weight;
+                    $totalweight += $this->operationWeightForMerge($orderOperation);
                     $totalInsurance += $orderOperation->insurance_value;
                     if ($orderOperation) {
                         if (!isset($mainShipment)) {
@@ -1494,35 +1485,91 @@ class ShipmentsController extends Controller
 
     private function unmergeSameAddressOrders(Request $request)
     {
-        Log::info("Coming HEre");
+        $preLabelStatuses = [
+            OrderOperationStatus::Created,
+            OrderOperationStatus::CanceledRequested,
+            OrderOperationStatus::PaymentPending,
+        ];
+
         $mergedOperations = OrderOperation::where('is_merged', true)
-            ->whereIn('status',[0,20])
-            ->whereNotNull('merged_with')->get();
+            ->whereNotNull('merged_with')
+            ->where(function ($q) use ($preLabelStatuses) {
+                // original rule: child itself is still open
+                $q->whereIn('status', [OrderOperationStatus::Created, OrderOperationStatus::CanceledRequested])
+                // child changed status after merging (e.g. its order was cancelled)
+                // while the main shipment is still unshipped
+                ->orWhereIn('merged_with', function ($sub) use ($preLabelStatuses) {
+                    $sub->select('id')
+                        ->from('order_operation')
+                        ->whereIn('status', $preLabelStatuses);
+                })
+                // orphans: main shipment no longer exists
+                ->orWhereNotIn('merged_with', function ($sub) {
+                    $sub->select('id')->from('order_operation');
+                });
+            })
+            ->get();
 
         foreach ($mergedOperations as $mergedOperation) {
-            $mainOperation = OrderOperation::where('id', $mergedOperation->merged_with)->first();
+            DB::transaction(function () use ($mergedOperation, $preLabelStatuses) {
+                $mainOperation = OrderOperation::find($mergedOperation->merged_with);
 
-            foreach ($mergedOperation->operationItem as $operationItem) {
-                OrderOperationItem::where('order_item_id', $operationItem->order_item_id)
-                    ->where('order_operation_id',$mainOperation->id)->delete();
-            }
-            $mergedOperation->update([
-                'is_merged' => false,
-                'merged_with' => null,
-            ]);
+                if ($mainOperation) {
+                    foreach ($mergedOperation->operationItem as $operationItem) {
+                        OrderOperationItem::where('order_item_id', $operationItem->order_item_id)
+                            ->where('order_operation_id', $mainOperation->id)->delete();
+                    }
 
-            $mergedOrderIds = json_decode($mainOperation->orderIds, true) ?? [];
-            // remove the merged orderId
-            $mergedOrderIds = array_filter($mergedOrderIds, function ($id) use ($mergedOperation) {
-                return $id != $mergedOperation->order_id;
+                    // remove the merged orderId
+                    $mergedOrderIds = json_decode($mainOperation->orderIds, true) ?? [];
+                    $mergedOrderIds = array_values(array_filter($mergedOrderIds, function ($id) use ($mergedOperation) {
+                        return $id != $mergedOperation->order_id;
+                    }));
+                    $mainOperation->orderIds = json_encode($mergedOrderIds);
+
+                    // take back the weight / insurance that the merge added to the main shipment,
+                    // but never alter a shipment whose label was already bought
+                    if (in_array($mainOperation->status, $preLabelStatuses)) {
+                        $mainOperation->weight_value = max(0, ($mainOperation->weight_value ?? 0) - $this->operationWeightForMerge($mergedOperation));
+                        $mainOperation->insurance_value = max(0, ($mainOperation->insurance_value ?? 0) - ($mergedOperation->insurance_value ?? 0));
+                    }
+                    $mainOperation->save();
+                }
+
+                $mergedOperation->update([
+                    'is_merged' => false,
+                    'merged_with' => null,
+                ]);
+
+                Log::info('Unmerged operation ' . $mergedOperation->id . ' from ' . ($mainOperation->id ?? 'missing main operation'));
             });
-
-            $mainOperation->orderIds = json_encode($mergedOrderIds);
-            $mainOperation->save();
-
-            Log::info('Merging Orders : ' . json_encode($mergedOrderIds));
-
         }
+    }
+
+    /**
+     * Weight an operation contributes when merged into another shipment.
+     * Shared by merge and unmerge so unmerge subtracts exactly what merge added.
+     */
+    private function operationWeightForMerge(OrderOperation $orderOperation)
+    {
+        if ($orderOperation->weight_value !== null) {
+            return $orderOperation->weight_value;
+        }
+
+        $product_weight = 0;
+        foreach ($orderOperation->operationItem as $oitem) {
+            if (isset($oitem->orderItem->product)) {
+                $product_id = $oitem->orderItem->product->product_id;
+                if ($product_id) {
+                    $product_detail = Catalog::find($product_id);
+                    if ($product_detail) {
+                        $product_weight = $product_detail->product_weight * $oitem->quantity;
+                    }
+                }
+            }
+        }
+
+        return $product_weight;
     }
 
     public function approveShipment(Request $request){
