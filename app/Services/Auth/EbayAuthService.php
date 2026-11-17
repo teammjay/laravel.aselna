@@ -11,6 +11,8 @@ use App\Constants\FeedTypes;
 
 class EbayAuthService
 {
+    private const MEDIA_API_BASE_URL = 'https://apim.ebay.com/commerce/media/v1_beta';
+
     protected $client;
     protected $clientId;
     protected $clientSecret;
@@ -330,53 +332,55 @@ class EbayAuthService
         }
     }
 
-    public function uploadImageToEPS($imageUrl, $imageName)
+    /**
+     * Upload a self-hosted image to eBay Picture Services (EPS) via the
+     * Media API createImageFromUrl call (replaces the deprecated Trading API
+     * UploadSiteHostedPictures call).
+     *
+     * @see https://developer.ebay.com/develop/api/sell/media_api#sell-media_api-image-createimagefromurl
+     *
+     * @param string      $imageUrl  Public HTTPS URL of the image to import.
+     * @param string|null $imageName Unused by the Media API; kept for caller compatibility.
+     * @return string|null The EPS image URL to use in listings, or null on failure.
+     */
+    public function uploadImageToEPS($imageUrl, $imageName = null)
     {
+        if (!is_string($imageUrl) || stripos($imageUrl, 'https://') !== 0) {
+            Log::warning('eBay Media API requires an HTTPS image URL, skipping EPS upload: ' . $imageUrl);
+            return null;
+        }
+
         try {
             $accessToken = $this->refreshToken();
 
-            $headers = [
-                'X-EBAY-API-COMPATIBILITY-LEVEL' => '1147',
-                'X-EBAY-API-CALL-NAME' => 'UploadSiteHostedPictures',
-                'X-EBAY-API-SITEID' => '0',
-                'Content-Type' => 'text/xml',
-                'X-EBAY-API-IAF-TOKEN' => $accessToken,
-            ];
-
-            $xml = new \SimpleXMLElement('<?xml version="1.0" encoding="utf-8"?>
-<UploadSiteHostedPicturesRequest xmlns="urn:ebay:apis:eBLBaseComponents"></UploadSiteHostedPicturesRequest>');
-
-            $xml->addChild('PictureName', $imageName);
-            $xml->addChild('ExternalPictureURL', $imageUrl);
-            $xml->addChild('PictureSet', 'Supersize');
-            $xmlContent = $xml->asXML();
-
-            $response = $this->client->post('ws/api.dll', [
-                'headers' => $headers,
-                'body' => $xmlContent,
-            ]);
-
-            $body = $response->getBody()->getContents();
-            Log::info('UploadSiteHostedPictures Response ' . $response->getBody());
-            $xml = simplexml_load_string($body);
-
-            if (isset($xml->SiteHostedPictureDetails->FullURL)) {
-
-                $imageUrl = (string)$xml->SiteHostedPictureDetails->FullURL;
-                $maxSize = 0;
-
-                foreach ($xml->SiteHostedPictureDetails->PictureSetMember as $member) {
-                    $size = (int)$member->PictureHeight;
-                    if ($size > $maxSize) {
-                        $maxSize = $size;
-                        $imageUrl = (string)$member->MemberURL;
-                    }
-                }
-                return $imageUrl;
+            if (!is_string($accessToken) || $accessToken === '') {
+                Log::error('eBay EPS upload skipped: could not obtain an access token');
+                return null;
             }
 
+            $response = $this->client->post(self::MEDIA_API_BASE_URL . '/image/create_image_from_url', [
+                'headers' => [
+                    'Authorization' => 'Bearer ' . $accessToken,
+                    'Content-Type' => 'application/json',
+                    'Accept' => 'application/json',
+                ],
+                'json' => [
+                    'imageUrl' => $imageUrl,
+                ],
+            ]);
+
+            $body = (string) $response->getBody();
+            Log::info('createImageFromUrl Response ' . $body);
+
+            $data = json_decode($body, true);
+
+            if (is_array($data) && !empty($data['imageUrl'])) {
+                return $data['imageUrl'];
+            }
+
+            Log::error('eBay createImageFromUrl returned no imageUrl for: ' . $imageUrl);
             return null;
-        }catch (RequestException $e){
+        } catch (RequestException $e) {
 
             CriticalErrorService::report('Ebay upload images to EPS failed', [
                 'marketplace' => 'eBay',
@@ -385,13 +389,23 @@ class EbayAuthService
             ],['image_url' => $imageUrl]);
 
             if ($e->hasResponse()) {
-                $errorBody = json_decode($e->getResponse()->getBody()->getContents(), true);
-                $this->handleApiErrors($errorBody);
+                $rawBody = (string) $e->getResponse()->getBody();
+                $this->handleApiErrors(json_decode($rawBody, true), $rawBody);
             } else {
                 Log::error('Error: ' . $e->getMessage());
-                return null;
-                /*throw new \Exception('Unexpected error occurred: ' . $e->getMessage());*/
             }
+
+            return null;
+        } catch (\Throwable $e) {
+
+            CriticalErrorService::report('Ebay upload images to EPS failed', [
+                'marketplace' => 'eBay',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
+                'method' => __METHOD__
+            ],['image_url' => $imageUrl]);
+
+            Log::error('Error: ' . $e->getMessage());
+            return null;
         }
     }
 
@@ -493,10 +507,17 @@ class EbayAuthService
         }
     }
 
-    protected function handleApiErrors(array $errorResponse)
+    /**
+     * @param mixed  $errorResponse Decoded JSON error body; null/non-array when the body was not JSON (XML, HTML, empty).
+     * @param string $rawBody       Raw response body, logged when it cannot be parsed.
+     */
+    protected function handleApiErrors($errorResponse, string $rawBody = '')
     {
-        if (isset($errorResponse['errors'])) {
+        if (is_array($errorResponse) && isset($errorResponse['errors']) && is_array($errorResponse['errors'])) {
             foreach ($errorResponse['errors'] as $error) {
+                $error['errorId'] = $error['errorId'] ?? 'unknown';
+                $error['message'] = $error['message'] ?? 'No message';
+
                 Log::error("eBay API Error: [{$error['errorId']}] {$error['message']}");
 
                 // Optional: Map error codes to custom exceptions
@@ -561,7 +582,7 @@ class EbayAuthService
                 return null;
             }
         } else {
-            Log::error('Error: Unexpected API error structure' );
+            Log::error('Error: Unexpected API error structure: ' . mb_substr($rawBody, 0, 1000));
             return null;
             //throw new \Exception('Unexpected API error structure');
         }
