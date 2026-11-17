@@ -610,6 +610,30 @@ class WalmartService implements MarketplaceServiceInterface
                         : $title . ' \n' . $description;
                 }
 
+                // Append the title to the end of one bullet point (the last one); skip if any bullet already has it
+                $bullets = array_values(array_filter(
+                    (array) ($visibleAttributes['keyFeatures'] ?? []),
+                    fn ($b) => trim((string) $b) !== ''
+                ));
+                if ($title !== '') {
+                    $alreadyPresent = false;
+                    foreach ($bullets as $bullet) {
+                        if (str_contains((string) $bullet, $title)) {
+                            $alreadyPresent = true;
+                            break;
+                        }
+                    }
+                    if (!$alreadyPresent) {
+                        if (empty($bullets)) {
+                            $bullets[] = $title;
+                        } else {
+                            $last = count($bullets) - 1;
+                            $bullets[$last] = rtrim((string) $bullets[$last]) . ' ' . $title;
+                        }
+                    }
+                    $visibleAttributes['keyFeatures'] = $bullets;
+                }
+
                 $product['Visible'][$storeTypeCategory->name] = $visibleAttributes;
 
                 $jsonFeed['MPItem'][] = $product;
