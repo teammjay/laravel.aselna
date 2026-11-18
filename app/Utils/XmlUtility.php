@@ -56,13 +56,9 @@ class XmlUtility
      */
     public static function saveToFile(string $filePath, string $xmlContent): void
     {
-        $directory = dirname($filePath);
-
-        // 2. Ensure the directory exists (Laravel handles recursive creation)
-        if (!File::isDirectory($directory)) {
-            File::makeDirectory($directory, 0775, true);
-        }
-        File::put($filePath, $xmlContent);
+        // Shared helper handles directory creation and cross-user permissions
+        // (web vs. queue worker) — see FileUtility::saveToFile.
+        FileUtility::saveToFile($filePath, $xmlContent);
     }
 
     private static function is_numeric_array(array $value)
