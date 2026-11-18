@@ -9,16 +9,76 @@ use Illuminate\Support\Facades\Log;
 
 class FileUtility
 {
+    /**
+     * Write a generated file (feed, result feed, ...) so that it stays writable by
+     * BOTH the web user (PHP-FPM) and the queue/scheduler user.
+     *
+     * Feeds are written from web requests and from queue workers. If those run as
+     * different OS users (e.g. workers as root), a file/dir created by one is
+     * read-only for the other and the next write fails with
+     * "file_put_contents(...): Failed to open stream: Permission denied".
+     */
     public static function saveToFile(string $filePath, string $fileContent): void
     {
-        File::ensureDirectoryExists(dirname($filePath));
-        File::put($filePath, $fileContent);
+        $directory = dirname($filePath);
+        self::ensureSharedDirectory($directory);
 
-        if (env('APP_ENV') !== 'local') {
-            chown($filePath, 'aselna');
-            chgrp($filePath, 'psacln');
+        // An existing file we can't write (created by another user) can still be
+        // replaced if the directory is writable: drop it and write a fresh one.
+        if (is_file($filePath) && !is_writable($filePath) && is_writable($directory)) {
+            @unlink($filePath);
         }
-        // chmod($filePath, 0777);
+
+        File::put($filePath, $fileContent);
+        self::shareOwnership($filePath, 0664);
+    }
+
+    /**
+     * Create the directory (recursively) and make every newly created level
+     * group-writable with setgid, so files inside inherit the shared group.
+     */
+    public static function ensureSharedDirectory(string $directory): void
+    {
+        if (File::isDirectory($directory)) {
+            return;
+        }
+
+        // Find the first missing ancestor so we only touch dirs we create.
+        $missing = [];
+        for ($dir = $directory; !File::isDirectory($dir) && $dir !== dirname($dir); $dir = dirname($dir)) {
+            $missing[] = $dir;
+        }
+
+        File::ensureDirectoryExists($directory, 0775, true);
+
+        foreach ($missing as $dir) {
+            self::shareOwnership($dir, 02775);
+        }
+    }
+
+    /**
+     * Best effort: set mode, and when running as root, hand the path to the app
+     * user/group. Never throws — a permission tweak must not fail the feed.
+     */
+    private static function shareOwnership(string $path, int $mode): void
+    {
+        if (app()->environment('local')) {
+            return;
+        }
+
+        // chmod only succeeds for the owner (or root); ignore otherwise.
+        @chmod($path, $mode);
+
+        if (function_exists('posix_geteuid') && posix_geteuid() === 0) {
+            $owner = config('filesystems.app_file_owner');
+            $group = config('filesystems.app_file_group');
+            if ($owner) {
+                @chown($path, $owner);
+            }
+            if ($group) {
+                @chgrp($path, $group);
+            }
+        }
     }
 
     public static function saveImage($imagePath, $localPath, $fileName)
