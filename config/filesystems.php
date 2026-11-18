@@ -16,6 +16,13 @@ return [
     'default' => env('FILESYSTEM_DISK', 'local'),
 
     /*
+    | OS user/group that generated files (feeds etc.) are handed to when a
+    | process running as root writes them. Used by FileUtility::saveToFile.
+    */
+    'app_file_owner' => env('APP_FILE_OWNER', 'aselna'),
+    'app_file_group' => env('APP_FILE_GROUP', 'psacln'),
+
+    /*
     |--------------------------------------------------------------------------
     | Filesystem Disks
     |--------------------------------------------------------------------------

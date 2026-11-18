@@ -45,18 +45,37 @@ class ListingItemImageCreate implements ShouldQueue
 
         try {
             $listingInfo = Listing::find($this->listigId);
-            //Log::info('Listing :: ' . json_encode($listingInfo));
-            ListingItemLink::where('listing_id', $this->listigId)->chunk(100, function ($listingItemLinks) use ($listingInfo) {
+            Log::info('[ListingItemImageCreate] Job started', [
+                'listing_id' => $this->listigId,
+                'listing_found' => (bool) $listingInfo,
+                'store_id' => $listingInfo->store->id ?? null,
+                'store_type' => $listingInfo->store->storeType->name ?? null,
+            ]);
+
+            $processedItems = 0;
+            ListingItemLink::where('listing_id', $this->listigId)->chunk(100, function ($listingItemLinks) use ($listingInfo, &$processedItems) {
                 foreach ($listingItemLinks as $listingItemLink) {
                     $this->createListingItemImage($listingItemLink, $listingInfo);
+                    $processedItems++;
                 }
             });
+
+            Log::info('[ListingItemImageCreate] Job completed', [
+                'listing_id' => $this->listigId,
+                'listing_items_processed' => $processedItems,
+            ]);
 
             $this->updateTrackingRecord([
                 'status' => 'completed',
                 'finished_at' => now()
             ]);
         }catch (\Throwable $e) {
+            Log::error('[ListingItemImageCreate] Job failed', [
+                'listing_id' => $this->listigId,
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
 
             $this->updateTrackingRecord([
                 'status' => 'failed',
@@ -80,12 +99,33 @@ class ListingItemImageCreate implements ShouldQueue
         $storeType = $listingInfo->store->storeType;
         $storeProduct = $listingItem->storeProduct;
         $productData = $storeProduct->product;
-        //Log::info('ProductData :: ' . json_encode($productData));
+        Log::info('[ListingItemImageCreate] Processing listing item', [
+            'listing_item_id' => $listingItemLink->item_id,
+            'sku' => $listingItem->sku ?? null,
+            'product_id' => $productData->product_id ?? null,
+            'product_sku' => $productData->product_sku ?? null,
+        ]);
         ProductImages::where('product_id', $productData->product_id)
             ->chunk(100, function ($productImages) use ($listingItem, $store, $storeType, $listingItemLink,$productData) {
-                if (!isset($store->fileSystem)) return;
+                if (!isset($store->fileSystem)) {
+                    Log::warning('[ListingItemImageCreate] Store has no file system, skipping images', [
+                        'store_id' => $store->id,
+                        'listing_item_id' => $listingItemLink->item_id,
+                    ]);
+                    return;
+                }
+                Log::info('[ListingItemImageCreate] Product images found', [
+                    'listing_item_id' => $listingItemLink->item_id,
+                    'count' => count($productImages),
+                ]);
                 foreach ($productImages as $productImage) {
                     $Image = $productImage->imageObj;
+                    if (!$Image) {
+                        Log::warning('[ListingItemImageCreate] Product image has no file record (imageObj is null)', [
+                            'listing_item_id' => $listingItemLink->item_id,
+                            'product_image_id' => $productImage->id,
+                        ]);
+                    }
                     $path = '';
                     //Log::info('StoreType :: ' . json_encode($storeType));
 
@@ -118,7 +158,11 @@ class ListingItemImageCreate implements ShouldQueue
                             Log::info("Version :: " .  $nextImageVersion);
                             $alternativeImage = ProductImageAlternative::where('main_image_id', $productImage->id)->where('version_number', $nextImageVersion)->first();
                             if(isset($alternativeImage) && isset($alternativeImage->imageObj)) {
-                                //Log::info("Alternative Image :: " . json_encode($alternativeImage));
+                                Log::info('[ListingItemImageCreate] Using alternative main image', [
+                                    'listing_item_id' => $listingItemLink->item_id,
+                                    'version' => $nextImageVersion,
+                                    'alt_product_image_id' => $alternativeImage->id,
+                                ]);
                                 $path = '/store-images/' . $store->id . '/' . $listingItem->id . '_' . $alternativeImage->id . '.jpg';
                                 $imageData['path'] = $path;
                                 $imageData['product_image_id'] = null;
@@ -126,6 +170,11 @@ class ListingItemImageCreate implements ShouldQueue
                                 $Image = $alternativeImage->imageObj;
                                 $this->uploadImage($store, $Image, $path);
                             } else {
+                                Log::info('[ListingItemImageCreate] No alternative image for version, using original main image', [
+                                    'listing_item_id' => $listingItemLink->item_id,
+                                    'version' => $nextImageVersion,
+                                    'product_image_id' => $productImage->id,
+                                ]);
                                 $this->uploadImage($store, $Image, $path);
                             }
                         } else {
@@ -140,10 +189,20 @@ class ListingItemImageCreate implements ShouldQueue
                         $imageData['path'] = $himage;
                     }
 
-                    ListingItemProductImage::updateOrCreate([
+                    $record = ListingItemProductImage::updateOrCreate([
                         'listing_item_id' => $listingItemLink->item_id,
                         'product_image_id' => $productImage->id,
                     ], $imageData);
+
+                    Log::info('[ListingItemImageCreate] Listing item image saved', [
+                        'id' => $record->id,
+                        'listing_item_id' => $listingItemLink->item_id,
+                        'product_image_id' => $productImage->id,
+                        'alt_product_image_id' => $imageData['alt_product_image_id'],
+                        'main_image' => $imageData['main_image'] ?? 0,
+                        'path' => $imageData['path'],
+                        'was_created' => $record->wasRecentlyCreated,
+                    ]);
                 }
             });
     }
@@ -188,15 +247,23 @@ class ListingItemImageCreate implements ShouldQueue
         $rootPath = $storeFileSystem->root_path;
         $localFilePath = storage_path('app/public/' . $Image->location . $Image->name);
 
+        if (!file_exists($localFilePath)) {
+            Log::warning('[ListingItemImageCreate] Local image file not found', [
+                'store_id' => $store->id,
+                'local_path' => $localFilePath,
+                'remote_path' => $path,
+            ]);
+        }
+
         $ftpConn = ftp_connect($host, $port);
         if (!$ftpConn) {
-            Log::info("Could not connect to FTP server: $host");
+            Log::error("[ListingItemImageCreate] Could not connect to FTP server: $host:$port", ['store_id' => $store->id]);
         }
 
         $login = ftp_login($ftpConn, $loginId, $password);
         if (!$login) {
             ftp_close($ftpConn);
-            Log::info("Could not login to FTP server with provided credentials.");
+            Log::error("[ListingItemImageCreate] Could not login to FTP server with provided credentials.", ['store_id' => $store->id, 'host' => $host]);
         }
 
         ftp_pasv($ftpConn, true);
@@ -208,9 +275,14 @@ class ListingItemImageCreate implements ShouldQueue
 
         //Upload the file
         if (ftp_put($ftpConn, $remoteFilePath, $localFilePath, FTP_BINARY)) {
-            echo "File uploaded successfully to $remoteFilePath";
+            Log::info('[ListingItemImageCreate] Image uploaded', ['store_id' => $store->id, 'remote_path' => $remoteFilePath]);
         } else {
-            echo "Error uploading file.";
+            Log::error('[ListingItemImageCreate] Image upload failed', [
+                'store_id' => $store->id,
+                'local_path' => $localFilePath,
+                'remote_path' => $remoteFilePath,
+                'error' => error_get_last()['message'] ?? null,
+            ]);
         }
 
         // Close FTP connection
