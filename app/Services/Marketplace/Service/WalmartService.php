@@ -267,6 +267,40 @@ class WalmartService implements MarketplaceServiceInterface
         }
     }
 
+    /**
+     * Whether Walmart has a final result for every item in the feed.
+     *
+     * feedStatus PROCESSED only means Walmart finished ingesting the file; items can still be
+     * INPROGRESS (e.g. "under review for compliance", up to 24 hours) with no itemid yet. Treating
+     * that as final marks every item Unsynchronize and resubmits the whole feed, so the feed counts
+     * as done only when no item is still in progress.
+     */
+    private function isFeedFullyProcessed(array $response, array $itemStatuses): bool
+    {
+        if (($response['feedStatus'] ?? null) !== 'PROCESSED') {
+            return false;
+        }
+
+        if (intval($response['itemsProcessing'] ?? 0) > 0) {
+            return false;
+        }
+
+        $itemsReceived = intval($response['itemsReceived'] ?? 0);
+        $itemsFinished = intval($response['itemsSucceeded'] ?? 0) + intval($response['itemsFailed'] ?? 0);
+        if ($itemsReceived > 0 && $itemsFinished < $itemsReceived) {
+            return false;
+        }
+
+        foreach ($itemStatuses as $item) {
+            $status = strtoupper(str_replace('_', '', $item['ingestionStatus'] ?? ''));
+            if ($status === 'INPROGRESS') {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     public function getResultFeed(mixed $listingId, $feedId = null)
     {
         $listingInfo = Listing::where('id', $listingId)->first();
@@ -307,8 +341,11 @@ class WalmartService implements MarketplaceServiceInterface
 
         // If not yet processed, handle the items that already passed and return (status stays PROCESSING).
         // Walmart's compliance / AI review can keep a create feed in progress for up to ~24 hours.
-        if ($response['feedStatus'] != 'PROCESSED') {
-            Log::info('Walmart feed still processing. Status: ' . $response['feedStatus']);
+        // Walmart can report feedStatus PROCESSED while items are still INPROGRESS (compliance review),
+        // so the item-level state decides, not the top-level feedStatus.
+        if (!$this->isFeedFullyProcessed($response, $itemStatuses)) {
+            Log::info('Walmart feed still processing. Status: ' . ($response['feedStatus'] ?? 'N/A')
+                . ', itemsProcessing: ' . ($response['itemsProcessing'] ?? 'N/A'));
             if ($isCreateFeed) {
                 $this->saveStoreSkus($listingInfo, $itemStatuses, true);
                 $this->submitInventoryForReadyItems($listingInfo);
