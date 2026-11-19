@@ -223,7 +223,14 @@ class ListingItemImageCreate implements ShouldQueue
         $redirectUri = env('EBAY_REDIRECT_URI');
 
         $authService = new EbayAuthService($clientId, $clientSecret, $redirectUri,$store_user_id);
+
+        // One retry: a failed upload leaves our own path on the row, and the eBay feed skips those pictures.
         $epsUrl = $authService->uploadImageToEPS($newpath, $filename);
+        if (!$epsUrl) {
+            Log::warning("[ListingItemImageCreate] EPS upload failed, retrying: $newpath");
+            sleep(2);
+            $epsUrl = $authService->uploadImageToEPS($newpath, $filename);
+        }
 
         Log::info("Ebay Hosted Image: $epsUrl");
 
