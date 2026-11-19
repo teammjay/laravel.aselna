@@ -1152,13 +1152,82 @@
                 }
             });
 
-            document.getElementById('doneBtn').addEventListener('click', () => {
+            // Clear everything a previous run generated so the next listing starts clean.
+            // Step 1 search filters (store, product codes, devices, ...) are kept on purpose.
+            const resetListingWizard = () => {
+                // JS state shared across steps
+                product_model = {};
+                product_models = {};
+                productDetail = {};
+                selected_device = {};
+                selected_carrier = {};
+                apply_price_count = 0;
+
+                // Step 1: product selection
+                $('#selected_product').prop('checked', false);
+                $('.total_sel_product').html('');
+                $('#total_search_product').html('');
+                if ($.fn.DataTable.isDataTable('#productsTable')) {
+                    $('#productsTable').DataTable().clear().draw();
+                } else {
+                    $('#search-product-list').html('');
+                }
+
+                // Steps 2-4: put inputs back to their page-load defaults
+                $('#tab2, #tab3, #tab4').find('input').each(function () {
+                    if (this.type === 'checkbox' || this.type === 'radio') {
+                        this.checked = this.defaultChecked;
+                    } else if (this.type === 'text' || this.type === 'hidden') {
+                        this.value = this.defaultValue;
+                    }
+                });
+                $('#price_type').val('fixed');
+
+                // Step 2: selected products + category dropdown
+                $('#productsTable2_wrapper').html('');
+                if ($('#store_category').hasClass('select2-hidden-accessible')) {
+                    $('#store_category').select2('destroy');
+                }
+                $('#store_category').html('');
+                $('.total_product').html('');
+
+                // Step 3: move every chosen option back out of the dual-list filters
+                ['#brand_filter', '#rating_filter', '#popularity_filter', '#carrier_filter'].forEach((sel) => {
+                    const $sel = $(sel);
+                    $sel.find('option').prop('selected', true);
+                    $sel.closest('table').find('.btn-val-remove').trigger('click');
+                });
+                $('.carr-filter').hide();
+                $('#product-list-3').html('');
+                $('#total_listing_product').html('');
+                if ($.fn.DataTable.isDataTable('#productListingTable')) {
+                    $('#productListingTable').DataTable().clear().draw();
+                } else {
+                    $('#listing_list').html('');
+                }
+
+                // Step 4: generated listings + models
+                $('#listing-product').html('');
+                $('#model_list').html('');
+                $('#total_generate_product').html('');
+                $('#total_generate_models').html('');
+
+                // Step 5: summary
+                $('#tab5').html('');
+
+                // Footer buttons + back to step 1
                 $('#nextBtn').html('Next');
                 $('.lbtn').show();
                 $('.donebtn').hide();
                 currentIndex = 0;
                 activateTab(0);
-            });
+                $('html, body').animate({ scrollTop: 0 }, 'fast');
+
+                // Refresh step 1 with the kept filters (just-listed products drop out of "Never Listed")
+                loadProducts();
+            };
+
+            document.getElementById('doneBtn').addEventListener('click', resetListingWizard);
 
             // Initialize by activating the first tab
             activateTab(currentIndex);
