@@ -636,6 +636,49 @@ class ProcessFeedGenerationJob implements ShouldQueue
             || str_contains(strtolower($this->storeDetail->store_url ?? ''), 'nevawireless');
     }
 
+    /**
+     * Stores whose feed titles get the device appended in place of the comma
+     * ("Case, Holster - NW1" => "Case for Samsung Galaxy S24 - Holster - NW1") instead of
+     * starting with the device name (the OdeMobile / UZID style). Matched on name as well as
+     * store_url, since store_url is not filled in on every store row.
+     */
+    private function isAppendDeviceTitleStore(): bool
+    {
+        foreach (['accessorychoice', 'accessorywiz', 'aselna', 'neva'] as $needle) {
+            if (str_contains(strtolower($this->storeDetail->store_url ?? ''), $needle)
+                || str_contains(strtolower($this->storeDetail->name ?? ''), $needle)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Puts the device into a feed title, in the store's style.
+     */
+    private function addDeviceToFeedTitle(string $title, $device, $deviceType): string
+    {
+        $deviceName = $device->brand->name . ' ' . $device->name;
+
+        if ($this->isAppendDeviceTitleStore()) {
+            if (str_contains($title, ',')) {
+                return str_replace(',', ' for ' . $deviceName . ' -', $title);
+            }
+
+            // No comma to replace (title saved without one, or the space joined keyword
+            // fallback): put the device before the " - <short code><sku>" suffix, or at the end.
+            if (preg_match('/^(.*\S)(\s+-\s+\S+)$/s', $title, $m)) {
+                return $m[1] . ' for ' . $deviceName . $m[2];
+            }
+            return trim($title) . ' for ' . $deviceName;
+        }
+
+        if ($deviceType->code != 1 && $deviceType->code != 2) {
+            return $deviceName . ' Compatible ' . $title;
+        }
+        return $deviceName . ' - ' . $title;
+    }
+
     public function generateProductImages($productData, $store)
     {
         //Log::info('Filesystem : ' . json_encode($store->fileSystem));
@@ -1152,19 +1195,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                 }
 
                                 $deviceType = $device->deviceType;
-                                $descriptionTitle = '';
-                                if (strpos($productTitle, ',') !== false &&
-                                    (str_contains(strtolower($this->storeDetail->store_url), 'accessorychoice') || str_contains(strtolower($this->storeDetail->store_url), 'accessorywiz')
-                                        || str_contains(strtolower($this->storeDetail->store_url), 'aselna') || str_contains(strtolower($this->storeDetail->store_url), 'neva'))) {
-                                    $descriptionTitle = str_replace(',', ' for ' . $device->brand->name . ' ' . $device->name . ' -', $title);
-                                    Log::info('final Product title 1: ' . $productTitle);
-                                } else {
-                                    if ($deviceType->code != 1 && $deviceType->code != 2) {
-                                        $descriptionTitle = $device->brand->name . ' ' . $device->name . ' Compatible ' . $title;
-                                    } else {
-                                        $descriptionTitle = $device->brand->name . ' ' . $device->name . ' - ' . $title;
-                                    }
-                                }
+                                $descriptionTitle = $this->addDeviceToFeedTitle($title, $device, $deviceType);
 
                                 $descriptionTitle = str_replace('Apple ', '', $descriptionTitle);
                                 $descriptionTitle = str_replace('apple', '', $descriptionTitle);
@@ -1172,20 +1203,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                 $final_description = $descriptionTitle . ' for ' . $device->name . '. ' . $product_description;
 
                                 if ($this->can_add_device_to_title($productTitle, $device)) {
-                                    if (strpos($productTitle, ',') !== false &&
-                                        (str_contains(strtolower($this->storeDetail->store_url), 'accessorychoice') || str_contains(strtolower($this->storeDetail->store_url), 'accessorywiz')
-                                            || str_contains(strtolower($this->storeDetail->store_url), 'aselna') || str_contains(strtolower($this->storeDetail->store_url), 'neva'))) {
-                                        $productTitle = str_replace(',', ' for ' . $device->brand->name . ' ' . $device->name . ' -', $productTitle);
-                                        Log::info('final Product title 2: ' . $productTitle);
-                                    } else {
-
-                                        if ($deviceType->code != 1 && $deviceType->code != 2) {
-                                            // Smartphone or Tablet
-                                            $productTitle = $device->brand->name . ' ' . $device->name . ' Compatible ' . $productTitle;
-                                        } else {
-                                            $productTitle = $device->brand->name . ' ' . $device->name . ' - ' . $productTitle;
-                                        }
-                                    }
+                                    $productTitle = $this->addDeviceToFeedTitle($productTitle, $device, $deviceType);
                                 }
 
                                 $productTitle = str_replace('Apple ', '', $productTitle);
