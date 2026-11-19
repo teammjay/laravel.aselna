@@ -41,6 +41,29 @@ class EbayService implements MarketplaceServiceInterface
 
     private $version = '1250';
 
+    /**
+     * The PictureURL to send for one listing image, or null to leave it out.
+     *
+     * eBay rejects an item that mixes self hosted and eBay hosted (EPS) pictures
+     * (error 20004), so only i.ebayimg.com pictures are sent. A row that still
+     * holds our own media path (ListingItemImageCreate could not put it on EPS)
+     * is skipped.
+     */
+    private function resolveEbayPictureUrl(ListingItemProductImage $image, $fileSystem, $sku): ?string
+    {
+        if (strpos((string) $image->path, 'ebayimg') !== false) {
+            return $image->path;
+        }
+
+        Log::warning('[EbayService] Skipping picture that is not hosted on eBay EPS', [
+            'sku' => $sku,
+            'listing_item_product_image_id' => $image->id,
+            'url' => $fileSystem->url_base_path . $image->path,
+        ]);
+
+        return null;
+    }
+
     public function generateFeed($listingId, $feedId = null)
     {
         $listingInfo = Listing::where('id', $listingId)->first();
@@ -217,30 +240,21 @@ class EbayService implements MarketplaceServiceInterface
 
             // Add PictureDetails
             $pictureDetails = $item->addChild('PictureDetails');
-            $images = ListingItemProductImage::leftJoin('product_images', 'product_images.id', '=', 'listing_item_product_images.product_image_id')->where('listing_item_product_images.listing_item_id', $itemDetail->id)->orderBy('listing_item_product_images.main_image', 'desc')->get();
+            // select() keeps the joined product_images.id / main_image from overwriting this row's own columns.
+            $images = ListingItemProductImage::select('listing_item_product_images.*')->leftJoin('product_images', 'product_images.id', '=', 'listing_item_product_images.product_image_id')->where('listing_item_product_images.listing_item_id', $itemDetail->id)->orderBy('listing_item_product_images.main_image', 'desc')->get();
+            $pictureCount = 0;
             foreach ($images as $image) {
                 if ($image->productImage) {
-                    if (strpos($image->path, 'ebayimg') !== false) {
-                        $imagesPath = $image->path;
-                    } else {
-                        $imagesPath = $fileSystem->url_base_path . $image->path;
+                    $imagesPath = $this->resolveEbayPictureUrl($image, $fileSystem, $itemDetail->sku);
+                    if ($imagesPath === null) {
+                        continue;
                     }
-                    /*$filename = basename($imagesPath,".jpg");
-                    $clientId = env('EBAY_CLIENT_ID');
-                    $clientSecret = env('EBAY_CLIENT_SECRET');
-                    $redirectUri = env('EBAY_REDIRECT_URI');
-
-                    $authService = new EbayAuthService($clientId, $clientSecret, $redirectUri,$store->user_id);
-                    $epsUrl = $authService->uploadImageToEPS($imagesPath, $filename);
-
-                    if ($epsUrl) {
-                        $hostimage = $epsUrl;
-                    } else {
-                        // Log or handle the failure per image
-                        $hostimage = $imagesPath;
-                    }*/
                     $pictureDetails->addChild('PictureURL', $imagesPath);
+                    $pictureCount++;
                 }
+            }
+            if ($pictureCount === 0) {
+                Log::warning('[EbayService] Item has no eBay hosted pictures, eBay will reject it', ['sku' => $itemDetail->sku]);
             }
             /*if(isset($itemDetail->storeProduct->productImages) && !empty($itemDetail->storeProduct->productImages)){
                 foreach($itemDetail->storeProduct->productImages as $image){
