@@ -13,6 +13,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Models\Customer;
@@ -37,6 +38,12 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
 
     public $timeout = 60 * 35; // Set a timeout for the job
 
+    /**
+     * Must outlive $timeout so the lock can't expire mid-run. If a worker is killed hard
+     * (the finally never runs) the lock frees itself after this many seconds.
+     */
+    private const ACCOUNT_LOCK_SECONDS = 60 * 40;
+
     protected $storeMessageAccount;
     protected $store;
     public $store_type;
@@ -50,8 +57,36 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
         $this->store_name = $store->name;
     }
 
+    public static function accountLockKey($storeMessageAccount): string
+    {
+        // Lock on the mailbox actually being fetched; fall back to the store message account itself.
+        return 'fetch-email-messages:' . ($storeMessageAccount->incoming_account_id ?: 'sma-' . $storeMessageAccount->id);
+    }
+
     public function handle()
     {
+        // Only one run may fetch a mailbox at a time. Two overlapping runs would read the same
+        // emails from the same filter_from_date and create duplicate tickets / messages.
+        $accountLock = Cache::lock(self::accountLockKey($this->storeMessageAccount), self::ACCOUNT_LOCK_SECONDS);
+        if (!$accountLock->get()) {
+            Log::warning('ProcessStoreMessageAccountJob: skipping, another run is already fetching this mailbox.', [
+                'store_id' => $this->store->id,
+                'store_name' => $this->store->name,
+                'store_message_account_id' => $this->storeMessageAccount->id,
+                'incoming_account_id' => $this->storeMessageAccount->incoming_account_id,
+            ]);
+
+            // Return normally (not fail) so the rest of the chain keeps running.
+            $this->updateTrackingRecord([
+                'status' => 'completed',
+                'started_at' => now(),
+                'finished_at' => now(),
+                'tags' => $this->store_name,
+                'output' => 'Skipped: another run is already fetching this mailbox.',
+            ]);
+            return;
+        }
+
         try {
             Log::info('===== ProcessStoreMessageAccountJob Started =====', [
                 'store_id' => $this->store->id,
@@ -626,6 +661,8 @@ class ProcessStoreMessageAccountJob implements ShouldQueue
             ],['store_type' => $this->store_type, 'store_name' => $this->store_name,'store_message_account' => $this->storeMessageAccount]);
 
             Log::error('Error processing store message account: ' . $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine());
+        } finally {
+            $accountLock->release();
         }
     }
 
