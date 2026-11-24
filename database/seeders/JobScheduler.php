@@ -267,7 +267,14 @@ class JobScheduler extends Seeder
                 'name' => 'Shopify Device SKU Metafields',
                 'description' => 'Push the product+device combination SKUs to the global.device_skus metafield of each Shopify product (also runs after every Shopify feed generation)',
                 'class_name' => 'App\Jobs\Shopify\SyncShopifyDeviceSkuMetafieldsJob',
-            ]
+            ],
+            // Hidden from the client for now. Uncomment to show it (weekly cron: ScheduledCronJobsSeeder).
+            // [
+            //     //DownloadAllEbayListingJob
+            //     'name' => 'Download All eBay Listing',
+            //     'description' => 'Download all active eBay listings (GetMyeBaySelling) and check them against listing items and listing item details',
+            //     'class_name' => 'App\Jobs\Ebay\DownloadAllEbayListingJob',
+            // ],
         ];
 
         // delete all existing scheduled jobs which we can be delete without foreign key issues

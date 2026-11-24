@@ -637,6 +637,24 @@ class ProcessFeedGenerationJob implements ShouldQueue
     }
 
     /**
+     * Price bucket in steps of 5: 32.99 -> "Above 30", anything from 50 up -> "Above 50",
+     * under 5 -> "Under 5". Empty when there is no usable price.
+     */
+    private function getPriceRangeLabel($price)
+    {
+        if (!is_numeric($price)) {
+            return '';
+        }
+
+        $price = (float) $price;
+        if ($price < 5) {
+            return 'Under 5';
+        }
+
+        return 'Above ' . min(50, (int) (floor($price / 5) * 5));
+    }
+
+    /**
      * Stores whose feed titles get the device appended in place of the comma
      * ("Case, Holster - NW1" => "Case for Samsung Galaxy S24 - Holster - NW1") instead of
      * starting with the device name (the OdeMobile / UZID style). Matched on name as well as
@@ -1189,6 +1207,13 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                 } else {
                                     $custom_label_3 = $custom_label_3_prefix . $device->brand->name . ' ' . $device->name;
                                 }
+                                // Meta product tag keeps the device text even when custom_label_3 changes below
+                                $device_tag = $custom_label_3;
+
+                                // NevaWireless only: custom_label_3 carries the price bucket (Above 5 ... Above 50)
+                                if ($this->isNevaWirelessStore()) {
+                                    $custom_label_3 = $this->getPriceRangeLabel($product_price);
+                                }
 
                                 if ($productTitle == NULL) {
                                     $productTitle = $title;
@@ -1301,6 +1326,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
                                         'custom_label_1' => $custom_label_1,
                                         'custom_label_2' => $custom_label_2,
                                         'custom_label_3' => $custom_label_3,
+                                        'device_tag' => $device_tag,
                                         'custom_label_4' => (isset($itemDetail->product->product_sku)) ? $itemDetail->product->product_sku : '',
                                     ]));
                                 } else {
@@ -1361,7 +1387,7 @@ class ProcessFeedGenerationJob implements ShouldQueue
         $price = $v['price'] !== '' && $v['price'] !== null ? number_format((float) $v['price'], 2, '.', '') . ' USD' : '';
         // product tags are limited to 110 characters each
         $tag0 = mb_substr($v['custom_label_0'], 0, 110);
-        $tag1 = mb_substr($v['custom_label_3'], 0, 110);
+        $tag1 = mb_substr($v['device_tag'] ?? $v['custom_label_3'], 0, 110);
         // Stores that keep UPCs out of the feed put the SKU in gtin. Meta rejects an invalid GTIN,
         // so only real 8/12/13/14 digit codes are sent.
         $gtin = preg_match('/^(\d{8}|\d{12,14})$/', (string) $v['gtin']) ? $v['gtin'] : '';
