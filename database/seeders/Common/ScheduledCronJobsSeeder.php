@@ -96,6 +96,18 @@ class ScheduledCronJobsSeeder extends Seeder
                 'type' => 'job',
                 'description' => 'Sync existing eBay listing items daily at 01:00',
             ],
+            // Hidden from the client for now. Uncomment to schedule it weekly.
+            // [
+            //     'name' => 'Download All eBay Listing',
+            //     'class_name' => 'App\Jobs\Ebay\DownloadAllEbayListingJob',
+            //     'command' => null,
+            //     'cron_expression' => '0 2 * * 0', // weekly, Sunday at 02:00
+            //     'parameters' => null,
+            //     'store_type' => 'ebay',
+            //     'is_active' => true,
+            //     'type' => 'job',
+            //     'description' => 'Download all active eBay listings weekly and check them against listing items and listing item details',
+            // ],
             [
                 'name' => 'Amazon Existing Listing Item Sync',
                 'class_name' => 'App\Jobs\Amazon\ExistingListingItemSyncJob',

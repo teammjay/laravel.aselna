@@ -849,6 +849,58 @@ class EbayAuthService
         }
     }
 
+    /**
+     * One page of the seller's active listings, with their variations, via the Trading API GetMyeBaySelling call.
+     * Only the ActiveList is requested; eBay allows at most 200 entries per page.
+     * https://developer.ebay.com/devzone/xml/docs/reference/ebay/GetMyeBaySelling.html
+     *
+     * Returns the decoded response array, or null when the request itself failed.
+     */
+    public function getMyeBaySellingActiveList(int $pageNumber = 1, int $entriesPerPage = 200)
+    {
+        try {
+            $accessToken = $this->refreshToken();
+
+            if (!isset($accessToken)) return null;
+
+            $xml = new \SimpleXMLElement('<?xml version="1.0" encoding="utf-8"?>
+<GetMyeBaySellingRequest xmlns="urn:ebay:apis:eBLBaseComponents"></GetMyeBaySellingRequest>');
+            $activeList = $xml->addChild('ActiveList');
+            $activeList->addChild('Include', 'true');
+            $pagination = $activeList->addChild('Pagination');
+            $pagination->addChild('EntriesPerPage', (string) min(max($entriesPerPage, 1), 200));
+            $pagination->addChild('PageNumber', (string) max($pageNumber, 1));
+            $xml->addChild('HideVariations', 'false');
+
+            $response = $this->client->post('ws/api.dll', [
+                'verify' => false,
+                'headers' => [
+                    'X-EBAY-API-COMPATIBILITY-LEVEL' => '1349',
+                    'X-EBAY-API-CALL-NAME' => 'GetMyeBaySelling',
+                    'X-EBAY-API-SITEID' => '0',
+                    'X-EBAY-API-IAF-TOKEN' => $accessToken,
+                    'Content-Type' => 'text/xml',
+                ],
+                'body' => $xml->asXML(),
+            ]);
+
+            $body = $response->getBody()->getContents();
+
+            return json_decode(json_encode(simplexml_load_string($body)), true);
+
+        } catch (RequestException $e) {
+
+            CriticalErrorService::report('Ebay GetMyeBaySelling failed', [
+                'marketplace' => 'eBay',
+                'reason' => $e->getMessage() . ' in file: ' . $e->getFile() . ' on line: ' . $e->getLine() ?? 'Unknown',
+                'method' => __METHOD__
+            ], ['page_number' => $pageNumber]);
+
+            Log::error('GetMyeBaySelling Error: ' . $e->getMessage());
+            return null;
+        }
+    }
+
     public function getOrderDetail($orderID)
     {
 
