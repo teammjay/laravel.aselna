@@ -124,6 +124,14 @@ class OrderOperationUtility
             return [];
         }
 
+        // Don't buy a second shipping label for an order that already has one (e.g. a duplicate
+        // OrderOperation created by the order sync) — that would send the parcel twice.
+        $existingLabel = self::findExistingShipmentLabel($orderOperation);
+        if ($existingLabel) {
+            Log::warning('Label purchase blocked for order operation ' . $orderOperation->id . ': order already has shipment label ' . $existingLabel->tracking_number . ' on order operation ' . $existingLabel->id);
+            return 'This order already has a shipping label (tracking ' . $existingLabel->tracking_number . ') on another shipment. Void that label or cancel that shipment before creating a new one.';
+        }
+
         $shipmentDetails = [];
         $errorMessages = ShippingUtility::assignSolutionService($orderOperation);
         if (isset($errorMessages) && !empty($errorMessages)) {
@@ -291,6 +299,35 @@ class OrderOperationUtility
             Log::error('Error creating label for order operation: ' . $orderOperation->id . ' - ' . json_encode($response));
             return $response['error'] ?? 'Error In Endicia Response.';
         }
+    }
+
+    /**
+     * Another live shipment operation of the same order that already has a tracking number, or null.
+     *
+     * Only OrderShipment operations are compared, so returns (OrderReturn, own operation type) are never
+     * affected. Replacements are unaffected too: replaceOrder() puts the replacement label on a new
+     * Order with its own shipment operation. Ignored: canceled operations, and labels voided through
+     * the shipping account (the operation keeps its tracking number, the transaction is marked canceled).
+     */
+    public static function findExistingShipmentLabel($orderOperation): ?OrderOperation
+    {
+        if (!OrderOperationType::isShipment($orderOperation->operation_type) || empty($orderOperation->order_id)) {
+            return null;
+        }
+
+        return OrderOperation::where('order_id', $orderOperation->order_id)
+            ->where('id', '<>', $orderOperation->id)
+            ->where('operation_type', OrderOperationType::OrderShipment)
+            ->whereNotNull('tracking_number')
+            ->where('tracking_number', '<>', '')
+            ->whereNotIn('status', [OrderOperationStatus::Canceled, OrderOperationStatus::CanceledRequested])
+            ->whereNotExists(function ($query) {
+                $query->select(DB::raw(1))
+                    ->from('shipping_account_transaction')
+                    ->whereColumn('shipping_account_transaction.tracking_number', 'order_operation.tracking_number')
+                    ->where('shipping_account_transaction.canceled', 1);
+            })
+            ->first();
     }
 
     public static function checkCredit($orderOperation){
