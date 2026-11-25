@@ -811,7 +811,12 @@ class EbayService implements MarketplaceServiceInterface
                                         $failCnt = 0;
                                         $warningCnt = 0;
                                         $errorMsg = '';
+                                        // Not-successful SKUs, per bucket, for the GetItem check below.
+                                        // accepted = error 21916271 (already counted as success), uncounted = failure without an Errors node.
+                                        $unconfirmedSkus = ['fail' => [], 'warning' => [], 'accepted' => [], 'uncounted' => []];
+                                        $unconfirmedWithoutSku = false;
                                         foreach ($responseObj as $item) {
+                                            $responseSku = trim((string) ($item->SKU ?? ''));
                                             if (isset($item->Ack) && strtolower($item->Ack) == 'success') {
                                                 $successCnt++;
                                                 $successSku[] = $item->SKU;
@@ -829,15 +834,28 @@ class EbayService implements MarketplaceServiceInterface
                                                 if (isset($item->Errors)) {
                                                     $errorMsg = $item->Errors->LongMessage;
                                                 }
+                                                if ($responseSku !== '') {
+                                                    $unconfirmedSkus['warning'][] = $responseSku;
+                                                } else {
+                                                    $unconfirmedWithoutSku = true;
+                                                }
                                             } else {
 
+                                                $bucket = 'uncounted';
                                                 if (isset($item->Errors)) {
                                                     if (isset($item->Errors->ErrorCode) && $item->Errors->ErrorCode == '21916271') {
                                                         $successCnt++;
+                                                        $bucket = 'accepted';
                                                     } else {
                                                         $failCnt++;
+                                                        $bucket = 'fail';
                                                     }
                                                     $errorMsg = $item->Errors->LongMessage;
+                                                }
+                                                if ($responseSku !== '') {
+                                                    $unconfirmedSkus[$bucket][] = $responseSku;
+                                                } else {
+                                                    $unconfirmedWithoutSku = true;
                                                 }
                                             }
                                         }
@@ -863,6 +881,27 @@ class EbayService implements MarketplaceServiceInterface
                                                     ]);
                                                 }
                                             }
+                                        }
+
+                                        // eBay sometimes reports an error for an item it did create. Check the
+                                        // not-successful items with GetItem before counting them, and before the
+                                        // CREATE recount / resubmit below, so live items are not resubmitted.
+                                        $confirmed = $this->verifyUnconfirmedItemsOnEbay($authService, $feedInfo, $listingId, $unconfirmedSkus, $unconfirmedWithoutSku);
+                                        foreach ($confirmed as $confirmedSku) {
+                                            if (in_array($confirmedSku, $unconfirmedSkus['accepted'], true)) {
+                                                continue; // error 21916271: already counted as a success above
+                                            }
+                                            $successCnt++;
+                                            if (in_array($confirmedSku, $unconfirmedSkus['warning'], true)) {
+                                                $warningCnt = max(0, $warningCnt - 1);
+                                            } elseif (!in_array($confirmedSku, $unconfirmedSkus['uncounted'], true)) {
+                                                // a 'fail' SKU, or one found through the no-SKU fallback (its node was counted as failed)
+                                                $failCnt = max(0, $failCnt - 1);
+                                            }
+                                        }
+                                        if (!empty($confirmed)) {
+                                            $errorMsg = 'eBay returned errors but ' . count($confirmed) . ' item(s) exist on eBay (verified via GetItem): '
+                                                . implode(', ', $confirmed) . '. ' . $errorMsg;
                                         }
 
                                         Log::info('Success Count: ' . $successCnt);
@@ -1305,6 +1344,103 @@ class EbayService implements MarketplaceServiceInterface
             Log::info('Ebay order error : ' . $e->getMessage());
         }
         return false;
+    }
+
+    /**
+     * eBay's bulk result file sometimes reports an error for an item it actually created. For the items of this
+     * feed that still have no store_sku, ask eBay (GetItem by SKU) whether the listing exists. When it is active,
+     * stamp store_sku = ItemID and mark it Synchronized.
+     *
+     * Never throws: if anything goes wrong the items simply stay failed, as before.
+     *
+     * @param  array $unconfirmedSkus  SKU buckets from the result file ('fail', 'warning', 'accepted', 'uncounted')
+     * @param  bool  $includeItemsWithoutSku  a failed response node had no SKU; also check every linked item with no store_sku
+     * @return string[] SKUs confirmed on eBay (empty in dry-run mode)
+     */
+    private function verifyUnconfirmedItemsOnEbay(EbayAuthService $authService, ListingFeed $feedInfo, $listingId, array $unconfirmedSkus, bool $includeItemsWithoutSku): array
+    {
+        if (!config('services.ebay.verify_failed_items', true)) {
+            return [];
+        }
+
+        $dryRun = (bool) config('services.ebay.verify_dry_run', false);
+        $maxPerRun = max(1, (int) config('services.ebay.verify_max_per_run', 50));
+        $skus = array_values(array_unique(array_merge(...array_values($unconfirmedSkus))));
+
+        if (empty($skus) && !$includeItemsWithoutSku) {
+            return [];
+        }
+
+        $confirmed = [];
+        $lookupErrors = [];
+
+        try {
+            $query = ListingItem::select('listing_item.*')
+                ->join('listing_item_link', 'listing_item_link.item_id', '=', 'listing_item.id')
+                ->where('listing_item_link.listing_id', $listingId)
+                ->where(function ($q) {
+                    $q->whereNull('listing_item.store_sku')->orWhere('listing_item.store_sku', '');
+                });
+            if (!$includeItemsWithoutSku) {
+                $query->whereIn('listing_item.sku', $skus);
+            }
+            $items = $query->limit($maxPerRun)->get();
+
+            foreach ($items as $listingItem) {
+                $sku = (string) $listingItem->sku;
+                if ($sku === '') {
+                    continue;
+                }
+
+                $response = $authService->getItemBySku($sku);
+                if ($response === null) {
+                    $lookupErrors[] = $sku;
+                    Log::warning('eBay GetItem verify: SKU ' . $sku . ' -> lookup error (feed ' . $feedInfo->id . ')');
+                    continue;
+                }
+
+                $ack = $response['Ack'] ?? null;
+                $itemId = trim((string) ($response['Item']['ItemID'] ?? ''));
+                $listingStatus = $response['Item']['SellingStatus']['ListingStatus'] ?? null;
+                $returnedSku = (string) ($response['Item']['SKU'] ?? '');
+
+                $exists = in_array($ack, ['Success', 'Warning'], true)
+                    && $itemId !== ''
+                    && $listingStatus === 'Active'
+                    && ($returnedSku === '' || strcasecmp($returnedSku, $sku) === 0);
+
+                if (!$exists) {
+                    $reason = $itemId === '' ? 'not found (Ack ' . ($ack ?? 'n/a') . ')' : 'ItemID ' . $itemId . ' is ' . ($listingStatus ?? 'unknown');
+                    Log::info('eBay GetItem verify: SKU ' . $sku . ' -> ' . $reason . ', left as failed (feed ' . $feedInfo->id . ')');
+                    continue;
+                }
+
+                if ($dryRun) {
+                    Log::info('eBay GetItem verify [DRY RUN]: would mark SKU ' . $sku . ' as created with ItemID ' . $itemId . ' (feed ' . $feedInfo->id . ')');
+                    continue;
+                }
+
+                $listingItem->update([
+                    'store_sku' => $itemId,
+                    'sync_status' => ListingSyncStatus::Synchronized,
+                ]);
+                $confirmed[] = $sku;
+                Log::info('eBay GetItem verify: SKU ' . $sku . ' -> ItemID ' . $itemId . ', marked as created (feed ' . $feedInfo->id . ')');
+            }
+        } catch (\Throwable $e) {
+            \App\Helpers\ErrorLogger::log($e, __METHOD__, ['feed_id' => $feedInfo->id]);
+            Log::error('eBay GetItem verify failed for feed ' . $feedInfo->id . ': ' . $e->getMessage());
+        }
+
+        if (!empty($lookupErrors)) {
+            \App\Services\CriticalErrorService::report('eBay GetItem verification failed', [
+                'marketplace' => 'eBay',
+                'reason' => 'GetItem lookup failed for ' . count($lookupErrors) . ' SKU(s); they were left as failed.',
+                'method' => __METHOD__,
+            ], ['feed_id' => $feedInfo->id, 'failed_skus' => $lookupErrors]);
+        }
+
+        return $confirmed;
     }
 
     public function resubmitFailedItems($listingId, $maxRetry = 3)
