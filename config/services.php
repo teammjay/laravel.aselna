@@ -44,4 +44,14 @@ return [
         ))))),
     ],
 
+    'ebay' => [
+        // When a create/resubmit result feed reports an item as failed, ask eBay (GetItem by SKU)
+        // whether the listing was created anyway, and count it as a success if it was.
+        'verify_failed_items' => (bool) env('EBAY_VERIFY_FAILED_ITEMS', true),
+        // Log what the GetItem check would change without updating any data.
+        'verify_dry_run' => (bool) env('EBAY_VERIFY_DRY_RUN', false),
+        // Most GetItem lookups per feed per result check; the rest wait for the next check.
+        'verify_max_per_run' => (int) env('EBAY_VERIFY_MAX_PER_RUN', 50),
+    ],
+
 ];

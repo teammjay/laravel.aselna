@@ -699,6 +699,52 @@ class EbayAuthService
         }
     }
 
+    /**
+     * Look up one listing by seller SKU with the Trading API GetItem call. Works because our listings are
+     * created with InventoryTrackingMethod = SKU.
+     * https://developer.ebay.com/devzone/xml/docs/reference/ebay/GetItem.html
+     *
+     * Returns the decoded response array (check its Ack), or null when the request itself failed.
+     */
+    public function getItemBySku(string $sku): ?array
+    {
+        try {
+            $accessToken = $this->refreshToken();
+
+            if (!isset($accessToken)) return null;
+
+            $xml = new \SimpleXMLElement('<?xml version="1.0" encoding="utf-8"?>
+<GetItemRequest xmlns="urn:ebay:apis:eBLBaseComponents"></GetItemRequest>');
+            $xml->addChild('SKU', htmlspecialchars($sku));
+            $xml->addChild('DetailLevel', 'ReturnAll');
+            $xml->addChild('IncludeItemSpecifics', 'true');
+            $xml->addChild('IncludeWatchCount', 'true');
+            $xml->addChild('ErrorLanguage', 'en_US');
+            $xml->addChild('WarningLevel', 'High');
+
+            $response = $this->client->post('ws/api.dll', [
+                'verify' => false,
+                'headers' => [
+                    'X-EBAY-API-COMPATIBILITY-LEVEL' => '1349',
+                    'X-EBAY-API-CALL-NAME' => 'GetItem',
+                    'X-EBAY-API-SITEID' => '0',
+                    'X-EBAY-API-IAF-TOKEN' => $accessToken,
+                    'Content-Type' => 'text/xml',
+                ],
+                'body' => $xml->asXML(),
+            ]);
+
+            $body = $response->getBody()->getContents();
+
+            return json_decode(json_encode(simplexml_load_string($body)), true);
+
+        } catch (\Throwable $e) {
+            // Not reported here: the caller reports once per feed instead of once per SKU.
+            Log::error('eBay GetItem failed for SKU ' . $sku . ': ' . $e->getMessage());
+            return null;
+        }
+    }
+
     public function cancelOrder($data)
     {
         try {
