@@ -78,7 +78,16 @@ class FeedGenerationJob implements ShouldQueue
             $itemCount = ListingItemLink::where('listing_id', $this->listingId)->count();
 
             $feedInfo->update(['number_of_items' => $itemCount]);
-            ListingItemLink::where('listing_id', $this->listingId)->update(['feed_id' => $feedInfo->id]);
+            // Only touch rows that actually change, in small batches, so each
+            // statement holds row locks briefly instead of locking the whole listing.
+            ListingItemLink::where('listing_id', $this->listingId)
+                ->where(function ($q) use ($feedInfo) {
+                    $q->whereNull('feed_id')->orWhere('feed_id', '!=', $feedInfo->id);
+                })
+                ->select('id')
+                ->chunkById(500, function ($links) use ($feedInfo) {
+                    ListingItemLink::whereIn('id', $links->pluck('id'))->update(['feed_id' => $feedInfo->id]);
+                });
 
             if (isset($store->auto_submit_listing) && $store->auto_submit_listing == 1) {
                 $marketplaceService->submitFeed($feedInfo->id, $this->listingId);
