@@ -980,6 +980,7 @@ class WalmartService implements MarketplaceServiceInterface
     public function getfeedType($feedType)
     {
         switch ($feedType) {
+            case FeedTypes::RESUBMIT:
             case FeedTypes::CREATE:
                 return 'MP_ITEM';
             // case FeedTypes::IMAGE_UPDATE:
