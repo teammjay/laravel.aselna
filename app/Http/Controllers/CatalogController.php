@@ -1634,7 +1634,9 @@ class CatalogController extends Controller
                                             'product_id' => $productId,
                                             'name' => $specifications[$i],
                                             'value' => $specification_values[$i],
-                                            'store_type_id' => $store->storeType->id ?? null
+                                            'store_type_id' => $store->storeType->id ?? null,
+                                            'created_at' => now(),
+                                            'updated_at' => now(),
                                         );
                                     }
                                 }
