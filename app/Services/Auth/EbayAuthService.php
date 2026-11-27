@@ -409,9 +409,52 @@ class EbayAuthService
         }
     }
 
+    /**
+     * eBay rejects LMS upload files over 15 MB (plain or zipped). Feeds above
+     * this threshold are zipped before upload; LMS accepts zipped XML.
+     * @see https://developer.ebay.com/api-docs/sell/static/feed/data-file-limits.html
+     */
+    private const LMS_MAX_UPLOAD_BYTES = 15 * 1024 * 1024;
+    private const LMS_ZIP_THRESHOLD_BYTES = 10 * 1024 * 1024;
+
+    /**
+     * Zip the feed file when it is too large to upload as plain XML.
+     * Returns [fileName, filePath] to upload.
+     */
+    private function prepareUploadFile(string $fileName, string $filePath): array
+    {
+        $size = filesize($filePath);
+        if ($size === false || $size <= self::LMS_ZIP_THRESHOLD_BYTES) {
+            return [$fileName, $filePath];
+        }
+
+        $zipName = pathinfo($fileName, PATHINFO_FILENAME) . '.zip';
+        $zipPath = dirname($filePath) . '/' . $zipName;
+
+        $zip = new \ZipArchive;
+        if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== true) {
+            throw new \Exception('Could not create zip for eBay feed upload: ' . $zipPath);
+        }
+        $zip->addFile($filePath, $fileName);
+        $zip->setCompressionName($fileName, \ZipArchive::CM_DEFLATE);
+        $zip->close();
+
+        clearstatcache(true, $zipPath);
+        Log::info("eBay feed {$fileName} is {$size} bytes; zipped to " . filesize($zipPath) . " bytes for upload");
+
+        return [$zipName, $zipPath];
+    }
+
     public function uploadFile(string $taskId, string $fileName, string $filePath)
     {
         try {
+            [$fileName, $filePath] = $this->prepareUploadFile($fileName, $filePath);
+
+            $uploadSize = filesize($filePath);
+            if ($uploadSize > self::LMS_MAX_UPLOAD_BYTES) {
+                throw new \Exception("eBay feed file {$fileName} is {$uploadSize} bytes, over the 15 MB LMS upload limit even after compression. Split the listing into smaller feeds.");
+            }
+
             $accessToken = $this->refreshToken();
 
             $response = $this->client->post("sell/feed/v1/task/".$taskId."/upload_file", [

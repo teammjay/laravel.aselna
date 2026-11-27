@@ -114,6 +114,77 @@ class EndicialabelServiceTest extends TestCase
         ];
     }
 
+    /**
+     * Reproduces order 19045047599298: Priority + FlatRateEnvelope fails with Status 64011
+     * ("No rate found for the specified mail class, package, and dimensions") when 10x10x1
+     * dimensions are sent. Sends the same request with and without MailpieceDimensions.
+     *
+     * Test="YES" makes Endicia return a sample label without charging postage.
+     * Credentials come from the shipping account used by ShippingUtility::assignSolutionService().
+     *
+     * ./vendor/bin/phpunit --filter testFlatRateEnvelopeDimensions tests/Utils/EndicialabelServiceTest.php
+     */
+    public function testFlatRateEnvelopeDimensions()
+    {
+        $account = \App\Models\ShippingAccount::findOrFail('6af8e570-2505-ebab-a60f-3a7f0a5e8da6');
+        $client = new Client();
+
+        $variants = [
+//            'with_dimensions' => '<MailpieceDimensions><Length>10</Length><Width>10</Width><Height>1</Height></MailpieceDimensions>',
+            'without_dimensions' => '',
+        ];
+
+        foreach ($variants as $name => $dimensions) {
+            $xmlString = '<?xml version="1.0" encoding="utf-8"?>'
+                . '<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"><soap:Body>'
+                . '<GetPostageLabel xmlns="www.envmgr.com/LabelService">'
+                . '<LabelRequest Test="YES" ImageFormat="ZPLII" LabelSize="4x5" ImageResolution="203" ImageRotation="Rotate180">'
+                . '<RequesterID>' . htmlspecialchars($account->requester_id, ENT_XML1) . '</RequesterID>'
+                . '<AccountID>' . htmlspecialchars($account->account_id, ENT_XML1) . '</AccountID>'
+                . '<PassPhrase>' . htmlspecialchars($account->pass_phrase, ENT_XML1) . '</PassPhrase>'
+                . '<MailClass>Priority</MailClass>'
+                . '<MailpieceShape>FlatRateEnvelope</MailpieceShape>'
+                . '<WeightOz>1.5</WeightOz>'
+                . '<PartnerTransactionID>TEST-19045047599298</PartnerTransactionID>'
+                . '<Machinable>TRUE</Machinable>'
+                . $dimensions
+                . '<FromName/><FromCompany>Fulfillment Center</FromCompany><FromAddress1>222 Universal Dr</FromAddress1>'
+                . '<FromAddress2>Bldg 3</FromAddress2><FromCity>North Haven</FromCity><FromState>CT</FromState><FromPostalCode>06473</FromPostalCode>'
+                . '<ToCompany>Zane Lozeau</ToCompany><ToAddress1>7983 Buck Mountain Rd</ToAddress1><ToCity>Dover</ToCity>'
+                . '<ToState>AR</ToState><ToPostalCode>72837</ToPostalCode>'
+                . '<ReturnName/><ReturnCompany>Fulfillment Center</ReturnCompany><ReturnAddress1>222 Universal Dr</ReturnAddress1>'
+                . '<ReturnAddress2>Bldg 3</ReturnAddress2><ReturnToCity>North Haven</ReturnToCity><ReturnToState>CT</ReturnToState>'
+                . '<ReturnToPostalCode>06473</ReturnToPostalCode>'
+                . '<RubberStamp1>OdeWeb 223964</RubberStamp1>'
+                . '</LabelRequest></GetPostageLabel></soap:Body></soap:Envelope>';
+
+            $response = $client->post('https://LabelServer.Endicia.com/LabelService/EwsLabelService.asmx', [
+                'headers' => [
+                    'Content-Type' => 'text/xml; charset=utf-8',
+                    'SOAPAction' => '"www.envmgr.com/LabelService/GetPostageLabel"',
+                ],
+                'body' => $xmlString,
+                'verify' => false,
+            ]);
+            $body = $response->getBody()->getContents();
+
+            // Drop the base64 label image so the log stays readable.
+            $loggable = preg_replace('#<Base64LabelImage>.*?</Base64LabelImage>#s', '<Base64LabelImage>[omitted]</Base64LabelImage>', $body);
+            Log::info("Endicia flat-rate test [$name] response: " . $loggable);
+
+            $xml = simplexml_load_string($body);
+            $xml->registerXPathNamespace('ns', 'www.envmgr.com/LabelService');
+            $status = (string)($xml->xpath('//ns:Status')[0] ?? '?');
+            $error = (string)($xml->xpath('//ns:ErrorMessage')[0] ?? '');
+            $postage = (string)($xml->xpath('//ns:FinalPostage')[0] ?? '?');
+
+            fwrite(STDERR, PHP_EOL . "[$name] Status=$status FinalPostage=$postage" . ($error ? " Error=$error" : '') . PHP_EOL);
+            fwrite(STDERR, $loggable . PHP_EOL);
+        }
+
+        $this->assertTrue(true);
+    }
+
     public function testBuildStatusRequestXmlEscaping()
     {
         $service = new EndicialabelService();
